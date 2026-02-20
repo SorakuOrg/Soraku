@@ -1,70 +1,208 @@
-# Soraku Community
+# Soraku Community Hub
 
-Website komunitas Pop Jepang & Anime yang modern dan terintegrasi dengan Discord.
+Soraku adalah komunitas Pop Jepang & Anime yang berkembang bersama.
+Website ini adalah pusat komunitas, media platform, dan integrasi Discord.
+
+## Tech Stack
+- Next.js (App Router)
+- TailwindCSS
+- PostgreSQL (Supabase)
+- Clerk Auth
+- Discord API
+- Vercel Deployment
 
 ## Fitur Utama
 
-### 1. Authentication (Discord OAuth2)
-- Login dengan akun Discord
-- Sync username dan avatar
-- Role-based access control (admin/moderator/member)
-- JWT session management
+### 1. Maintenance Mode
+- Toggle via Admin Dashboard
+- Redirect semua route ke /maintenance
+- Tetap tampilkan jumlah member online
 
-### 2. Admin Dashboard
-- CRUD Blog Post
-- CRUD Event
-- Manage Users
-- Analytics sederhana
-- Custom settings
+### 2. Discord Integration
+- Real-time member count
+- Online member count (auto refresh 60s)
+- Server info display
 
-### 3. Blog System
-- Rich text editor
-- Upload gambar
-- Slug otomatis
-- SEO meta tags
-- Tags dan kategori
-- Featured posts
-- Pagination
+### 3. Clerk Authentication
+- Login/Register dengan Discord OAuth
+- Role-based access control
+- Middleware protection
 
-### 4. Events Real-Time
+### 4. Role System
+- **Manager**: Full access (post events, blog, manage users, toggle maintenance)
+- **Agensi**: Manage events
+- **Admin**: Post & edit blog
+- **User**: Upload gallery
+
+### 5. Community Page
+- 1000+ Members badge
+- Real Discord data
+- 3 Pilar Soraku
+- Channel preview
+
+### 6. Events System
+- Grid layout 3 kolom
 - Countdown timer
-- Status event (Upcoming/Ongoing/Ended)
-- RSVP system
-- Filter kategori
-- Auto status update
+- Status badge
+- Discord webhook integration
 
-### 5. Discord Integration
-- Tampilkan jumlah member online
-- Server info
-- Invite link
-- Webhook support
-- Role sync
+### 7. Gallery System
+- User upload (pending approval)
+- Admin approval workflow
+- Grid responsive
+- Modal preview
 
-### 6. Community Section
-- Hero section dengan animasi
-- Features showcase
-- Testimonials
-- Discord server preview
-- CTA sections
+## Setup Project
 
-## Tech Stack
+### 1. Clone repo
+```bash
+git clone https://github.com/yourusername/soraku.git
+cd soraku
+```
 
-- **Frontend**: React + TypeScript + Vite
-- **Styling**: Tailwind CSS + shadcn/ui
-- **State Management**: Zustand
-- **Animation**: Framer Motion
-- **Database**: Supabase (PostgreSQL)
-- **Auth**: Discord OAuth2
-- **Icons**: Lucide React
+### 2. Install dependencies
+```bash
+npm install
+```
+
+### 3. Setup environment variables
+
+Buat file `.env.local`:
+
+```env
+# Clerk Authentication
+NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_YOUR_CLERK_KEY
+CLERK_SECRET_KEY=sk_test_YOUR_CLERK_SECRET
+NEXT_PUBLIC_CLERK_SIGN_IN_URL=/sign-in
+NEXT_PUBLIC_CLERK_SIGN_UP_URL=/sign-up
+
+# Supabase
+NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+SUPABASE_SERVICE_ROLE_KEY=your-service-key
+
+# Discord
+DISCORD_CLIENT_ID=your-discord-client-id
+DISCORD_CLIENT_SECRET=your-discord-client-secret
+DISCORD_BOT_TOKEN=your-discord-bot-token
+DISCORD_SERVER_ID=1116971049045729302
+DISCORD_WEBHOOK_URL=https://discord.com/api/webhooks/your-webhook
+
+# App
+NEXT_PUBLIC_APP_URL=http://localhost:3000
+```
+
+### 4. Setup Discord Bot
+1. Buat Application di [Discord Developer Portal](https://discord.com/developers/applications)
+2. Aktifkan OAuth2
+3. Tambahkan Bot
+4. Berikan permission: Read Members, Send Messages
+5. Invite ke server Soraku (Server ID: 1116971049045729302)
+
+### 5. Setup Clerk
+1. Buat project di [Clerk Dashboard](https://dashboard.clerk.dev)
+2. Enable Discord OAuth provider
+3. Tambahkan redirect URLs:
+   - http://localhost:3000/sign-in
+   - http://localhost:3000/sign-up
+   - https://your-domain.com/sign-in
+   - https://your-domain.com/sign-up
+4. Setup role metadata di Clerk
+
+### 6. Setup Supabase
+1. Buat project di [Supabase](https://supabase.com)
+2. Buat tables sesuai schema di `src/lib/supabase.ts`
+3. Copy API keys ke environment variables
+
+### 7. Run development
+```bash
+npm run dev
+```
+
+### 8. Build production
+```bash
+npm run build
+```
+
+## Deployment ke Vercel
+
+1. Push ke GitHub
+2. Import project ke [Vercel](https://vercel.com)
+3. Set environment variables di Vercel Dashboard
+4. Deploy!
+
+## Database Schema
+
+### Tables
+
+**users**
+- id (uuid)
+- clerk_id (text)
+- username (text)
+- avatar_url (text)
+- email (text)
+- role (enum: user, admin, agensi, manager)
+- created_at (timestamp)
+- updated_at (timestamp)
+
+**blog_posts**
+- id (uuid)
+- title (text)
+- slug (text)
+- content (text)
+- excerpt (text)
+- featured_image (text)
+- author_id (uuid)
+- status (enum: draft, published)
+- category (text)
+- tags (text[])
+- featured (boolean)
+- view_count (int)
+- created_at (timestamp)
+- updated_at (timestamp)
+
+**events**
+- id (uuid)
+- title (text)
+- slug (text)
+- description (text)
+- short_description (text)
+- banner_image (text)
+- start_date (timestamp)
+- end_date (timestamp)
+- location (text)
+- location_type (enum: online, offline, hybrid)
+- max_participants (int)
+- status (enum: upcoming, ongoing, ended, cancelled)
+- category (text)
+- organizer_id (uuid)
+- discord_event_id (text)
+- rsvp_count (int)
+- created_at (timestamp)
+- updated_at (timestamp)
+
+**gallery**
+- id (uuid)
+- user_id (uuid)
+- image_url (text)
+- caption (text)
+- status (enum: pending, approved, rejected)
+- created_at (timestamp)
+
+**settings**
+- id (uuid)
+- key (text)
+- value (text)
+- updated_at (timestamp)
 
 ## Design System
 
 ### Colors
-- **Primary**: #4FA3D1
-- **Dark Base**: #1C1E22
-- **Secondary**: #6E8FA6
-- **Light Base**: #D9DDE3
-- **Accent**: #E8C2A8
+- Primary: #4FA3D1
+- Dark Base: #1C1E22
+- Secondary: #6E8FA6
+- Light Base: #D9DDE3
+- Accent: #E8C2A8
 
 ### Features
 - Glassmorphism (blur + transparansi)
@@ -74,109 +212,13 @@ Website komunitas Pop Jepang & Anime yang modern dan terintegrasi dengan Discord
 - Smooth animations
 - Micro interactions
 
-## Struktur Halaman
+## Logo
 
-1. **Landing Page** - Hero, Features, Events, Blog, Discord, Testimonials, CTA
-2. **About Us** - Visi, Misi, Values, Timeline
-3. **Blog** - List artikel dan detail
-4. **Events** - List event dan detail dengan RSVP
-5. **Community** - Channel preview dan benefits
-6. **Admin Dashboard** - Full CRUD management
-7. **Privacy Policy** - Kebijakan privasi
-8. **Terms of Service** - Syarat dan ketentuan
-9. **Login** - Discord OAuth2
+Logo Soraku: https://blogger.googleusercontent.com/img/a/AVvXsEhlhs4Uhd-DSMY2uER618DpZkDLuupIyT5GmQDqdMmM31HF3XGi1om60_82VyP_P4r7aZlpqz8zCXNFe_-qfsBRQ63m_NcTD_viFP5pTpR4-sgfTGfK0BSUpjixF8N7eZdV7oki8kkq5uivp_Xo=w150-h150-p-k-no-nu-rw-e90
 
-## Environment Variables
+## License
 
-```env
-# Supabase
-VITE_SUPABASE_URL=your_supabase_url
-VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
-
-# Discord OAuth
-VITE_DISCORD_CLIENT_ID=your_discord_client_id
-VITE_DISCORD_CLIENT_SECRET=your_discord_client_secret
-VITE_DISCORD_REDIRECT_URI=http://localhost:5173/auth/callback
-
-# Discord Server
-VITE_DISCORD_SERVER_ID=your_discord_server_id
-VITE_DISCORD_INVITE_URL=https://discord.gg/soraku
-VITE_DISCORD_WEBHOOK_URL=your_discord_webhook_url
-```
-
-## Database Schema
-
-### Tables
-- **users** - Data user dari Discord
-- **blog_posts** - Artikel blog
-- **events** - Data event
-- **event_rsvps** - RSVP peserta event
-- **site_settings** - Pengaturan website
-- **admin_logs** - Log aktivitas admin
-
-## Getting Started
-
-### 1. Clone Repository
-```bash
-git clone https://github.com/yourusername/soraku.git
-cd soraku
-```
-
-### 2. Install Dependencies
-```bash
-npm install
-```
-
-### 3. Setup Environment Variables
-```bash
-cp .env.example .env
-# Edit .env dengan konfigurasi Anda
-```
-
-### 4. Run Development Server
-```bash
-npm run dev
-```
-
-### 5. Build for Production
-```bash
-npm run build
-```
-
-## Deployment
-
-### Vercel
-1. Push ke GitHub
-2. Import project di Vercel
-3. Setup environment variables
-4. Deploy!
-
-### Supabase Setup
-1. Buat project baru di Supabase
-2. Jalankan SQL migrations
-3. Setup Row Level Security (RLS)
-4. Copy API keys ke environment variables
-
-## Discord App Setup
-
-1. Buat aplikasi baru di Discord Developer Portal
-2. Setup OAuth2 redirect URLs
-3. Copy Client ID dan Client Secret
-4. Invite bot ke server Anda
-
-## Kontribusi
-
-Kontribusi selalu diterima! Silakan buat pull request atau buka issue untuk diskusi.
-
-## Lisensi
-
-MIT License - lihat [LICENSE](LICENSE) untuk detail.
-
-## Kontak
-
-- Email: hello@soraku.id
-- Discord: https://discord.gg/soraku
-- Website: https://soraku.id
+MIT License
 
 ---
 
