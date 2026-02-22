@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextResponse } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
 import { createServiceClient } from '@/lib/supabase'
 import { getCurrentUserRole } from '@/lib/clerk'
@@ -8,15 +8,14 @@ function applyIdOrSlug(query: any, value: string) {
   return query.or(`id.eq.${value},slug.eq.${value}`)
 }
 
-export async function GET(
-  _: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function GET(request: Request, context: any) {
+  const id = context.params?.id
+
   const supabase = createServiceClient()
 
   const { data, error } = await applyIdOrSlug(
     supabase.from('vtubers').select('*'),
-    params.id
+    id
   ).maybeSingle()
 
   if (error || !data) {
@@ -26,10 +25,7 @@ export async function GET(
   return NextResponse.json(data)
 }
 
-export async function PUT(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function PUT(request: Request, context: any) {
   const { userId } = await auth()
   if (!userId)
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -39,6 +35,7 @@ export async function PUT(
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   }
 
+  const id = context.params?.id
   const body = await request.json()
 
   // whitelist field yang boleh diupdate
@@ -66,7 +63,7 @@ export async function PUT(
 
   const { data, error } = await applyIdOrSlug(
     supabase.from('vtubers').update(safeUpdate).select(),
-    params.id
+    id
   ).maybeSingle()
 
   if (error) {
@@ -80,10 +77,7 @@ export async function PUT(
   return NextResponse.json(data)
 }
 
-export async function DELETE(
-  _: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function DELETE(request: Request, context: any) {
   const { userId } = await auth()
   if (!userId)
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -93,11 +87,12 @@ export async function DELETE(
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   }
 
+  const id = context.params?.id
   const supabase = createServiceClient()
 
   const { data, error } = await applyIdOrSlug(
     supabase.from('vtubers').delete().select(),
-    params.id
+    id
   ).maybeSingle()
 
   if (error) {
