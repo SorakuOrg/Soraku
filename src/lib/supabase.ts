@@ -1,253 +1,98 @@
-import { createClient } from '@supabase/supabase-js';
+import { createClient } from '@supabase/supabase-js'
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
-const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 
-export const supabase = createClient(supabaseUrl, supabaseKey);
+export const supabase = createClient(supabaseUrl, supabaseAnonKey)
 
-export type Database = {
-  public: {
-    Tables: {
-      users: {
-        Row: {
-          id: string;
-          discord_id: string;
-          username: string;
-          avatar_url: string | null;
-          email: string | null;
-          role: 'admin' | 'moderator' | 'member';
-          created_at: string;
-          updated_at: string;
-        };
-        Insert: {
-          id?: string;
-          discord_id: string;
-          username: string;
-          avatar_url?: string | null;
-          email?: string | null;
-          role?: 'admin' | 'moderator' | 'member';
-          created_at?: string;
-          updated_at?: string;
-        };
-        Update: {
-          id?: string;
-          discord_id?: string;
-          username?: string;
-          avatar_url?: string | null;
-          email?: string | null;
-          role?: 'admin' | 'moderator' | 'member';
-          created_at?: string;
-          updated_at?: string;
-        };
-      };
-      blog_posts: {
-        Row: {
-          id: string;
-          title: string;
-          slug: string;
-          content: string;
-          excerpt: string;
-          featured_image: string | null;
-          author_id: string;
-          status: 'draft' | 'published' | 'archived';
-          tags: string[];
-          category: string;
-          meta_title: string | null;
-          meta_description: string | null;
-          featured: boolean;
-          view_count: number;
-          published_at: string | null;
-          created_at: string;
-          updated_at: string;
-        };
-        Insert: {
-          id?: string;
-          title: string;
-          slug: string;
-          content: string;
-          excerpt: string;
-          featured_image?: string | null;
-          author_id: string;
-          status?: 'draft' | 'published' | 'archived';
-          tags?: string[];
-          category: string;
-          meta_title?: string | null;
-          meta_description?: string | null;
-          featured?: boolean;
-          view_count?: number;
-          published_at?: string | null;
-          created_at?: string;
-          updated_at?: string;
-        };
-        Update: {
-          id?: string;
-          title?: string;
-          slug?: string;
-          content?: string;
-          excerpt?: string;
-          featured_image?: string | null;
-          author_id?: string;
-          status?: 'draft' | 'published' | 'archived';
-          tags?: string[];
-          category?: string;
-          meta_title?: string | null;
-          meta_description?: string | null;
-          featured?: boolean;
-          view_count?: number;
-          published_at?: string | null;
-          created_at?: string;
-          updated_at?: string;
-        };
-      };
-      events: {
-        Row: {
-          id: string;
-          title: string;
-          slug: string;
-          description: string;
-          short_description: string;
-          banner_image: string | null;
-          start_date: string;
-          end_date: string;
-          location: string | null;
-          location_type: 'online' | 'offline' | 'hybrid';
-          max_participants: number | null;
-          status: 'upcoming' | 'ongoing' | 'ended' | 'cancelled';
-          category: string;
-          organizer_id: string;
-          discord_channel_id: string | null;
-          rsvp_count: number;
-          created_at: string;
-          updated_at: string;
-        };
-        Insert: {
-          id?: string;
-          title: string;
-          slug: string;
-          description: string;
-          short_description: string;
-          banner_image?: string | null;
-          start_date: string;
-          end_date: string;
-          location?: string | null;
-          location_type: 'online' | 'offline' | 'hybrid';
-          max_participants?: number | null;
-          status?: 'upcoming' | 'ongoing' | 'ended' | 'cancelled';
-          category: string;
-          organizer_id: string;
-          discord_channel_id?: string | null;
-          rsvp_count?: number;
-          created_at?: string;
-          updated_at?: string;
-        };
-        Update: {
-          id?: string;
-          title?: string;
-          slug?: string;
-          description?: string;
-          short_description?: string;
-          banner_image?: string | null;
-          start_date?: string;
-          end_date?: string;
-          location?: string | null;
-          location_type?: 'online' | 'offline' | 'hybrid';
-          max_participants?: number | null;
-          status?: 'upcoming' | 'ongoing' | 'ended' | 'cancelled';
-          category?: string;
-          organizer_id?: string;
-          discord_channel_id?: string | null;
-          rsvp_count?: number;
-          created_at?: string;
-          updated_at?: string;
-        };
-      };
-      event_rsvps: {
-        Row: {
-          id: string;
-          event_id: string;
-          user_id: string;
-          status: 'going' | 'maybe' | 'not_going';
-          notes: string | null;
-          created_at: string;
-          updated_at: string;
-        };
-        Insert: {
-          id?: string;
-          event_id: string;
-          user_id: string;
-          status: 'going' | 'maybe' | 'not_going';
-          notes?: string | null;
-          created_at?: string;
-          updated_at?: string;
-        };
-        Update: {
-          id?: string;
-          event_id?: string;
-          user_id?: string;
-          status?: 'going' | 'maybe' | 'not_going';
-          notes?: string | null;
-          created_at?: string;
-          updated_at?: string;
-        };
-      };
-      site_settings: {
-        Row: {
-          id: string;
-          key: string;
-          value: string;
-          type: 'string' | 'number' | 'boolean' | 'json';
-          description: string | null;
-          updated_at: string;
-          updated_by: string | null;
-        };
-        Insert: {
-          id?: string;
-          key: string;
-          value: string;
-          type: 'string' | 'number' | 'boolean' | 'json';
-          description?: string | null;
-          updated_at?: string;
-          updated_by?: string | null;
-        };
-        Update: {
-          id?: string;
-          key?: string;
-          value?: string;
-          type?: 'string' | 'number' | 'boolean' | 'json';
-          description?: string | null;
-          updated_at?: string;
-          updated_by?: string | null;
-        };
-      };
-      admin_logs: {
-        Row: {
-          id: string;
-          admin_id: string;
-          action: string;
-          entity_type: string;
-          entity_id: string;
-          details: string | null;
-          created_at: string;
-        };
-        Insert: {
-          id?: string;
-          admin_id: string;
-          action: string;
-          entity_type: string;
-          entity_id: string;
-          details?: string | null;
-          created_at?: string;
-        };
-        Update: {
-          id?: string;
-          admin_id?: string;
-          action?: string;
-          entity_type?: string;
-          entity_id?: string;
-          details?: string | null;
-          created_at?: string;
-        };
-      };
-    };
-  };
-};
+export const createServiceClient = () => {
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
+  return createClient(supabaseUrl, serviceKey, {
+    auth: { autoRefreshToken: false, persistSession: false },
+  })
+}
+
+// ── Types ────────────────────────────────────
+export type VtuberRow = {
+  id: string
+  name: string
+  slug: string
+  bio: string | null
+  avatar_url: string | null
+  generation: number
+  agency: string | null
+  social_links: Record<string, string>
+  created_by: string
+  created_at: string
+  updated_at: string
+}
+
+export type BlogPostRow = {
+  id: string
+  title: string
+  slug: string
+  content: string
+  excerpt: string | null
+  featured_image: string | null
+  author_id: string
+  author_name: string | null
+  status: 'draft' | 'published'
+  category: string | null
+  tags: string[]
+  featured: boolean
+  view_count: number
+  created_at: string
+  updated_at: string
+}
+
+export type EventRow = {
+  id: string
+  title: string
+  slug: string
+  description: string | null
+  short_description: string | null
+  banner_image: string | null
+  start_date: string
+  end_date: string
+  location: string | null
+  location_type: 'online' | 'offline' | 'hybrid'
+  max_participants: number | null
+  status: 'upcoming' | 'ongoing' | 'ended' | 'cancelled'
+  category: string | null
+  organizer_id: string
+  discord_event_id: string | null
+  rsvp_count: number
+  created_at: string
+  updated_at: string
+}
+
+export type GalleryRow = {
+  id: string
+  image_url: string
+  caption: string | null
+  uploaded_by: string
+  uploader_name: string | null
+  status: 'pending' | 'approved' | 'rejected'
+  reviewed_by: string | null
+  reviewed_at: string | null
+  created_at: string
+}
+
+export type UserRow = {
+  id: string
+  clerk_user_id: string
+  username: string
+  email: string
+  avatar_url: string | null
+  role: 'MANAGER' | 'AGENSI' | 'ADMIN' | 'USER'
+  created_at: string
+  updated_at: string
+}
+
+export type SettingRow = {
+  id: string
+  key: string
+  value: string
+  updated_by: string | null
+  updated_at: string
+}
