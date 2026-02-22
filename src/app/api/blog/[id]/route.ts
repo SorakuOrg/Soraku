@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { Request, Response } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
 import { createServiceClient } from '@/lib/supabase'
 import { getCurrentUserRole } from '@/lib/clerk'
