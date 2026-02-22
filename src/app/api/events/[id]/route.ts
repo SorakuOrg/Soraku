@@ -8,12 +8,16 @@ function applyIdOrSlug(query: any, value: string) {
   return query.or(`id.eq.${value},slug.eq.${value}`)
 }
 
-export async function GET(_: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(
+  request: NextRequest,
+  context: any
+) {
+  const { id } = context.params
   const supabase = createServiceClient()
 
   const { data, error } = await applyIdOrSlug(
     supabase.from('events').select('*'),
-    params.id
+    id
   ).maybeSingle()
 
   if (error || !data) {
@@ -23,9 +27,15 @@ export async function GET(_: NextRequest, { params }: { params: { id: string } }
   return NextResponse.json(data)
 }
 
-export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
+export async function PUT(
+  request: NextRequest,
+  context: any
+) {
+  const { id } = context.params
+
   const { userId } = await auth()
-  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  if (!userId)
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const role = await getCurrentUserRole()
   if (!hasPermission(role, ['MANAGER', 'AGENSI'])) {
@@ -34,8 +44,15 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
 
   const body = await request.json()
 
-  // whitelist field yang boleh diupdate
-  const allowedFields = ['title', 'description', 'date', 'location', 'slug', 'status']
+  const allowedFields = [
+    'title',
+    'description',
+    'date',
+    'location',
+    'slug',
+    'status'
+  ]
+
   const safeUpdate: Record<string, any> = {}
 
   for (const key of allowedFields) {
@@ -50,19 +67,29 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
 
   const { data, error } = await applyIdOrSlug(
     supabase.from('events').update(safeUpdate).select(),
-    params.id
+    id
   ).maybeSingle()
 
-  if (error || !data) {
-    return NextResponse.json({ error: 'Update failed' }, { status: 500 })
+  if (error) {
+    return NextResponse.json({ error: error.message }, { status: 500 })
+  }
+
+  if (!data) {
+    return NextResponse.json({ error: 'Not found' }, { status: 404 })
   }
 
   return NextResponse.json(data)
 }
 
-export async function DELETE(_: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(
+  request: NextRequest,
+  context: any
+) {
+  const { id } = context.params
+
   const { userId } = await auth()
-  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  if (!userId)
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const role = await getCurrentUserRole()
   if (!hasPermission(role, ['MANAGER'])) {
@@ -71,13 +98,17 @@ export async function DELETE(_: NextRequest, { params }: { params: { id: string 
 
   const supabase = createServiceClient()
 
-  const { error } = await applyIdOrSlug(
-    supabase.from('events').delete(),
-    params.id
-  )
+  const { data, error } = await applyIdOrSlug(
+    supabase.from('events').delete().select(),
+    id
+  ).maybeSingle()
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 })
+  }
+
+  if (!data) {
+    return NextResponse.json({ error: 'Not found' }, { status: 404 })
   }
 
   return NextResponse.json({ success: true })
