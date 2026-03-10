@@ -68,3 +68,4 @@ Setiap kali Riu atau tim melakukan revisi / perubahan keputusan:
 | 14 | Kaizo | Route `/api/premium/xendit/*` dan `/api/premium/donatur` | Sesuai spec KAIZO.md dari Bubu |
 | 15 | Kaizo | Route `/api/music/playlist` — response shape sesuai music player context | Cover pakai emoji fallback jika belum ada |
 | 16 | Kaizo | Fix TypeScript error `server.ts` + `middleware.ts` | `cookiesToSet` butuh explicit type `Parameters<CookieMethodsServer['setAll']>[0]` — TypeScript strict mode Vercel |
+| 17 | Kaizo | Fix TS error `server.ts` + `middleware.ts` sesi ke-2 | `Parameters<CookieMethodsServer['setAll']>` gagal karena method optional. Fix: type inline `{ name: string; value: string; options?: Record<string, unknown> }[]` |

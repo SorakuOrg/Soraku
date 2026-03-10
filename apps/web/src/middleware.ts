@@ -1,4 +1,4 @@
-import { createServerClient, type CookieMethodsServer } from '@supabase/ssr'
+import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
 export async function middleware(request: NextRequest) {
@@ -9,12 +9,15 @@ export async function middleware(request: NextRequest) {
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
       cookies: {
-        getAll() { return request.cookies.getAll() },
-        setAll(cookiesToSet: Parameters<CookieMethodsServer['setAll']>[0]) {
+        getAll() {
+          return request.cookies.getAll()
+        },
+        setAll(cookiesToSet: { name: string; value: string; options?: Record<string, unknown> }[]) {
           cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value))
           response = NextResponse.next({ request })
           cookiesToSet.forEach(({ name, value, options }) =>
-            response.cookies.set(name, value, options))
+            response.cookies.set(name, value, options as Parameters<typeof response.cookies.set>[2]),
+          )
         },
       },
     },
@@ -33,7 +36,7 @@ export async function middleware(request: NextRequest) {
     if (!user) return NextResponse.redirect(new URL('/login', request.url))
     const { data } = await supabase.schema('soraku').from('users')
       .select('role').eq('id', user.id).single()
-    if (!['OWNER','MANAGER','ADMIN'].includes(data?.role ?? '')) {
+    if (!['OWNER', 'MANAGER', 'ADMIN'].includes(data?.role ?? '')) {
       return NextResponse.redirect(new URL('/', request.url))
     }
   }
