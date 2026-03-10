@@ -407,3 +407,24 @@ Pakai ID ini di `webhook/role-update` untuk `addRoleId` / `removeRoleId`.
 
 **Catatan:** Endpoint `/api/premium/trakteer/webhook` perlu Kaizo buat (belum ada).
 Format Trakteer webhook: cek di https://trakteer.id/dashboard/webhook
+
+---
+
+## Log Bug Patterns (Tambahan Kaizo)
+
+| # | Bug | Fix |
+|---|-----|-----|
+| 6 | `Parameters<CookieMethodsServer['setAll']>` error | Method optional — pakai `type CookieOptions` dari `@supabase/ssr` |
+| 7 | `middleware.ts` deprecated Next.js 16 | Rename ke `proxy.ts`, hapus `middleware.ts` |
+| 8 | Trakteer webhook: `z.record(z.string())` | Zod v3 perlu 2 arg: `z.record(z.string(), z.string())` |
+
+## Progress Kaizo (2026-03-11)
+
+| # | Selesai |
+|---|---------|
+| ✅ | Fix `server.ts` — `CookieOptions` dari `@supabase/ssr` |
+| ✅ | Rename `middleware.ts` → `proxy.ts` (Next.js 16) |
+| ✅ | Tabel `notifications` di Supabase + RLS |
+| ✅ | `/api/notifications` GET + PATCH real DB |
+| ✅ | `/api/premium/trakteer` webhook — update DB + bot DM + role Discord |
+| ✅ | `/api/admin/events` trigger bot announce saat publish |

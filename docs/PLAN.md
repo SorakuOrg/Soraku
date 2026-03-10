@@ -106,7 +106,7 @@
 | Dashboard → real user data | Sora  | 🔄     | Auth user dari session + stats dari DB               |
 | Admin panel → real data    | Sora  | 🔄     | Connect admin pages ke API routes Kaizo              |
 | packages/utils             | Sora  | 🔄     | slugify, formatDate, formatRupiah, truncate          |
-| Trakteer webhook handler   | Sora  | 🔜     | /api/premium/trakteer/webhook → update DB + notif bot|
+| Trakteer webhook handler   | Kaizo | ✅     | /api/premium/trakteer → update DB + bot DM + role Discord    |
 
 ---
 
@@ -191,8 +191,8 @@ PORT=3001
 | Redesign login                | Bubu  | ✅     | Split layout mascot, DiscordIcon+GoogleIcon dari custom-icons |
 | Redesign register             | Bubu  | ✅     | Split layout benefits, 2-step form, OAuth dari custom-icons   |
 | Redesign /about               | Bubu  | ✅     | Kanji hero 空, mascot card, pilar gradient, tim, hierarki     |
-| Notif API (Supabase)          | Kaizo | ❌     | GET /api/notifications + PATCH mark-as-read, schema di route  |
-| Push via Discord DM           | Kaizo | ❌     | Via services/bot webhook                                      |
+| Notif API (Supabase)          | Kaizo | ✅     | GET /api/notifications + PATCH mark-as-read, tabel DB aktif   |
+| Push via Discord DM           | Kaizo | ✅     | Via bot /webhook/notify — Trakteer + premium flow             |
 | Supabase Realtime             | Sora  | ❌     | Gallery approval live update, notif count                     |
 | Connect IS_LOGGED_IN → auth   | Sora  | ❌     | Ganti konstanta mock dengan useAuth() / session               |
 
