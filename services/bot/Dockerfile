@@ -1,27 +1,23 @@
 # ── Build stage ──────────────────────────────────────────────────────────────
+# Build context = services/bot/ (Railway pakai folder yg ada railway.toml)
+# Semua COPY path relatif terhadap services/bot/
 FROM node:20-alpine AS builder
 
 WORKDIR /app
 
-# Install pnpm
 RUN npm install -g pnpm
 
-# Copy workspace files (needed for monorepo resolution)
-COPY pnpm-workspace.yaml ./
+# Copy package files dulu (layer cache)
 COPY package.json ./
+COPY tsconfig.json ./
 
-# Copy bot package files
-COPY services/bot/package.json ./services/bot/
-COPY services/bot/tsconfig.json ./services/bot/
-
-# Install deps (bot only)
-WORKDIR /app/services/bot
+# Install semua deps
 RUN pnpm install --frozen-lockfile
 
 # Copy source
-COPY services/bot/src ./src
+COPY src ./src
 
-# Build TypeScript
+# Build TypeScript → dist/
 RUN pnpm build
 
 # ── Runtime stage ─────────────────────────────────────────────────────────────
@@ -31,14 +27,14 @@ WORKDIR /app
 
 RUN npm install -g pnpm
 
-# Copy built files
-COPY --from=builder /app/services/bot/dist ./dist
-COPY --from=builder /app/services/bot/package.json ./package.json
+# Copy hasil build + package.json
+COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/package.json ./package.json
 
 # Install production deps only
 RUN pnpm install --prod --frozen-lockfile
 
-# Non-root user for security
+# Non-root user untuk keamanan
 RUN addgroup -S soraku && adduser -S bot -G soraku
 USER bot
 

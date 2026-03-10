@@ -140,3 +140,71 @@ dengan arsitektur yang sepenuhnya berbeda dari versi sebelumnya.
   - Fitur lanjutan bot (notify format, role ID mapping)
   - Alur Trakteer → DB → Bot → Discord lengkap
   - Reminder: buat /api/premium/trakteer/webhook
+
+---
+
+## SERVICES/BOT — Release History & Feature Plan
+
+### [bot-0.1.0] — 2026-03-10 · First Release 🚀
+
+**Scaffold awal Discord bot Soraku terintegrasi dengan web platform.**
+
+#### Core
+- `src/index.ts` — Entry point, Discord.js v14 client, env validation wajib
+- `src/events/ready.ts` — Bot online, set activity "Watching Soraku Community 空"
+- `src/events/guildMemberUpdate.ts` — Role Discord berubah → POST /api/discord/role-sync ke web
+
+#### HTTP Webhook Server (Hono, port 3001)
+- `GET  /health` — Railway healthcheck, return `{ status, bot, uptime }`
+- `POST /webhook/notify` — Terima dari web, kirim DM ke user Discord
+- `POST /webhook/role-update` — Terima dari web, add/remove role Discord user
+- `POST /webhook/discord-event` — Terima dari web, announce event ke channel Discord
+
+#### Slash Commands
+- `/ping` — Health check, tampilkan latency bot
+- `/member` — Ambil member count dari /api/discord/stats web
+- `/event` — List 5 event upcoming dari /api/events web
+
+#### Infrastructure
+- `Dockerfile` — Multi-stage build Node 20 Alpine, non-root user `bot`
+- `railway.toml` — Railway deployment config, healthcheck, restart policy
+- `.env.example` — Template semua ENV vars yang dibutuhkan
+
+#### Fix
+- `fix(bot): Dockerfile path error Railway` — Build context Railway = services/bot/,
+  semua COPY path diubah relatif (bukan `services/bot/src` → `src`)
+  railway.toml dockerfilePath diubah `"services/bot/Dockerfile"` → `"Dockerfile"`
+
+---
+
+### [bot-0.2.0] — PLANNED
+
+#### Fitur
+- [ ] Trakteer webhook handler terintegrasi (DM + role update otomatis)
+- [ ] Format pesan DM yang proper per event (donasi, approval galeri, role update)
+- [ ] Slash command `/donatur` — list top donatur bulan ini
+- [ ] Slash command `/info` — info platform Soraku + link
+
+### [bot-0.3.0] — PLANNED
+
+#### Fitur
+- [ ] Welcome message saat member baru join server Discord
+- [ ] Auto-role `USER` saat member baru join
+- [ ] Slash command `/role` — user lihat role mereka sendiri
+- [ ] Logging: kirim log aktivitas bot ke channel #bot-log
+
+### [bot-0.4.0] — PLANNED
+
+#### Fitur
+- [ ] Reminder otomatis event H-1 dan H-0 ke channel Discord
+- [ ] Slash command `/event [nama]` — detail satu event spesifik
+- [ ] Slash command `/galeri` — link ke galeri Soraku + stats (jumlah karya)
+- [ ] Auto-announce saat konten blog baru dipublish
+
+### [bot-1.0.0] — PLANNED (Launch Ready)
+
+#### Fitur
+- [ ] Rate limiting semua webhook endpoint
+- [ ] Logging terpusat (Winston atau pino)
+- [ ] Unit tests command handler
+- [ ] Monitoring uptime (UptimeRobot atau Railway metrics)

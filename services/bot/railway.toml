@@ -1,6 +1,7 @@
 [build]
 builder = "DOCKERFILE"
-dockerfilePath = "services/bot/Dockerfile"
+# Path relatif ke lokasi railway.toml (services/bot/)
+dockerfilePath = "Dockerfile"
 
 [deploy]
 startCommand = "node dist/index.js"
