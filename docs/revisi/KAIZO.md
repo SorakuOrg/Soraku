@@ -311,3 +311,99 @@ Track response shape:
 | 3 | Cookie handler implicit `any` | Import `CookieOptions` dari `@supabase/ssr` |
 | 4 | `middleware.ts` + `proxy.ts` konflik | Hapus middleware.ts, pakai proxy.ts saja |
 | 5 | `onError` di `<Image>` di Server Component | Hapus — event handler tidak bisa di server component |
+
+---
+
+## 🤖 Bot Discord (services/bot) — Instruksi Deploy Railway
+
+Sora sudah scaffold `services/bot/` lengkap. Kaizo yang handle deploy dan fitur selanjutnya.
+
+### File yang sudah ada (jangan diubah kecuali ada bug):
+```
+services/bot/
+├── src/index.ts                    ← entry point
+├── src/events/ready.ts             ← bot online
+├── src/events/guildMemberUpdate.ts ← role sync → /api/discord/role-sync
+├── src/webhooks/server.ts          ← Hono HTTP server
+│   ├── GET  /health
+│   ├── POST /webhook/notify        ← terima dari web, DM user Discord
+│   ├── POST /webhook/role-update   ← terima dari web, update role Discord
+│   └── POST /webhook/discord-event ← terima dari web, announce ke channel
+├── src/commands/register.ts        ← slash: /ping /member /event
+├── railway.toml                    ← Railway config
+├── Dockerfile                      ← build & run
+└── .env.example                    ← template env vars
+```
+
+### Langkah deploy ke Railway
+
+**1. Set ENV vars di Railway dashboard:**
+```env
+DISCORD_TOKEN=           ← dari Discord Developer Portal
+DISCORD_GUILD_ID=        ← ID server Discord Soraku
+DISCORD_EVENT_CHANNEL_ID= ← ID channel #event-soraku
+SORAKU_API_URL=https://soraku.vercel.app
+SORAKU_API_SECRET=       ← buat secret baru, sama dengan di Vercel
+WEBHOOK_SECRET=          ← buat secret baru, sama dengan BOT_WEBHOOK_SECRET di Vercel
+PORT=3001
+```
+
+**2. Set ENV vars di Vercel (apps/web):**
+```env
+BOT_WEBHOOK_URL=https://[nama-project].up.railway.app
+BOT_WEBHOOK_SECRET=      ← sama dengan WEBHOOK_SECRET di Railway
+SORAKU_API_SECRET=       ← sama dengan SORAKU_API_SECRET di Railway
+```
+
+**3. Di Railway:**
+- New Project → Deploy from GitHub repo
+- Root directory: `.` (root monorepo)
+- Railway otomatis pakai `services/bot/railway.toml`
+- Healthcheck: `GET /health` → harus return `{ status: "ok" }`
+
+### Fitur yang perlu Kaizo tambahkan ke bot:
+
+#### /webhook/notify — sudah ada, tambahkan format pesan yang baik
+```ts
+// Contoh format DM saat Trakteer berhasil:
+const msg = `
+✨ **Terima kasih sudah mendukung Soraku!**
+
+Kamu sekarang adalah **${tier}** member Soraku 💜
+Role Discord kamu akan diupdate dalam beberapa detik.
+
+🌐 Platform: https://soraku.vercel.app
+💙 Discord: https://discord.gg/qm3XJvRa6B
+`.trim()
+```
+
+#### /webhook/role-update — sudah ada, pastikan mapping role ID benar
+Role Discord ID (dari server Soraku):
+- DONATUR: `1436534227708543046`
+- VIP: `1447194092965728307`
+- VVIP: `1447194196401459320`
+
+Pakai ID ini di `webhook/role-update` untuk `addRoleId` / `removeRoleId`.
+
+#### Slash command /event — ambil dari web API
+```ts
+// Di commands/register.ts, /event sudah ada skeleton
+// Pastikan format response /api/events sesuai:
+// { data: Array<{ title, starts_at, slug }> }
+```
+
+### Alur lengkap Trakteer → Discord:
+```
+1. User donasi di trakteer.id/soraku
+2. Trakteer kirim webhook → POST /api/premium/trakteer/webhook (Vercel)
+3. Web update DB: users.supporter_tier = "DONATUR"
+4. Web kirim ke bot: POST {BOT_WEBHOOK_URL}/webhook/role-update
+   body: { discordId: "...", addRoleId: "1436534227708543046" }
+5. Bot update role Discord user
+6. Web kirim ke bot: POST {BOT_WEBHOOK_URL}/webhook/notify
+   body: { discordId: "...", message: "Terima kasih..." }
+7. Bot DM user Discord
+```
+
+**Catatan:** Endpoint `/api/premium/trakteer/webhook` perlu Kaizo buat (belum ada).
+Format Trakteer webhook: cek di https://trakteer.id/dashboard/webhook

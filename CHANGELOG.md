@@ -117,3 +117,26 @@ dengan arsitektur yang sepenuhnya berbeda dari versi sebelumnya.
 - Admin ubah role → update DB → bot update role Discord
 - Event baru dibuat → /api/bot/announce → bot post ke #event channel
 - Discord role berubah → bot → /api/discord/role-sync → update DB
+
+## [0.0.8] — 2026-03-10
+
+### Added (Sora — infrastructure & shared lib)
+- `services/bot/railway.toml` — Railway deployment config (builder Dockerfile, healthcheck /health)
+- `services/bot/Dockerfile` — multi-stage build, Node 20 Alpine, non-root user
+- `apps/web/src/components/icons/custom-icons.tsx` — registry SVG icon non-Lucide:
+  Discord, Instagram, Facebook, X, TikTok, YouTube, Bluesky, Google, Trakteer, Suno
+  Export: SORAKU_SOCIALS (sosmed + href), CUSTOM_ICONS, getIcon(slug), getIconsByCategory()
+
+### Updated (docs instruksi)
+- `docs/revisi/BUBU.md` — Instruksi lengkap:
+  - Redesign semua halaman (homepage, blog, events, gallery, dll)
+  - Halaman baru `/social` — grid sosmed pakai SORAKU_SOCIALS
+  - Footer: review Sora punya, pastikan logo.png ada
+  - Navbar: tambahan nav items + notification bell + user dropdown
+  - Aturan wajib: tidak ada inline SVG baru, semua dari custom-icons.tsx
+- `docs/revisi/KAIZO.md` — Tambah instruksi deploy Railway bot:
+  - ENV vars Railway + Vercel yang perlu di-set
+  - Langkah deploy step-by-step
+  - Fitur lanjutan bot (notify format, role ID mapping)
+  - Alur Trakteer → DB → Bot → Discord lengkap
+  - Reminder: buat /api/premium/trakteer/webhook
