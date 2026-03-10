@@ -1,89 +1,98 @@
 # SORAKU — PLAN.md
 > Koordinasi Tim: Riu (Owner) · Sora (Full Stack) · Bubu (Front-end) · Kaizo (Back-end)
-> Format: | Feature | Owner | Status | Catatan |
 
-## v0.0.1 — Foundation
+## v0.0.1 — Foundation ✅
 
 | Feature               | Owner | Status | Catatan                                      |
 |-----------------------|-------|--------|----------------------------------------------|
 | Monorepo setup        | Sora  | ✅     | pnpm workspace + Turborepo                   |
 | Design system / CSS   | Bubu  | ✅     | globals.css, tokens, animations              |
-| Navbar (flat)         | Bubu  | ✅     | Responsive, dark mode toggle                 |
-| Footer                | Bubu  | ✅     | Nav links + Discord icon                     |
-| Homepage              | Bubu  | ✅     | Hero blob, badges, marquee, stat pills       |
+| Navbar, Footer        | Bubu  | ✅     | Responsive, dark mode, social links          |
+| Homepage              | Bubu  | ✅     | Hero blob, badges, marquee                   |
 | About page            | Bubu  | ✅     | Filosofi, pilar, tim, CTA                   |
-| Placeholder pages     | Bubu  | ✅     | blog, events, gallery, agensi, premium, donate |
 | UI primitives         | Bubu  | ✅     | Button, Badge, Avatar, Separator             |
-| Types                 | Sora  | ✅     | User, BlogPost, Event, GalleryItem, ApiResponse |
+| Types                 | Sora  | ✅     | User, BlogPost, Event, GalleryItem + Talent/VTuber/Donatur |
 | 404 page              | Bubu  | ✅     | Custom dengan kanji 空                       |
 | Vercel deploy         | Sora  | ✅     | soraku.vercel.app — LIVE                     |
 
-## v0.1.0 — Navbar & Footer v2
+## v0.1.0 — Navbar & Footer ✅
 
 | Feature                          | Owner | Status | Catatan                                      |
 |----------------------------------|-------|--------|----------------------------------------------|
-| Navbar dropdown (Komunitas)      | Bubu  | ✅     | About, Blog, Event, Galeri                   |
-| Navbar dropdown (Agensi)         | Bubu  | ✅     | VTuber, Talent                               |
-| Footer 2 kolom (Komunitas+Platform) | Bubu | ✅  | Hapus kolom Akun                             |
-| Footer sosial media lengkap      | Bubu  | ✅     | Discord, TikTok, FB, IG, Twitter, YouTube    |
-| Agensi VTuber placeholder page   | Bubu  | ❌     | /agensi/vtuber                               |
+| Navbar dropdown Komunitas+Agensi | Bubu  | ✅     | With desc, mobile accordion                  |
+| Footer 2 kolom + 6 sosmed        | Bubu  | ✅     | Discord, TikTok, FB, IG, Twitter, YouTube    |
+| /agensi/vtuber page              | Bubu  | ✅     | VTuber cards + CTA                           |
 
-## v0.2.0 — Auth & User (Kaizo + Bubu)
+## v0.2.0 — Auth & User UI ✅ (UI only)
 
 | Feature                    | Owner | Status | Catatan                                      |
 |----------------------------|-------|--------|----------------------------------------------|
-| Supabase project setup     | Kaizo | ❌     | Auth + PostgreSQL + Storage + RLS            |
-| Schema DB (users, roles)   | Kaizo | ❌     | Lihat PHILOSOPHY.md untuk role system        |
-| Login page UI              | Bubu  | ❌     | Tunggu API spec dari Kaizo                   |
-| Register page UI           | Bubu  | ❌     | Tunggu API spec dari Kaizo                   |
-| Auth middleware             | Sora  | ❌     | Protected routes: /dashboard, /admin         |
-| User dashboard layout      | Bubu  | ❌     | Sidebar, profile, settings                   |
+| Supabase project setup     | Kaizo | ❌     | Backend belum setup                          |
+| Schema DB                  | Kaizo | ❌     | Lihat KAIZO.md untuk spec lengkap            |
+| Login page UI              | Bubu  | ✅     | 2 step + Discord OAuth button                |
+| Register page UI           | Bubu  | ✅     | 2 step form + benefits panel                 |
+| Auth middleware             | Sora  | ❌     | Tunggu Kaizo setup Supabase                  |
+| Dashboard layout + page    | Bubu  | ✅     | Sidebar, stats, quick links                  |
 
-## v0.3.0 — Konten (Bubu + Kaizo)
-
-| Feature                    | Owner | Status | Catatan                                      |
-|----------------------------|-------|--------|----------------------------------------------|
-| Blog listing page          | Bubu  | ❌     | Grid cards, filter kategori, search          |
-| Blog detail page           | Bubu  | ❌     | Markdown render, author info                 |
-| Blog API (GET)             | Kaizo | ❌     | /api/blog — list + detail                    |
-| Events listing page        | Bubu  | ❌     | Upcoming/past, card grid                     |
-| Events detail page         | Bubu  | ❌     | Info, CTA join                               |
-| Events API (GET)           | Kaizo | ❌     | /api/events                                  |
-| Galeri grid page           | Bubu  | ❌     | Masonry layout, filter, lightbox             |
-| Galeri upload form         | Bubu  | ❌     | Tunggu Storage API dari Kaizo                |
-| Galeri API (GET + upload)  | Kaizo | ❌     | /api/gallery + Supabase Storage              |
-
-## v0.4.0 — Agensi & Premium (Bubu + Kaizo)
+## v0.3.0 — Konten ✅ (UI + mock data)
 
 | Feature                    | Owner | Status | Catatan                                      |
 |----------------------------|-------|--------|----------------------------------------------|
-| Agensi page (talent list)  | Bubu  | ❌     | Grid talent/kreator                          |
-| Agensi VTuber page         | Bubu  | ❌     | /agensi/vtuber — profil VTuber               |
-| Agensi API                 | Kaizo | ❌     | /api/agensi                                  |
-| Premium page               | Bubu  | ❌     | Tier VIP/VVIP, benefit, CTA Xendit          |
-| Xendit integration         | Kaizo | ❌     | Payment untuk premium membership             |
-| Donate page                | Bubu  | ❌     | Redirect Trakteer, no webhook                |
-| Top Donatur page           | Bubu  | ❌     | Leaderboard donatur, gold podium             |
+| Blog listing page          | Bubu  | ✅     | Filter tag, featured post, grid              |
+| Blog detail page           | Bubu  | ✅     | /blog/[slug], related posts, metadata        |
+| Blog API (GET)             | Kaizo | ❌     | Lihat KAIZO.md Priority 2                    |
+| Events listing page        | Bubu  | ✅     | Upcoming/past, card grid, info lengkap       |
+| Events detail page         | Bubu  | ✅     | /events/[slug], Discord CTA                  |
+| Events API (GET)           | Kaizo | ❌     | Lihat KAIZO.md Priority 2                    |
+| Galeri grid page           | Bubu  | ✅     | Masonry layout, filter kategori              |
+| Galeri upload form         | Bubu  | ✅     | Drag & drop, preview, form                   |
+| Galeri API                 | Kaizo | ❌     | Lihat KAIZO.md Priority 2                    |
+| Loading skeletons          | Bubu  | ✅     | Blog, events, gallery loading.tsx            |
+| Error boundaries           | Bubu  | ✅     | Blog, events error.tsx                       |
 
-## v0.5.0 — Admin Panel
-
-| Feature                    | Owner | Status | Catatan                                      |
-|----------------------------|-------|--------|----------------------------------------------|
-| Admin layout               | Bubu  | ❌     | Sidebar, protected (ADMIN+)                  |
-| Admin user management      | Kaizo | ❌     | List, role change manual                     |
-| Admin premium toggle       | Kaizo | ❌     | Manual toggle VIP/VVIP via API               |
-| Admin blog management      | Bubu  | ❌     | CRUD blog                                    |
-| Admin event management     | Bubu  | ❌     | CRUD events                                  |
-| Admin galeri moderasi      | Bubu  | ❌     | Approve/reject upload                        |
-
-## v0.6.0 — Polish & Launch
+## v0.4.0 — Agensi & Premium ✅ (UI + mock data)
 
 | Feature                    | Owner | Status | Catatan                                      |
 |----------------------------|-------|--------|----------------------------------------------|
-| Discord live member count  | Bubu  | ❌     | Widget di homepage, polling 30s              |
-| Music player persistent    | Bubu  | ❌     | Navbar, React Context                        |
-| Sitemap API route          | Sora  | ❌     | /sitemap.xml                                 |
-| Loading skeletons          | Bubu  | ❌     | Semua halaman list                           |
-| Error boundaries           | Bubu  | ❌     | error.tsx per segment                        |
-| OG image meta              | Bubu  | ❌     | Per halaman                                  |
-| Performance audit          | Sora  | ❌     | Lighthouse 90+                               |
+| Agensi talent list         | Bubu  | ✅     | Grid cards, type badge, socials              |
+| Agensi VTuber page         | Bubu  | ✅     | /agensi/vtuber, model type, streams          |
+| Agensi API                 | Kaizo | ❌     | Lihat KAIZO.md Priority 3                    |
+| Premium page               | Bubu  | ✅     | 3 tier (Donatur/VIP/VVIP) + benefits         |
+| Xendit integration         | Kaizo | ❌     | Lihat KAIZO.md Priority 3                    |
+| Donate page                | Bubu  | ✅     | Trakteer redirect, how-to, usage             |
+| Top Donatur page           | Bubu  | ✅     | Podium 🥇🥈🥉, full list, gold glow          |
+
+## v0.5.0 — Admin Panel ✅ (UI + mock data)
+
+| Feature                    | Owner | Status | Catatan                                      |
+|----------------------------|-------|--------|----------------------------------------------|
+| Admin layout               | Bubu  | ✅     | Sidebar, protected (TODO: middleware Sora)   |
+| Admin dashboard overview   | Bubu  | ✅     | Stats cards, recent posts, pending gallery   |
+| Admin user management      | Bubu  | ✅     | UI done; Kaizo perlu API untuk actions       |
+| Admin blog CRUD UI         | Bubu  | ✅     | Tabel + Edit/Delete buttons                  |
+| Admin event CRUD UI        | Bubu  | ✅     | List + Edit/Delete buttons                   |
+| Admin galeri moderasi      | Bubu  | ✅     | Approve/Reject buttons per item              |
+| Admin API (users)          | Kaizo | ❌     | PATCH /api/admin/users/[id]                  |
+
+## v0.6.0 — Polish ✅
+
+| Feature                    | Owner | Status | Catatan                                      |
+|----------------------------|-------|--------|----------------------------------------------|
+| Discord stats API          | Sora  | ✅     | /api/discord/stats — fallback ke mock        |
+| Music player persistent    | Bubu  | ❌     | Next session                                 |
+| Sitemap                    | Bubu  | ✅     | /sitemap.xml — static + dynamic pages        |
+| Loading skeletons          | Bubu  | ✅     | Blog, events, gallery                        |
+| Error boundaries           | Bubu  | ✅     | Blog, events                                 |
+| OG image meta              | Bubu  | ✅     | layout.tsx — OG, Twitter card, robots        |
+| Performance audit          | Sora  | ❌     | Setelah launch                               |
+
+## 🔮 Next Steps
+
+| Item | Owner | Prioritas |
+|------|-------|-----------|
+| Supabase setup + schema | Kaizo | HIGH |
+| Auth middleware (Sora) | Sora | HIGH |
+| Ganti mock data → real API | Kaizo+Sora | MEDIUM |
+| Music player persistent | Bubu | LOW |
+| Admin form create/edit | Bubu | LOW |
+| Performance audit | Sora | LOW |
