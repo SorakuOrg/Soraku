@@ -1,17 +1,13 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import Image from "next/image";
 import { Upload, ImageIcon, ZoomIn } from "lucide-react";
-import { db } from "@/lib/supabase/server";
-
-export const dynamic = "force-dynamic";
+import { MOCK_GALLERY } from "@/lib/mock-data";
 
 export const metadata: Metadata = {
   title: "Galeri — Soraku Community",
   description: "Galeri karya anggota komunitas Soraku — fanart, cosplay, digital art, dan foto.",
 };
 
-// DB: gallery tidak punya kolom category — pakai tags sebagai kategori
 const CATEGORIES = [
   { slug: "Semua",   emoji: "✨" },
   { slug: "fanart",  emoji: "🎨" },
@@ -30,31 +26,16 @@ const COLORS = [
   "from-primary/20 to-accent/15",
 ];
 
-export default async function GalleryPage({
-  searchParams,
-}: {
-  searchParams?: Promise<{ category?: string }>;
-}) {
-  const params         = await searchParams;
-  const activeCategory  = params?.category ?? "Semua";
-
-  let query = (await db())
-    .from("gallery")
-    .select("id,imageurl,title,description,tags,status,createdat")
-    .eq("status", "approved")
-    .order("createdat", { ascending: false })
-    .limit(48);
-
-  // Filter by tag karena gallery tidak punya kolom category
-  if (activeCategory !== "Semua") {
-    query = query.contains("tags", [activeCategory]);
-  }
-
-  const { data: items } = await query;
+export default function GalleryPage({ searchParams }: { searchParams?: { category?: string } }) {
+  const activeCategory = searchParams?.category ?? "Semua";
+  const items = activeCategory === "Semua"
+    ? MOCK_GALLERY
+    : MOCK_GALLERY.filter((i) => i.category === activeCategory);
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-14 sm:px-6 lg:px-8">
 
+      {/* ── Header ── */}
       <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <p className="mb-3 text-xs font-bold uppercase tracking-widest text-primary/70">Komunitas</p>
@@ -71,6 +52,7 @@ export default async function GalleryPage({
         </Link>
       </div>
 
+      {/* ── Filter ── */}
       <div className="mb-8 flex flex-wrap gap-2">
         {CATEGORIES.map(({ slug, emoji }) => (
           <Link key={slug}
@@ -80,49 +62,43 @@ export default async function GalleryPage({
                 ? "bg-primary text-white shadow-md shadow-primary/20"
                 : "border border-border/60 text-muted-foreground hover:border-primary/40 hover:text-foreground hover:-translate-y-0.5"
             }`}>
-            <span>{emoji}</span><span>{slug}</span>
+            <span>{emoji}</span>
+            <span>{slug}</span>
           </Link>
         ))}
       </div>
 
-      {(items ?? []).length > 0 ? (
+      {/* ── Masonry grid ── */}
+      {items.length > 0 ? (
         <div className="columns-2 gap-4 sm:columns-3 lg:columns-4">
-          {(items ?? []).map((item, idx) => (
+          {items.map((item, idx) => (
             <div key={item.id}
               className="group relative mb-4 break-inside-avoid overflow-hidden rounded-2xl border border-border/50 bg-card/40 transition-all hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-lg hover:shadow-primary/8 cursor-pointer">
-              {item.imageurl ? (
-                <div className={`relative w-full ${idx % 3 === 0 ? "h-52" : idx % 3 === 1 ? "h-36" : "h-44"}`}>
-                  <Image
-                    src={item.imageurl}
-                    alt={item.title ?? "Karya galeri"}
-                    fill
-                    className="object-cover"
-                    sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-                  />
-                </div>
-              ) : (
-                <div className={`w-full bg-gradient-to-br ${COLORS[idx % COLORS.length]} flex items-center justify-center ${
-                  idx % 3 === 0 ? "h-52" : idx % 3 === 1 ? "h-36" : "h-44"
-                }`}>
-                  <ImageIcon className="h-8 w-8 text-foreground/10" />
-                </div>
-              )}
 
+              {/* Colored placeholder (swap with <Image> when real data) */}
+              <div className={`w-full bg-gradient-to-br ${COLORS[idx % COLORS.length]} flex items-center justify-center ${
+                idx % 3 === 0 ? "h-52" : idx % 3 === 1 ? "h-36" : "h-44"
+              }`}>
+                <ImageIcon className="h-8 w-8 text-foreground/10" />
+              </div>
+
+              {/* Hover overlay */}
               <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-background/70 opacity-0 transition-opacity backdrop-blur-sm group-hover:opacity-100 rounded-2xl">
                 <ZoomIn className="h-6 w-6 text-foreground/80" />
                 <span className="text-xs font-semibold text-foreground/70">Lihat</span>
               </div>
 
-              {(item.tags ?? []).length > 0 && (
-                <div className="absolute top-2 left-2">
-                  <span className="rounded-full bg-background/70 px-2 py-0.5 text-[10px] font-semibold text-foreground/70 capitalize backdrop-blur-sm">
-                    {(item.tags ?? [])[0]}
-                  </span>
-                </div>
-              )}
+              {/* Category badge */}
+              <div className="absolute top-2 left-2">
+                <span className="rounded-full bg-background/70 px-2 py-0.5 text-[10px] font-semibold text-foreground/70 capitalize backdrop-blur-sm">
+                  {item.category}
+                </span>
+              </div>
 
+              {/* Info */}
               <div className="p-3">
-                <p className="truncate text-xs font-semibold">{item.title ?? "Karya"}</p>
+                <p className="truncate text-xs font-semibold">{item.title}</p>
+                <p className="mt-0.5 text-[10px] text-muted-foreground/60 capitalize">{item.category}</p>
               </div>
             </div>
           ))}

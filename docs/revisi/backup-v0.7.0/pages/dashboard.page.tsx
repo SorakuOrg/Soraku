@@ -1,39 +1,25 @@
-import { BookOpen, Image, Star } from "lucide-react";
+import { BookOpen, Image, Star, Users } from "lucide-react";
 import Link from "next/link";
-import { getSession } from "@/lib/auth";
-import { db } from "@/lib/supabase/server";
 
-export const dynamic = "force-dynamic";
+const QUICK_STATS = [
+  { label: "Postingan", value: "0", icon: BookOpen, href: "/dashboard/posts" },
+  { label: "Karya Galeri", value: "0", icon: Image, href: "/dashboard/gallery" },
+  { label: "Poin Komunitas", value: "0", icon: Star, href: "#" },
+];
 
 const QUICK_LINKS = [
-  { label: "Edit Profil",    href: "/dashboard/profile",             desc: "Update bio, avatar, dan info akun" },
-  { label: "Upload Galeri",  href: "/gallery/upload",                desc: "Bagikan karya ke komunitas" },
-  { label: "Lihat Event",    href: "/events",                        desc: "Cek event & gathering terbaru" },
+  { label: "Edit Profil", href: "/dashboard/profile", desc: "Update bio, avatar, dan info akun" },
+  { label: "Upload Galeri", href: "/gallery/upload", desc: "Bagikan karya ke komunitas" },
+  { label: "Lihat Event", href: "/events", desc: "Cek event & gathering terbaru" },
   { label: "Gabung Discord", href: "https://discord.gg/qm3XJvRa6B", desc: "Chat langsung dengan komunitas" },
 ];
 
-export default async function DashboardPage() {
-  const session = await getSession();
-
-  // Stats user
-  const [{ count: postCount }, { count: galleryCount }] = await Promise.all([
-    (await db()).from("posts").select("*", { count: "exact", head: true }).eq("authorid", session?.id ?? ""),
-    (await db()).from("gallery").select("*", { count: "exact", head: true }).eq("uploadedby", session?.id ?? ""),
-  ]);
-
-  const QUICK_STATS = [
-    { label: "Postingan",      value: String(postCount ?? 0),   icon: BookOpen, href: "/dashboard/posts" },
-    { label: "Karya Galeri",   value: String(galleryCount ?? 0), icon: Image,   href: "/dashboard/gallery" },
-    { label: "Poin Komunitas", value: "0",                       icon: Star,    href: "#" },
-  ];
-
-  const name = session?.displayname ?? session?.username ?? "Sorakuer";
-
+export default function DashboardPage() {
   return (
     <div className="space-y-8">
       <div>
         <h1 className="text-2xl font-bold">Dashboard</h1>
-        <p className="mt-1 text-sm text-muted-foreground">Selamat datang kembali, {name}! 🌸</p>
+        <p className="mt-1 text-sm text-muted-foreground">Selamat datang kembali di Soraku Community! 🌸</p>
       </div>
 
       {/* Stats */}
