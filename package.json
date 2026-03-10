@@ -7,20 +7,21 @@
   "scripts": {
     "dev": "cd apps/web && pnpm dev",
     "build": "cd apps/web && pnpm install && pnpm build",
-    "lint": "turbo run lint",
-    "format": "prettier --write \"**/*.{ts,tsx,md,json}\" --ignore-path .prettierignore",
-    "type-check": "turbo run type-check"
+    "start": "cd apps/web && pnpm start",
+    "lint": "cd apps/web && pnpm lint",
+    "type-check": "cd apps/web && pnpm type-check"
+  },
+  "dependencies": {
+    "next": "^16.1.6",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0"
   },
   "devDependencies": {
     "turbo": "^2.8.15",
-    "prettier": "^3.5.3",
-    "@prettier/plugin-xml": "^3.4.1"
+    "typescript": "^5.9.3"
   },
   "engines": {
     "node": ">=20.0.0",
     "pnpm": ">=10.0.0"
-  },
-  "dependencies": {
-    "next": "^16.1.6"
   }
 }
