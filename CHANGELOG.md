@@ -76,3 +76,24 @@ dengan arsitektur yang sepenuhnya berbeda dari versi sebelumnya.
 - `services/api/` `services/bot/README.md` — Placeholder + docs
 - `packages/types/src/index.ts` — Shared TypeScript types (User, Post, Anime, Episode, dll)
 - `packages/ui/ utils/ auth/ config/` — Placeholder scaffold
+
+## [0.0.6] — 2026-03-10
+
+### Changed
+- `docs/MONOREPO.md` — Ditulis ulang agar lebih team-friendly dan implementable:
+  siapa kerjakan apa, urutan pengerjaan, arsitektur diagram, env vars lengkap
+- Docs restructure: hapus semua file kecuali 4 file utama
+  - Dipertahankan: `PHILOSOPHY.md`, `PLAN.md`, `PROMPTS.md`, `MONOREPO.md`
+
+### Added
+- `docs/revisi/BUBU.md` — Brief front-end: task list, navbar todo, custom icons, catatan API, motivasi
+- `docs/revisi/KAIZO.md` — Brief back-end: DB schema lengkap, API spec, bug patterns, motivasi
+- `docs/revisi/SORA.md` — Brief full stack lead: pending tasks, arsitektur, rules, log revisi
+
+### Removed
+- `docs/BUBU.md` → dipindah & diperbarui ke `docs/revisi/BUBU.md`
+- `docs/KAIZO.md` → dipindah & diperbarui ke `docs/revisi/KAIZO.md`
+- `docs/SORA.md` → dipindah & diperbarui ke `docs/revisi/SORA.md`
+- `docs/Revisi.md` → konten digabung ke masing-masing revisi/
+- `docs/ADMIN_BOT_TUTORIAL.md` → dihapus (konten akan pindah ke services/bot README)
+- `docs/REVISI/` folder lama → dihapus

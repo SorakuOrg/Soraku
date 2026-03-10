@@ -1,533 +1,385 @@
-PROJECT: SORAKU PLATFORM
-REPOSITORY: SorakuCommunity/Soraku
-ARCHITECTURE: MONOREPO
-ROLE: FULL STACK DEVELOPMENT SYSTEM
+# SORAKU — MONOREPO ARCHITECTURE
+> Platform ekosistem komunitas pop culture Jepang · Revisi 2026-03-10
+
+---
+
+## Gambaran Besar
+
+Soraku bukan hanya website — ini adalah **ekosistem platform** yang terdiri dari beberapa aplikasi, services, dan shared packages yang bekerja bersama.
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                      CLIENT APPS                            │
+│                                                             │
+│   apps/web          apps/stream        apps/mobile          │
+│   (Next.js)         (Next.js)          (React Native)       │
+│   Platform utama    Anime streaming    iOS & Android        │
+└────────────────────────────┬────────────────────────────────┘
+                             │  semua komunikasi lewat API
+┌────────────────────────────▼────────────────────────────────┐
+│                     BACKEND SERVICES                        │
+│                                                             │
+│   services/api                   services/bot               │
+│   Central REST API               Discord Bot                │
+│   (auth, users, konten, dll)     (Railway)                  │
+└────────────────────────────┬────────────────────────────────┘
+                             │
+┌────────────────────────────▼────────────────────────────────┐
+│                    DATABASE                                 │
+│              Supabase PostgreSQL · schema: soraku           │
+└─────────────────────────────────────────────────────────────┘
+```
+
+**Aturan wajib:** Client apps TIDAK boleh query database langsung. Semua lewat `services/api`.
+
+---
+
+## Struktur Folder
+
+```
+SorakuCommunity/Soraku/
+│
+├── apps/
+│   ├── web/          ✅ AKTIF   — Platform utama (Next.js, Vercel)
+│   ├── stream/       🔜 PLANNED — Anime streaming (Next.js)
+│   └── mobile/       🔜 PLANNED — Mobile app (React Native / Expo)
+│
+├── services/
+│   ├── api/          🔜 PLANNED — Central REST API
+│   └── bot/          ✅ AKTIF   — Discord bot (Railway, source di /Discord)
+│
+├── packages/
+│   ├── types/        ✅ SCAFFOLD — Shared TypeScript types
+│   ├── ui/           🔜 PLANNED  — Shared React components
+│   ├── utils/        🔜 PLANNED  — Shared helper functions
+│   ├── auth/         🔜 PLANNED  — Shared auth logic
+│   └── config/       🔜 PLANNED  — Shared ESLint & TS config
+│
+├── database/
+│   ├── schema/       🔜 PLANNED — SQL schema definitions
+│   ├── migrations/   🔜 PLANNED — Drizzle migrations
+│   └── seed/         🔜 PLANNED — Seed data untuk development
+│
+├── infrastructure/
+│   ├── docker/       🔜 PLANNED — Docker configs
+│   └── scripts/      🔜 PLANNED — Deployment & maintenance scripts
+│
+└── docs/
+    ├── MONOREPO.md   — File ini
+    ├── PHILOSOPHY.md — Visi & misi Soraku
+    ├── PLAN.md       — Feature roadmap lengkap
+    ├── PROMPTS.md    — Copy-paste prompts untuk setiap anggota tim
+    └── revisi/
+        ├── BUBU.md   — Catatan & tasks untuk Bubu (Front-end)
+        ├── KAIZO.md  — Catatan & tasks untuk Kaizo (Back-end)
+        └── SORA.md   — Catatan & tasks untuk Sora (Full Stack Lead)
+```
+
+---
+
+## Setiap Bagian — Siapa Kerjakan Apa
+
+### apps/web — Bubu + Kaizo + Sora
+
+Platform utama Soraku yang sudah live di Vercel.
+
+**Bubu** handle:
+- Semua halaman publik (`app/(public)/`)
+- Auth pages (`app/(auth)/`)
+- Dashboard user (`app/(dashboard)/`)
+- Admin panel UI (`app/(admin)/`)
+- Shared components (`components/`)
+
+**Kaizo** handle:
+- Semua API routes (`app/api/`)
+- Database queries via Drizzle
+- Auth middleware & session
+- Supabase storage
+
+**Sora** handle:
+- Arsitektur, routing config, middleware
+- TypeScript types & shared lib
+- Deployment & environment
+- Review code Bubu + Kaizo
 
-================================================
-PRIMARY OBJECTIVE
-================================================
+---
 
-You are responsible for developing the Soraku platform
-as a scalable community ecosystem for Japanese pop culture.
+### apps/stream — Sora (lead) + Bubu (UI)
 
-The platform combines:
+Platform streaming anime Soraku. Dibuat setelah `services/api` selesai.
 
-Community platform
-Anime media platform
-Creator support system
-Streaming platform
-Mobile ecosystem
+**Fitur yang akan dibangun:**
+- Katalog anime (browse, search, filter genre)
+- Halaman episode dengan video player
+- Riwayat tonton per user
+- Rekomendasi berdasarkan history
 
-Your job is to build the platform following the architecture,
-design system, and development workflow defined in this document.
+**Belum mulai.** Tunggu `services/api` dan katalog anime siap.
 
-You must NOT break the system structure.
+---
 
-All development must follow the modular architecture.
+### apps/mobile — Sora (arsitektur) + Bubu (UI)
 
-================================================
-MONOREPO STRUCTURE
-================================================
+Mobile app dengan React Native / Expo.
 
-Repository structure must always follow this pattern.
+**Fitur yang akan dibangun:**
+- Akses komunitas (feed, posting)
+- Push notifications
+- Streaming player mobile
+- User profile
 
-SorakuCommunity/Soraku
+**Belum mulai.** Priority setelah web + stream stabil.
 
-apps/
-    web/
-    stream/
-    mobile/
+---
 
-services/
-    api/
-    bot/
+### services/api — Kaizo (lead) + Sora (arsitektur)
 
-packages/
-    ui/
-    types/
-    utils/
-    auth/
-    config/
+Central REST API untuk seluruh platform. Semua client apps berkomunikasi ke sini.
 
-database/
-    schema/
-    migrations/
-    seed/
+**Stack yang akan dipakai:**
+- Hono.js atau Fastify (lebih ringan dari Express)
+- Drizzle ORM
+- Supabase PostgreSQL (schema: `soraku`)
+- Zod untuk validasi semua input
 
-infrastructure/
-    docker/
-    scripts/
+**Domain yang akan dihandle:**
+- `/auth/*` — login, register, session, OAuth
+- `/users/*` — profile, badges, activity
+- `/community/*` — posts, reactions, follows
+- `/content/*` — articles, categories, tags
+- `/events/*` — events, RSVP
+- `/gallery/*` — upload, review, moderation
+- `/supporters/*` — tiers, history, webhooks
+- `/streaming/*` — anime catalog, episodes, watch history
+- `/notifications/*` — push, in-app
+- `/admin/*` — management endpoints
 
-docs/
+**Belum mulai.** Ini yang paling urgent di-bangun setelah `apps/web` v0.6.0 selesai.
 
-Never change this structure unless instructed.
+---
 
-================================================
-APPLICATION RESPONSIBILITIES
-================================================
+### services/bot — Kaizo (maintenance)
 
-apps/web
+Discord bot yang sudah running di Railway. Source saat ini ada di folder `/Discord/` di root repo. Akan dimigrasikan ke `services/bot/` setelah monorepo lebih stabil.
 
-Main Soraku platform.
+**Fungsi aktif:**
+- Sinkronisasi role supporter (Trakteer webhook → Discord role)
+- Notifikasi event ke channel Discord
+- Otomasi komunitas (welcome, dll)
 
-Built with:
+---
 
-Next.js
-TypeScript
+### packages/types — Sora (owner)
 
-Features include:
+Shared TypeScript types yang dipakai semua apps dan services.
 
-User authentication
-User profiles
-Community system
-Articles
-Events
-Gallery
-Supporter system
+**Sudah ada:** `User`, `Post`, `Event`, `GalleryItem`, `Anime`, `Episode`, `ApiResponse<T>`
 
-------------------------------------------------
+**Cara pakai di apps lain:**
+```ts
+import type { User, ApiResponse } from "@soraku/types"
+```
 
-apps/stream
+**Aturan:** Jangan define type yang sama di dua tempat. Kalau ada di sini, pakai dari sini.
 
-Streaming platform.
+---
 
-Features:
+### packages/ui — Bubu (owner)
 
-Anime catalog
-Episode database
-Watch page
-Video player
-Watch history
+Reusable React components yang bisa dipakai oleh `apps/web` dan `apps/stream`.
 
-------------------------------------------------
+**Akan diisi dengan:** Button, Card, Badge, Modal, Input, Toast, Skeleton, Avatar, dll.
 
-apps/mobile
+**Belum mulai.** Mulai setelah design system di `apps/web` sudah stabil.
 
-Mobile application.
+---
 
-Stack:
+### packages/utils — Sora + Kaizo
 
-React Native or Expo
+Helper functions yang dipakai di mana-mana.
 
-Features:
+**Akan diisi dengan:**
+```ts
+slugify(text: string): string
+formatDate(date: string, locale?: string): string
+formatRupiah(amount: number): string
+truncate(text: string, maxLength: number): string
+generateAvatar(name: string): string   // initials fallback
+```
 
-Community access
-Notifications
-Streaming player
-User profile
+---
 
-================================================
-BACKEND SERVICES
-================================================
+### packages/auth — Kaizo (owner)
 
-services/api
+Shared authentication logic agar tidak duplikasi di tiap app.
 
-Central API for the entire platform.
+**Akan diisi dengan:**
+- JWT helpers (sign, verify, decode)
+- OAuth flow helpers (Discord, Google)
+- Session management utilities
+- Role guard helpers
 
-Responsible for:
+---
 
-Authentication
-User management
-Community data
-Content management
-Events
-Gallery
-Supporter system
-Streaming metadata
-Notifications
-Webhook processing
+### packages/config — Sora (owner)
 
-All client apps communicate through this API.
+Shared configs agar semua apps punya standar yang sama.
 
-------------------------------------------------
+**Akan diisi dengan:**
+- `eslint.config.js` — shared ESLint rules
+- `tsconfig.base.json` — shared TypeScript config
+- `prettier.config.js` — shared formatting rules
 
-services/bot
+---
 
-Discord integration service.
+## Database — Domain Separation
 
-Responsibilities:
+Semua tabel ada di Supabase PostgreSQL, schema `soraku`.
 
-Discord role synchronization
-Supporter role updates
-Event notifications
-Community automation
+| Domain | Tabel | Owner |
+|--------|-------|-------|
+| Users | `users`, `user_badges` | Kaizo |
+| Community | `posts`, `reactions`, `follows`, `comments` | Kaizo |
+| Content | `blog_posts`, `categories`, `tags` | Kaizo |
+| Events | `events`, `event_rsvp` | Kaizo |
+| Gallery | `gallery_items` | Kaizo |
+| Supporters | `donatur`, `supporter_history` | Kaizo |
+| Streaming | `anime`, `episodes`, `watch_history` | Kaizo |
+| System | `notifications`, `audit_logs`, `music_tracks` | Kaizo |
 
-================================================
-SHARED PACKAGES
-================================================
+**Aturan DB:**
+- Standard fields setiap tabel: `id UUID`, `created_at TIMESTAMPTZ`, `updated_at TIMESTAMPTZ`
+- Setiap tabel baru wajib RLS policy
+- Perubahan DB selalu lewat migration file di `database/migrations/`
+- Jangan pernah edit tabel production secara langsung
 
-packages/ui
+---
 
-Reusable UI components shared across apps.
+## Urutan Pengerjaan
 
-------------------------------------------------
+```
+SEKARANG (v0.1 → v0.6)
+└── apps/web — selesaikan semua fitur utama
+    ├── Kaizo : API routes per domain
+    ├── Bubu  : UI pages + design system
+    └── Sora  : middleware, types, deployment
 
-packages/types
+SETELAH v0.6.0 SELESAI
+└── packages/
+    ├── types   — finalize semua shared types
+    ├── utils   — helpers yang sudah dipakai di web
+    └── config  — shared ESLint + TS
 
-Shared TypeScript types.
+BERIKUTNYA
+└── services/api — central REST API
+    ├── Kaizo : migrate logic dari apps/web/api
+    └── Sora  : arsitektur, routing, middleware
 
-Examples:
+SELANJUTNYA
+└── apps/stream — setelah services/api siap
+    ├── Sora  : setup project, routing
+    └── Bubu  : UI halaman streaming
 
-User
-Post
-Event
-Supporter
-StreamEpisode
+TERAKHIR
+└── apps/mobile — React Native / Expo
+    └── Sora + Bubu
+```
 
-------------------------------------------------
+---
 
-packages/utils
+## Design System
 
-Shared utilities and helper functions.
+Berlaku untuk semua apps (web, stream, mobile).
 
-------------------------------------------------
+| Token | Value |
+|-------|-------|
+| Primary | `#6C5CE7` |
+| Accent | `#38BDF8` |
+| Background dark | `#020617` · `#0F172A` · `#111827` |
+| Font | Inter (utama) · Poppins (sekunder) · Orbitron (aksen) |
 
-packages/auth
+**Card style (glass):**
+```css
+background: rgba(255, 255, 255, 0.06);
+backdrop-filter: blur(12px);
+border: 1px solid rgba(255, 255, 255, 0.08);
+border-radius: 16px;
+```
 
-Shared authentication logic.
+---
 
-Examples:
+## Git Workflow
 
-JWT helpers
-OAuth helpers
-Session management
+### Branch strategy
+```
+master    → production (Vercel auto-deploy)
+develop   → development (staging)
+feature/  → fitur baru   contoh: feature/gallery-upload
+fix/      → bug fix       contoh: fix/auth-cookie
+refactor/ → refactoring   contoh: refactor/navbar
+```
 
-------------------------------------------------
+### Commit format
+```
+feat(scope): deskripsi singkat
+fix(scope): deskripsi singkat
+refactor(scope): deskripsi singkat
+docs(scope): deskripsi singkat
+chore(scope): deskripsi singkat
+```
 
-packages/config
+### Git command wajib
+```bash
+git add -A -- ':!.github/workflows/ci.yml'
+```
 
-Shared configurations.
+---
 
-Includes:
+## Versioning
 
-ESLint config
-TypeScript config
-Environment constants
+`MAJOR.MINOR.PATCH` — Semantic Versioning
 
-================================================
-DATABASE DESIGN
-================================================
+| Tipe | Kapan |
+|------|-------|
+| MAJOR | Breaking change (misal: restructur DB besar) |
+| MINOR | Fitur baru yang backward-compatible |
+| PATCH | Bug fix |
 
-Database type:
+---
 
-PostgreSQL or Supabase
+## Safe Rebuild Rules
 
-Domain separation:
+- Community system bisa di-rebuild tanpa affect streaming
+- Streaming bisa di-update tanpa affect articles
+- Setiap service communicate **hanya** lewat API — tidak direct DB access antar service
+- Migration harus reversible — selalu ada `up` dan `down`
 
-Auth
-Users
-Community
-Content
-Events
-Gallery
-Supporters
-Streaming
-System
+---
 
-Standard fields for every table:
+## Environment Variables
 
-id (UUID)
-createdAt
-updatedAt
+**apps/web (Vercel):**
+```env
+NEXT_PUBLIC_SUPABASE_URL=
+NEXT_PUBLIC_SUPABASE_ANON_KEY=
+SUPABASE_SERVICE_ROLE_KEY=
+DISCORD_CLIENT_ID=
+DISCORD_CLIENT_SECRET=
+TRAKTEER_API_KEY=trapi-nQQtEuQ3kf8gNNnlS0NP42FW
+XENDIT_SECRET_KEY=          # optional - masih draft
+NEXT_PUBLIC_DISCORD_INVITE=qm3XJvRa6B
+BOT_WEBHOOK_URL=
+BOT_WEBHOOK_SECRET=
+```
 
-Database changes must always use migrations.
+**services/bot (Railway):**
+```env
+DISCORD_TOKEN=
+DISCORD_GUILD_ID=
+WEBHOOK_SECRET=
+SORAKU_API_URL=https://soraku.vercel.app
+```
 
-Never modify production tables directly.
+---
 
-================================================
-SYSTEM ARCHITECTURE
-================================================
-
-Soraku uses layered architecture.
-
-Client Applications
-↓
-API Layer
-↓
-Domain Services
-↓
-Database
-
-Clients include:
-
-Web App
-Streaming App
-Mobile App
-Discord Bot
-
-Clients communicate ONLY with the API.
-
-================================================
-DESIGN SYSTEM
-================================================
-
-UI style must follow Soraku design identity.
-
-Design philosophy:
-
-Modern
-Clean
-Futuristic
-Anime inspired
-Community focused
-
-------------------------------------------------
-
-Primary Color
-
-#6C5CE7
-
-------------------------------------------------
-
-Accent Color
-
-#38BDF8
-
-------------------------------------------------
-
-Background
-
-#020617
-#0F172A
-#111827
-
-------------------------------------------------
-
-Typography
-
-Primary font
-
-Inter
-
-Secondary font
-
-Poppins
-
-Optional accent font
-
-Orbitron or Space Grotesk
-
-------------------------------------------------
-
-Card Style
-
-Glass style
-
-background: rgba(255,255,255,0.06)
-backdrop-filter: blur(12px)
-border: 1px solid rgba(255,255,255,0.08)
-border-radius: 16px
-
-================================================
-FEATURE DOMAINS
-================================================
-
-Core domains of the platform.
-
-Auth System
-User System
-Community System
-Content System
-Events System
-Gallery System
-Supporter System
-Streaming System
-Notification System
-Admin System
-
-Each domain must be developed independently.
-
-================================================
-CORE FEATURES
-================================================
-
-Auth
-
-User registration
-Email login
-OAuth login
-Discord login
-Password reset
-Email verification
-Two factor authentication
-
-------------------------------------------------
-
-User Profile
-
-Profile page
-Avatar
-Bio
-Badges
-Activity timeline
-Achievements
-Social links
-
-------------------------------------------------
-
-Community
-
-Community feed
-Create post
-Edit post
-Delete post
-Reactions
-Comments
-Replies
-Post bookmarking
-Trending posts
-Follow users
-
-------------------------------------------------
-
-Content
-
-Article publishing
-Categories
-Tags
-Author profiles
-Comments
-Reactions
-Trending articles
-
-------------------------------------------------
-
-Events
-
-Event creation
-Event calendar
-RSVP
-Event reminders
-
-------------------------------------------------
-
-Gallery
-
-Image upload
-Fan art gallery
-Cosplay gallery
-Artwork reactions
-Featured artworks
-
-------------------------------------------------
-
-Supporter System
-
-Supporter tiers:
-
-Donatur
-VIP
-Kizuna Elite
-
-Supporter badges
-Donation history
-Supporter events
-
-------------------------------------------------
-
-Streaming
-
-Anime catalog
-Episode database
-Streaming player
-Watch history
-Recommendations
-
-================================================
-DEVELOPMENT WORKFLOW
-================================================
-
-Branch strategy
-
-main
-stable production
-
-develop
-active development
-
-feature/[name]
-
-fix/[name]
-
-refactor/[name]
-
-------------------------------------------------
-
-Development process
-
-Create feature branch
-Develop feature
-Open pull request
-Code review
-Merge to develop
-Release to main
-
-================================================
-COMMIT MESSAGE FORMAT
-================================================
-
-type(scope): description
-
-Examples
-
-feat(auth): add discord login
-feat(community): add post reactions
-fix(api): fix token validation
-refactor(profile): improve user schema
-
-================================================
-VERSIONING
-================================================
-
-Semantic Versioning.
-
-MAJOR.MINOR.PATCH
-
-Example:
-
-1.2.0
-
-Major
-breaking change
-
-Minor
-new feature
-
-Patch
-bug fix
-
-================================================
-SAFE REBUILD RULES
-================================================
-
-The platform must always support safe rebuilding.
-
-Rules:
-
-Modules must be independent
-Services must communicate through API
-Database migrations must be reversible
-Shared packages must be reused
-
-Examples:
-
-Community system can be rebuilt without affecting streaming.
-
-Streaming system can be updated without affecting articles.
-
-Supporter system can evolve without breaking user profiles.
-
-================================================
-FINAL OBJECTIVE
-================================================
-
-Soraku must evolve into a full ecosystem platform combining:
-
-Community interaction
-Anime media platform
-Creator economy
-Streaming services
-Mobile ecosystem
-
-The system must remain scalable, modular,
-and maintainable for long term development.
+*Soraku · Scalable · Modular · Maintainable · Long-term*
