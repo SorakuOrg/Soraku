@@ -56,3 +56,14 @@ Setiap kali Riu atau tim melakukan revisi / perubahan keputusan:
 ---
 
 *File ini dikelola oleh Kaizo. Update setiap ada revisi dari Riu.*
+
+### 2026-03-10 (Sesi Lanjut)
+
+| # | Dari | Revisi | Keterangan |
+|---|------|--------|------------|
+| 10 | Kaizo | Re-push semua API routes | File sebelumnya ter-overwrite saat Bubu push UI v0.1–v0.6 |
+| 11 | Kaizo | Tambah tabel `musictracks` + `donatur` di DB | Dibutuhkan untuk music player dan top donatur page |
+| 12 | Kaizo | Route `/api/blog` (bukan `/api/posts`) | Sesuai spec KAIZO.md dari Bubu |
+| 13 | Kaizo | Route `/api/agensi` (bukan `/api/vtubers`) | Sesuai spec KAIZO.md dari Bubu |
+| 14 | Kaizo | Route `/api/premium/xendit/*` dan `/api/premium/donatur` | Sesuai spec KAIZO.md dari Bubu |
+| 15 | Kaizo | Route `/api/music/playlist` — response shape sesuai music player context | Cover pakai emoji fallback jika belum ada |

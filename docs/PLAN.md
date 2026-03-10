@@ -27,11 +27,11 @@
 
 | Feature                    | Owner | Status | Catatan                                      |
 |----------------------------|-------|--------|----------------------------------------------|
-| Supabase project setup     | Kaizo | ❌     | Backend belum setup                          |
-| Schema DB                  | Kaizo | ❌     | Lihat KAIZO.md untuk spec lengkap            |
+| Supabase project setup     | Kaizo | ✅     | Schema soraku aktif di Supabase              |
+| Schema DB                  | Kaizo | ✅     | 15 tabel di schema soraku, RLS aktif         |
 | Login page UI              | Bubu  | ✅     | 2 step + Discord OAuth button                |
 | Register page UI           | Bubu  | ✅     | 2 step form + benefits panel                 |
-| Auth middleware             | Sora  | ❌     | Tunggu Kaizo setup Supabase                  |
+| Auth middleware             | Kaizo | ✅     | src/middleware.ts — role-based protection    |
 | Dashboard layout + page    | Bubu  | ✅     | Sidebar, stats, quick links                  |
 
 ## v0.3.0 — Konten ✅ (UI + mock data)
@@ -40,13 +40,13 @@
 |----------------------------|-------|--------|----------------------------------------------|
 | Blog listing page          | Bubu  | ✅     | Filter tag, featured post, grid              |
 | Blog detail page           | Bubu  | ✅     | /blog/[slug], related posts, metadata        |
-| Blog API (GET)             | Kaizo | ❌     | Lihat KAIZO.md Priority 2                    |
+| Blog API (GET)             | Kaizo | ✅     | /api/blog + /api/blog/[slug]                 |
 | Events listing page        | Bubu  | ✅     | Upcoming/past, card grid, info lengkap       |
 | Events detail page         | Bubu  | ✅     | /events/[slug], Discord CTA                  |
-| Events API (GET)           | Kaizo | ❌     | Lihat KAIZO.md Priority 2                    |
+| Events API (GET)           | Kaizo | ✅     | /api/events + /api/events/[slug]             |
 | Galeri grid page           | Bubu  | ✅     | Masonry layout, filter kategori              |
 | Galeri upload form         | Bubu  | ✅     | Drag & drop, preview, form                   |
-| Galeri API                 | Kaizo | ❌     | Lihat KAIZO.md Priority 2                    |
+| Galeri API                 | Kaizo | ✅     | /api/gallery + /api/gallery/upload           |
 | Loading skeletons          | Bubu  | ✅     | Blog, events, gallery loading.tsx            |
 | Error boundaries           | Bubu  | ✅     | Blog, events error.tsx                       |
 
@@ -56,9 +56,9 @@
 |----------------------------|-------|--------|----------------------------------------------|
 | Agensi talent list         | Bubu  | ✅     | Grid cards, type badge, socials              |
 | Agensi VTuber page         | Bubu  | ✅     | /agensi/vtuber, model type, streams          |
-| Agensi API                 | Kaizo | ❌     | Lihat KAIZO.md Priority 3                    |
+| Agensi API                 | Kaizo | ✅     | /api/agensi + /api/agensi/[slug]             |
 | Premium page               | Bubu  | ✅     | 3 tier (Donatur/VIP/VVIP) + benefits         |
-| Xendit integration         | Kaizo | ❌     | Lihat KAIZO.md Priority 3                    |
+| Xendit integration         | Kaizo | ✅     | /api/premium/xendit/create + webhook         |
 | Donate page                | Bubu  | ✅     | Trakteer redirect, how-to, usage             |
 | Top Donatur page           | Bubu  | ✅     | Podium 🥇🥈🥉, full list, gold glow          |
 
@@ -72,7 +72,7 @@
 | Admin blog CRUD UI         | Bubu  | ✅     | Tabel + Edit/Delete buttons                  |
 | Admin event CRUD UI        | Bubu  | ✅     | List + Edit/Delete buttons                   |
 | Admin galeri moderasi      | Bubu  | ✅     | Approve/Reject buttons per item              |
-| Admin API (users)          | Kaizo | ❌     | PATCH /api/admin/users/[id]                  |
+| Admin API (users)          | Kaizo | ✅     | /api/admin/users + blog + events + gallery   |
 
 ## v0.6.0 — Polish ✅
 
@@ -90,9 +90,9 @@
 
 | Item | Owner | Prioritas |
 |------|-------|-----------|
-| Supabase setup + schema | Kaizo | HIGH |
+| Supabase setup + schema | Kaizo | ✅ DONE |
 | Auth middleware (Sora) | Sora | HIGH |
-| Ganti mock data → real API | Kaizo+Sora | MEDIUM |
+| Ganti mock data → real API | Kaizo+Sora | 🔄 API siap, Sora connect ke UI |
 | Music player persistent | Bubu | ✅ DONE |
 | Admin form create/edit | Bubu | LOW |
 | Performance audit | Sora | LOW |
