@@ -97,3 +97,23 @@ dengan arsitektur yang sepenuhnya berbeda dari versi sebelumnya.
 - `docs/Revisi.md` → konten digabung ke masing-masing revisi/
 - `docs/ADMIN_BOT_TUTORIAL.md` → dihapus (konten akan pindah ke services/bot README)
 - `docs/REVISI/` folder lama → dihapus
+
+## [0.0.7] — 2026-03-10
+
+### Added (Sora)
+- `docs/PLAN.md` — Diperbarui: v0.7.0 (real data integration) + v0.8.0 (Discord bot) + v0.9.0 (notif) + v1.0.0 (launch)
+- `services/bot/` — Scaffold Discord bot lengkap siap Railway:
+  - `src/index.ts` — entry point, Discord client, env validation
+  - `src/events/ready.ts` — bot ready handler
+  - `src/events/guildMemberUpdate.ts` — role berubah → POST /api/discord/role-sync
+  - `src/webhooks/server.ts` — HTTP server (Hono): /health, /webhook/notify, /webhook/role-update, /webhook/discord-event
+  - `src/commands/register.ts` — slash commands: /ping, /member, /event
+  - `package.json`, `tsconfig.json`, `.env.example`
+- `apps/web/src/app/api/bot/notify/route.ts` — Web → trigger bot DM
+- `apps/web/src/app/api/bot/announce/route.ts` — Web → trigger bot announce event ke Discord
+
+### Integration Map
+- Trakteer webhook → update DB → /api/bot/notify → bot DM user
+- Admin ubah role → update DB → bot update role Discord
+- Event baru dibuat → /api/bot/announce → bot post ke #event channel
+- Discord role berubah → bot → /api/discord/role-sync → update DB

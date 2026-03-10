@@ -23,7 +23,7 @@
 | Footer 2 kolom + 6 sosmed        | Bubu  | ✅     | Discord, TikTok, FB, IG, Twitter, YouTube    |
 | /agensi/vtuber page              | Bubu  | ✅     | VTuber cards + CTA                           |
 
-## v0.2.0 — Auth & User UI ✅ (UI only)
+## v0.2.0 — Auth & User UI ✅
 
 | Feature                    | Owner | Status | Catatan                                      |
 |----------------------------|-------|--------|----------------------------------------------|
@@ -66,33 +66,152 @@
 
 | Feature                    | Owner | Status | Catatan                                      |
 |----------------------------|-------|--------|----------------------------------------------|
-| Admin layout               | Bubu  | ✅     | Sidebar, protected (TODO: middleware Sora)   |
+| Admin layout               | Bubu  | ✅     | Sidebar, protected (middleware active)       |
 | Admin dashboard overview   | Bubu  | ✅     | Stats cards, recent posts, pending gallery   |
-| Admin user management      | Bubu  | ✅     | UI done; Kaizo perlu API untuk actions       |
+| Admin user management      | Bubu  | ✅     | UI done                                      |
 | Admin blog CRUD UI         | Bubu  | ✅     | Tabel + Edit/Delete buttons                  |
 | Admin event CRUD UI        | Bubu  | ✅     | List + Edit/Delete buttons                   |
 | Admin galeri moderasi      | Bubu  | ✅     | Approve/Reject buttons per item              |
-| Admin API (users)          | Kaizo | ✅     | /api/admin/users + blog + events + gallery   |
+| Admin API                  | Kaizo | ✅     | /api/admin/users + blog + events + gallery   |
 
 ## v0.6.0 — Polish ✅
 
 | Feature                    | Owner | Status | Catatan                                      |
 |----------------------------|-------|--------|----------------------------------------------|
 | Discord stats API          | Sora  | ✅     | /api/discord/stats — fallback ke mock        |
-| Music player persistent    | Bubu  | ✅     | React Context, PlayerBar floating + minimized pill                                 |
+| Music player persistent    | Bubu  | ✅     | React Context, PlayerBar floating            |
 | Sitemap                    | Bubu  | ✅     | /sitemap.xml — static + dynamic pages        |
 | Loading skeletons          | Bubu  | ✅     | Blog, events, gallery                        |
 | Error boundaries           | Bubu  | ✅     | Blog, events                                 |
 | OG image meta              | Bubu  | ✅     | layout.tsx — OG, Twitter card, robots        |
-| Performance audit          | Sora  | ❌     | Setelah launch                               |
+| Performance audit          | Sora  | ❌     | Ditunda ke v1.0.0                            |
 
-## 🔮 Next Steps
+---
 
-| Item | Owner | Prioritas |
-|------|-------|-----------|
-| Supabase setup + schema | Kaizo | ✅ DONE |
-| Auth middleware (Sora) | Sora | HIGH |
-| Ganti mock data → real API | Kaizo+Sora | 🔄 API siap, Sora connect ke UI |
-| Music player persistent | Bubu | ✅ DONE |
-| Admin form create/edit | Bubu | LOW |
-| Performance audit | Sora | LOW |
+## v0.7.0 — Real Data Integration 🔄 IN PROGRESS
+> **Owner: Sora**
+> Connect semua halaman dari mock data ke real Supabase DB.
+> Server Components query langsung via `db()` dari `@/lib/supabase/server` — lebih efisien dari fetch ke /api/*.
+> API routes tetap untuk: mutations dari client, panggilan dari bot, webhooks.
+
+| Feature                    | Owner | Status | Catatan                                              |
+|----------------------------|-------|--------|------------------------------------------------------|
+| Blog listing → real DB     | Sora  | 🔄     | `db().from('blog_posts')` replace MOCK_POSTS         |
+| Blog detail → real DB      | Sora  | 🔄     | Query by slug, notFound() jika tidak ada             |
+| Events → real DB           | Sora  | 🔄     | Sort by starts_at, filter upcoming/past              |
+| Gallery → real DB          | Sora  | 🔄     | approved=true only, dengan pagination                |
+| Agensi → real DB           | Sora  | 🔄     | Query talents table, filter by type                  |
+| Top Donatur → real DB      | Sora  | 🔄     | Query donatur, sorted by amount DESC                 |
+| Music playlist → real DB   | Sora  | 🔄     | Query music_tracks via /api/music/playlist           |
+| Dashboard → real user data | Sora  | 🔄     | Auth user dari session + stats dari DB               |
+| Admin panel → real data    | Sora  | 🔄     | Connect admin pages ke API routes Kaizo              |
+| packages/utils             | Sora  | 🔄     | slugify, formatDate, formatRupiah, truncate          |
+| Trakteer webhook handler   | Sora  | 🔜     | /api/premium/trakteer/webhook → update DB + notif bot|
+
+---
+
+## v0.8.0 — Discord Bot (services/bot) 🔜 PLANNED
+> **Owner: Sora (scaffold + arsitektur) · Kaizo (fitur + maintenance)**
+> Bot Discord terintegrasi penuh dengan web via internal webhooks.
+
+### Alur Integrasi Web ↔ Bot
+
+```
+1. User donasi Trakteer
+   Trakteer → POST /api/premium/trakteer/webhook (Vercel)
+   → Update DB supporter_tier
+   → POST {BOT_WEBHOOK_URL}/webhook/notify (Bot)
+   → Bot DM user Discord + update role Discord
+
+2. Admin ubah role di web
+   Admin → PATCH /api/admin/users/[id] (Vercel)
+   → Update DB
+   → POST {BOT_WEBHOOK_URL}/webhook/role-update (Bot)
+   → Bot update role Discord user
+
+3. Event baru dibuat di web
+   Admin → POST /api/admin/events (Vercel)
+   → Simpan DB
+   → POST {BOT_WEBHOOK_URL}/webhook/discord-event (Bot)
+   → Bot post announcement ke #event-soraku
+
+4. User join/update role di Discord
+   Discord → Bot guildMemberUpdate event
+   → Bot POST /api/discord/role-sync (Vercel)
+   → Update DB supporter_tier user
+```
+
+| Feature                          | Owner | Status | Catatan                                              |
+|----------------------------------|-------|--------|------------------------------------------------------|
+| Scaffold services/bot            | Sora  | 🔜     | Discord.js v14, TypeScript, Railway-ready            |
+| HTTP server internal (Hono)      | Sora  | 🔜     | Terima webhooks dari web, port 3001                  |
+| Bot login & ready handler        | Sora  | 🔜     | Bot online, set activity status                      |
+| Slash command: /ping             | Sora  | 🔜     | Health check command                                 |
+| Slash command: /member           | Kaizo | 🔜     | Info member count + online                           |
+| Slash command: /event            | Kaizo | 🔜     | List upcoming events dari web API                    |
+| guildMemberUpdate → role-sync    | Kaizo | 🔜     | Role Discord berubah → POST /api/discord/role-sync   |
+| POST /webhook/notify             | Kaizo | 🔜     | Terima dari web → DM user Discord                    |
+| POST /webhook/role-update        | Kaizo | 🔜     | Terima dari web → update role Discord user           |
+| POST /webhook/discord-event      | Kaizo | 🔜     | Terima dari web → announce ke channel                |
+| GET  /health                     | Sora  | 🔜     | Railway healthcheck                                  |
+| API web: POST /api/bot/notify    | Sora  | 🔜     | Web endpoint untuk kirim request ke bot              |
+| API web: POST /api/bot/announce  | Sora  | 🔜     | Web endpoint untuk trigger bot announcement          |
+| Dockerfile + Railway config      | Kaizo | 🔜     | Deploy Railway dari services/bot/                    |
+
+### ENV yang dibutuhkan (services/bot)
+```env
+DISCORD_TOKEN=
+DISCORD_GUILD_ID=
+DISCORD_EVENT_CHANNEL_ID=   # channel #event-soraku
+SORAKU_API_URL=https://soraku.vercel.app
+SORAKU_API_SECRET=           # sama dengan di Vercel
+WEBHOOK_SECRET=              # sama dengan BOT_WEBHOOK_SECRET di Vercel
+PORT=3001
+```
+
+---
+
+## v0.9.0 — Notifikasi & Real-time 🔜 PLANNED
+
+| Feature                    | Owner | Status | Catatan                                              |
+|----------------------------|-------|--------|------------------------------------------------------|
+| Notification bell UI       | Bubu  | 🔜     | Bell icon + dot merah, lihat docs/revisi/BUBU.md     |
+| Notif API                  | Kaizo | 🔜     | GET /api/notifications + PATCH mark-as-read          |
+| Push via Discord DM        | Kaizo | 🔜     | Via services/bot webhook                             |
+| Supabase Realtime          | Sora  | 🔜     | Gallery approval live update, notif count            |
+
+---
+
+## v1.0.0 — Launch Ready 🔜 PLANNED
+
+| Feature                    | Owner | Status | Catatan                                              |
+|----------------------------|-------|--------|------------------------------------------------------|
+| Performance audit          | Sora  | 🔜     | Lighthouse 90+, Core Web Vitals                      |
+| Security audit             | Sora  | 🔜     | Rate limiting, CORS, CSP headers                     |
+| E2E tests (Playwright)     | Sora  | 🔜     | Auth flow, blog, gallery upload                      |
+| Error monitoring           | Sora  | 🔜     | Sentry / Vercel monitoring                           |
+| Custom domain              | Riu   | 🔜     | soraku.id atau soraku.moe                            |
+
+---
+
+## Catatan Teknis Sora — Pattern v0.7.0
+
+```ts
+// ✅ Server Component — query langsung ke DB (efisien)
+import { db } from "@/lib/supabase/server"
+export default async function BlogPage() {
+  const { data: posts } = await (await db())
+    .from("blog_posts")
+    .select("id, slug, title, excerpt, tags, created_at, author:users(username, display_name, avatar_url)")
+    .eq("published", true)
+    .order("created_at", { ascending: false })
+    .limit(12)
+  return <BlogGrid posts={posts ?? []} />
+}
+
+// ✅ Client Component mutation — lewat API routes
+await fetch("/api/gallery/upload", { method: "POST", body: formData })
+
+// ❌ JANGAN fetch /api/* dari Server Component
+const res = await fetch("/api/blog") // double round-trip, tidak perlu
+```
