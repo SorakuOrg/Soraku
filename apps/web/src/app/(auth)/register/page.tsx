@@ -1,14 +1,19 @@
 "use client";
+
 import Link from "next/link";
+import Image from "next/image";
 import { useState } from "react";
 import { Eye, EyeOff, ArrowRight, Check } from "lucide-react";
+import { DiscordIcon, GoogleIcon } from "@/components/icons/custom-icons";
 
 const BENEFITS = [
-  "Akses ke semua konten komunitas",
-  "Ikut event & gathering eksklusif",
-  "Upload karya ke galeri",
-  "Badge & role member",
+  { icon: "🎌", text: "Akses ke semua konten komunitas" },
+  { icon: "🗓️", text: "Ikut event & gathering eksklusif" },
+  { icon: "🖼️", text: "Upload karya ke galeri komunitas" },
+  { icon: "🏅", text: "Badge & role member Soraku" },
 ];
+
+const STEPS = ["Akun", "Profil"];
 
 export default function RegisterPage() {
   const [showPass, setShowPass] = useState(false);
@@ -19,73 +24,148 @@ export default function RegisterPage() {
     e.preventDefault();
     if (step === 1) { setStep(2); return; }
     setLoading(true);
-    // TODO: Kaizo — hit POST /api/auth/register
-    setTimeout(() => setLoading(false), 1000);
+    // TODO Kaizo: POST /api/auth/register
+    setTimeout(() => setLoading(false), 1200);
   };
 
   return (
-    <div className="relative flex min-h-[calc(100vh-4rem)] items-center justify-center px-4 py-12">
-      <div className="pointer-events-none absolute inset-0 overflow-hidden">
-        <div className="animate-blob absolute -right-20 top-10 h-72 w-72 rounded-full bg-accent/5 blur-3xl" />
-        <div className="animate-blob animation-delay-4000 absolute left-0 bottom-0 h-64 w-64 rounded-full bg-primary/7 blur-3xl" />
-      </div>
+    <div className="relative flex min-h-[calc(100vh-4rem)] items-stretch">
 
-      <div className="relative grid w-full max-w-3xl gap-8 lg:grid-cols-2 lg:items-start">
-        {/* Left: benefits */}
-        <div className="hidden lg:block">
-          <Link href="/" className="inline-flex items-center gap-2 mb-8">
-            <span className="text-gradient text-2xl font-black leading-none">空</span>
-            <span className="text-lg font-bold">Soraku</span>
-            <span className="text-muted-foreground/50 text-xs uppercase tracking-widest">Community</span>
+      {/* ── Left: Benefits panel ── */}
+      <div className="relative hidden flex-1 overflow-hidden lg:flex lg:flex-col bg-gradient-to-br from-accent/8 via-background to-background border-r border-border/40">
+        {/* Blobs */}
+        <div className="pointer-events-none absolute inset-0">
+          <div className="animate-blob absolute -top-20 -right-20 h-80 w-80 rounded-full bg-accent/10 blur-[120px]" />
+          <div className="animate-blob animation-delay-3000 absolute bottom-10 left-0 h-72 w-72 rounded-full bg-primary/8 blur-[100px]" />
+        </div>
+
+        {/* Logo */}
+        <div className="relative p-8">
+          <Link href="/" className="flex items-center gap-2.5">
+            <div className="h-10 w-10 overflow-hidden rounded-xl border border-border/60">
+              <Image src="/logo.png" alt="Soraku" width={40} height={40} className="h-full w-full object-cover object-top" />
+            </div>
+            <span className="text-base font-black">Soraku</span>
+            <span className="text-xs text-muted-foreground/40 uppercase tracking-widest">Community</span>
           </Link>
-          <h2 className="text-3xl font-black mb-2">Bergabung Gratis</h2>
-          <p className="text-muted-foreground mb-8">Jadi bagian dari komunitas anime & budaya Jepang terbaik di Indonesia.</p>
-          <ul className="space-y-4">
+        </div>
+
+        {/* Content */}
+        <div className="relative flex flex-1 flex-col justify-center p-8">
+          <p className="mb-2 text-xs font-bold uppercase tracking-widest text-primary/60">Bergabung Sekarang</p>
+          <h2 className="text-2xl font-black tracking-tight leading-tight">
+            Komunitas anime<br />& budaya Jepang<br />terbesar di Indonesia
+          </h2>
+          <p className="mt-3 text-sm text-muted-foreground leading-relaxed">
+            Gratis selamanya. Daftar dan mulai berinteraksi dengan ribuan member.
+          </p>
+
+          <ul className="mt-8 space-y-3">
             {BENEFITS.map((b) => (
-              <li key={b} className="flex items-start gap-3">
-                <span className="mt-0.5 flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-primary/20 text-primary">
-                  <Check className="h-3 w-3" />
+              <li key={b.text} className="flex items-center gap-3">
+                <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-xl bg-primary/10 text-base">
+                  {b.icon}
                 </span>
-                <span className="text-sm text-muted-foreground">{b}</span>
+                <span className="text-sm text-muted-foreground/80">{b.text}</span>
               </li>
             ))}
           </ul>
-          <p className="mt-8 text-xs text-muted-foreground/50">
-            空 · Non-profit · Est. 2023 · Indonesia
-          </p>
+
+          {/* Mascot */}
+          <div className="mt-8 flex items-center gap-3 rounded-2xl border border-border/50 bg-card/40 p-3">
+            <div className="h-12 w-12 flex-shrink-0 overflow-hidden rounded-xl border border-border/50">
+              <Image src="/logo.png" alt="Mascot" width={48} height={48} className="h-full w-full object-cover object-top" />
+            </div>
+            <div>
+              <p className="text-xs font-semibold">Sudah 500+ member!</p>
+              <p className="text-[11px] text-muted-foreground/50">Bergabunglah dan jadilah bagian dari Soraku</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* ── Right: Form ── */}
+      <div className="relative flex flex-1 items-center justify-center px-4 py-12 sm:px-8 lg:max-w-[480px]">
+        {/* Mobile blobs */}
+        <div className="pointer-events-none absolute inset-0 overflow-hidden lg:hidden">
+          <div className="animate-blob absolute -top-16 -right-16 h-64 w-64 rounded-full bg-accent/6 blur-3xl" />
+          <div className="animate-blob animation-delay-2000 absolute bottom-0 -left-10 h-56 w-56 rounded-full bg-primary/7 blur-3xl" />
         </div>
 
-        {/* Right: form */}
-        <div className="glass-card p-8">
-          {/* Progress */}
-          <div className="mb-6 flex items-center gap-2">
-            {[1, 2].map((s) => (
-              <div key={s} className={`h-1.5 flex-1 rounded-full transition-colors ${s <= step ? "bg-primary" : "bg-border"}`} />
-            ))}
+        <div className="relative w-full max-w-sm">
+          {/* Mobile logo */}
+          <div className="mb-6 flex items-center gap-3 lg:hidden">
+            <div className="h-9 w-9 overflow-hidden rounded-xl border border-border/60">
+              <Image src="/logo.png" alt="Soraku" width={36} height={36} className="h-full w-full object-cover object-top" />
+            </div>
+            <span className="text-base font-black">Soraku Community</span>
           </div>
 
-          <h1 className="text-xl font-bold mb-1">
-            {step === 1 ? "Buat Akun" : "Info Profil"}
-          </h1>
-          <p className="text-sm text-muted-foreground mb-6">
-            {step === 1 ? "Langkah 1 dari 2 — Akun & keamanan" : "Langkah 2 dari 2 — Perkenalkan dirimu"}
-          </p>
+          {/* Header + step indicator */}
+          <div className="mb-6">
+            <div className="mb-4 flex items-center gap-2">
+              {STEPS.map((s, i) => (
+                <div key={s} className="flex items-center gap-2">
+                  <div className={`flex h-6 w-6 items-center justify-center rounded-full text-[11px] font-bold transition-all ${
+                    step > i + 1 ? "bg-green-500 text-white"
+                    : step === i + 1 ? "bg-primary text-white"
+                    : "border border-border text-muted-foreground/50"
+                  }`}>
+                    {step > i + 1 ? <Check className="h-3 w-3" /> : i + 1}
+                  </div>
+                  <span className={`text-xs font-medium ${step === i + 1 ? "text-foreground" : "text-muted-foreground/40"}`}>{s}</span>
+                  {i < STEPS.length - 1 && <div className="h-px w-6 bg-border/50" />}
+                </div>
+              ))}
+            </div>
+            <h1 className="text-2xl font-black tracking-tight">
+              {step === 1 ? "Buat Akun" : "Lengkapi Profil"}
+            </h1>
+            <p className="mt-1 text-sm text-muted-foreground">
+              {step === 1 ? "Daftar gratis ke Soraku Community" : "Hampir selesai! Isi info profil kamu"}
+            </p>
+          </div>
 
+          {/* OAuth — only step 1 */}
+          {step === 1 && (
+            <>
+              <div className="flex flex-col gap-2.5">
+                <a href="/api/auth/discord"
+                  className="flex items-center justify-center gap-3 rounded-xl border border-indigo-500/30 bg-indigo-500/8 px-4 py-3 text-sm font-semibold text-indigo-300 transition-all hover:border-indigo-400/50 hover:bg-indigo-500/15 hover:-translate-y-0.5">
+                  <DiscordIcon className="h-4 w-4" />
+                  Daftar dengan Discord
+                </a>
+                <button type="button"
+                  className="flex items-center justify-center gap-3 rounded-xl border border-border/60 bg-card/50 px-4 py-3 text-sm font-medium text-muted-foreground transition-all hover:border-primary/30 hover:text-foreground hover:-translate-y-0.5">
+                  <GoogleIcon className="h-4 w-4" />
+                  Daftar dengan Google
+                </button>
+              </div>
+
+              <div className="my-5 flex items-center gap-3">
+                <div className="h-px flex-1 bg-border/50" />
+                <span className="text-[11px] font-medium text-muted-foreground/40">atau daftar dengan email</span>
+                <div className="h-px flex-1 bg-border/50" />
+              </div>
+            </>
+          )}
+
+          {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-4">
             {step === 1 ? (
               <>
                 <div>
                   <label className="mb-1.5 block text-sm font-medium">Email</label>
                   <input type="email" required placeholder="kamu@email.com"
-                    className="w-full rounded-xl border border-border bg-card/50 px-4 py-2.5 text-sm placeholder:text-muted-foreground/50 focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/20 transition-colors" />
+                    className="w-full rounded-xl border border-border bg-card/50 px-4 py-2.5 text-sm placeholder:text-muted-foreground/40 focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all" />
                 </div>
                 <div>
                   <label className="mb-1.5 block text-sm font-medium">Password</label>
                   <div className="relative">
                     <input type={showPass ? "text" : "password"} required placeholder="Min. 8 karakter"
-                      className="w-full rounded-xl border border-border bg-card/50 px-4 py-2.5 text-sm placeholder:text-muted-foreground/50 focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/20 transition-colors pr-10" />
+                      className="w-full rounded-xl border border-border bg-card/50 px-4 py-2.5 pr-10 text-sm placeholder:text-muted-foreground/40 focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all" />
                     <button type="button" onClick={() => setShowPass(!showPass)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground/50 hover:text-muted-foreground transition-colors">
                       {showPass ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                     </button>
                   </div>
@@ -95,60 +175,56 @@ export default function RegisterPage() {
               <>
                 <div>
                   <label className="mb-1.5 block text-sm font-medium">Username</label>
-                  <div className="relative">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">@</span>
-                    <input type="text" required placeholder="usernamu" pattern="[a-zA-Z0-9_]+"
-                      className="w-full rounded-xl border border-border bg-card/50 pl-8 pr-4 py-2.5 text-sm placeholder:text-muted-foreground/50 focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/20 transition-colors" />
-                  </div>
-                  <p className="mt-1 text-xs text-muted-foreground/60">Hanya huruf, angka, dan underscore</p>
+                  <input type="text" required placeholder="@username kamu" minLength={3}
+                    className="w-full rounded-xl border border-border bg-card/50 px-4 py-2.5 text-sm placeholder:text-muted-foreground/40 focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all" />
                 </div>
                 <div>
-                  <label className="mb-1.5 block text-sm font-medium">Nama Tampil <span className="text-muted-foreground font-normal">(opsional)</span></label>
-                  <input type="text" placeholder="Nama yang ditampilkan ke orang lain"
-                    className="w-full rounded-xl border border-border bg-card/50 px-4 py-2.5 text-sm placeholder:text-muted-foreground/50 focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/20 transition-colors" />
+                  <label className="mb-1.5 block text-sm font-medium">Nama Tampilan</label>
+                  <input type="text" required placeholder="Nama yang akan ditampilkan"
+                    className="w-full rounded-xl border border-border bg-card/50 px-4 py-2.5 text-sm placeholder:text-muted-foreground/40 focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all" />
                 </div>
-                <label className="flex items-start gap-2.5 cursor-pointer">
-                  <input type="checkbox" required className="mt-0.5 rounded border-border" />
-                  <span className="text-xs text-muted-foreground">
-                    Saya setuju dengan{" "}
-                    <Link href="/terms" className="text-primary hover:underline">Syarat & Ketentuan</Link>
-                    {" "}dan{" "}
-                    <Link href="/privacy" className="text-primary hover:underline">Kebijakan Privasi</Link> Soraku.
-                  </span>
-                </label>
+                <div>
+                  <label className="mb-1.5 block text-sm font-medium">Bio <span className="text-muted-foreground/40 font-normal">(opsional)</span></label>
+                  <textarea rows={2} placeholder="Ceritakan sedikit tentang diri kamu..."
+                    className="w-full resize-none rounded-xl border border-border bg-card/50 px-4 py-2.5 text-sm placeholder:text-muted-foreground/40 focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all" />
+                </div>
               </>
+            )}
+
+            {step === 1 && (
+              <p className="text-xs text-muted-foreground/50 leading-relaxed">
+                Dengan mendaftar, kamu menyetujui{" "}
+                <Link href="/terms" className="text-primary/70 hover:text-primary">Syarat & Ketentuan</Link>
+                {" "}dan{" "}
+                <Link href="/privacy" className="text-primary/70 hover:text-primary">Kebijakan Privasi</Link> Soraku.
+              </p>
             )}
 
             <button type="submit" disabled={loading}
-              className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 py-3 text-sm font-bold text-white shadow-md shadow-primary/20 hover:bg-primary/90 hover:-translate-y-0.5 transition-all disabled:opacity-60 disabled:pointer-events-none">
-              {loading ? "Membuat akun..." : step === 1 ? (<>Lanjut <ArrowRight className="h-4 w-4" /></>) : (<>Daftar Sekarang <ArrowRight className="h-4 w-4" /></>)}
+              className="group flex w-full items-center justify-center gap-2 rounded-xl bg-primary py-3 text-sm font-bold text-white shadow-md shadow-primary/20 transition-all hover:-translate-y-0.5 hover:shadow-primary/30 disabled:opacity-60">
+              {loading ? (
+                <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+              ) : (
+                <>
+                  {step === 1 ? "Lanjut" : "Selesai Daftar"}
+                  <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
+                </>
+              )}
             </button>
 
-            {step === 1 && (
-              <>
-                <div className="my-2 flex items-center gap-3">
-                  <div className="h-px flex-1 bg-border" />
-                  <span className="text-xs text-muted-foreground">atau</span>
-                  <div className="h-px flex-1 bg-border" />
-                </div>
-                <a href="/api/auth/discord"
-                  className="flex w-full items-center justify-center gap-2 rounded-xl border border-indigo-500/30 bg-indigo-500/8 px-4 py-3 text-sm font-medium text-indigo-300 hover:bg-indigo-500/15 transition-colors">
-                  <svg viewBox="0 0 24 24" className="h-4 w-4 fill-current"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03z"/></svg>
-                  Daftar dengan Discord
-                </a>
-              </>
-            )}
-
             {step === 2 && (
-              <button type="button" onClick={() => setStep(1)} className="w-full text-center text-sm text-muted-foreground hover:text-foreground transition-colors">
+              <button type="button" onClick={() => setStep(1)}
+                className="w-full rounded-xl border border-border py-3 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">
                 ← Kembali
               </button>
             )}
           </form>
 
-          <p className="mt-6 text-center text-sm text-muted-foreground">
+          <p className="mt-6 text-center text-sm text-muted-foreground/60">
             Sudah punya akun?{" "}
-            <Link href="/login" className="font-medium text-primary hover:underline">Masuk</Link>
+            <Link href="/login" className="font-semibold text-primary hover:underline">
+              Masuk di sini
+            </Link>
           </p>
         </div>
       </div>

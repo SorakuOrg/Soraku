@@ -184,6 +184,12 @@ PORT=3001
 | Notif lib + hook + API route  | Bubu  | ✅     | lib/notifications.ts · hooks/use-notifications.ts             |
 | User dropdown di Navbar       | Bubu  | ✅     | Avatar, nama, Profil/Settings/Admin/Keluar                    |
 | Logo mascot di Navbar         | Bubu  | ✅     | Image Next.js, hover scale                                    |
+| Redesign homepage             | Bubu  | ✅     | Mascot hero visual, stats grid, DiscordIcon CTA, features     |
+| Redesign blog                 | Bubu  | ✅     | Featured post besar, emoji tags, search placeholder           |
+| Redesign events               | Bubu  | ✅     | Upcoming/past section, countdown timer, filter tipe           |
+| Redesign gallery              | Bubu  | ✅     | Masonry grid, hover overlay, category filter                  |
+| Redesign login                | Bubu  | ✅     | Split layout mascot, DiscordIcon+GoogleIcon dari custom-icons |
+| Redesign register             | Bubu  | ✅     | Split layout benefits, 2-step form, OAuth dari custom-icons   |
 | Notif API (Supabase)          | Kaizo | ❌     | GET /api/notifications + PATCH mark-as-read, schema di route  |
 | Push via Discord DM           | Kaizo | ❌     | Via services/bot webhook                                      |
 | Supabase Realtime             | Sora  | ❌     | Gallery approval live update, notif count                     |
