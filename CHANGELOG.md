@@ -208,3 +208,14 @@ dengan arsitektur yang sepenuhnya berbeda dari versi sebelumnya.
 - [ ] Logging terpusat (Winston atau pino)
 - [ ] Unit tests command handler
 - [ ] Monitoring uptime (UptimeRobot atau Railway metrics)
+
+## [0.0.9] — 2026-03-10
+
+### Fixed (services/bot)
+- `fix(bot): ganti pnpm → npm di Dockerfile` — lockfile `pnpm-lock.yaml` ada di root monorepo,
+  tidak ikut ke build context Railway (`services/bot/`). `pnpm install --frozen-lockfile` akan gagal.
+  Solusi: pakai `npm install` dan `npm install --omit=dev` langsung tanpa lockfile.
+- `fix(bot): tambah @hono/node-server ke dependencies` — `server.ts` import dari `@hono/node-server`
+  tapi package belum ada di `package.json`. Build akan gagal saat runtime.
+- `fix(bot): hapus @node-fetch/undici` — package tidak dipakai di mana-mana, hapus dari deps.
+- `fix(bot): bump version 0.0.1 → 0.1.0` — mencerminkan first working release

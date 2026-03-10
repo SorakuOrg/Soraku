@@ -1,38 +1,33 @@
 # ── Build stage ──────────────────────────────────────────────────────────────
-# Build context = services/bot/ (Railway pakai folder yg ada railway.toml)
-# Semua COPY path relatif terhadap services/bot/
+# Build context = services/bot/ (Railway set root directory ke services/bot/)
+# Lockfile ada di root monorepo, tidak tersedia di sini → pakai npm install biasa
 FROM node:20-alpine AS builder
 
 WORKDIR /app
 
-RUN npm install -g pnpm
+# Copy package files dulu (layer cache optimal)
+COPY package.json tsconfig.json ./
 
-# Copy package files dulu (layer cache)
-COPY package.json ./
-COPY tsconfig.json ./
-
-# Install semua deps
-RUN pnpm install --frozen-lockfile
+# Install semua deps (tanpa frozen-lockfile karena lockfile di root monorepo)
+RUN npm install
 
 # Copy source
 COPY src ./src
 
 # Build TypeScript → dist/
-RUN pnpm build
+RUN npm run build
 
 # ── Runtime stage ─────────────────────────────────────────────────────────────
 FROM node:20-alpine AS runner
 
 WORKDIR /app
 
-RUN npm install -g pnpm
-
-# Copy hasil build + package.json
+# Copy hasil build + package.json dari builder
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/package.json ./package.json
 
-# Install production deps only
-RUN pnpm install --prod --frozen-lockfile
+# Install hanya production deps
+RUN npm install --omit=dev
 
 # Non-root user untuk keamanan
 RUN addgroup -S soraku && adduser -S bot -G soraku
