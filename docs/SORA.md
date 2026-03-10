@@ -86,3 +86,10 @@ apps/web/src/
 └── styles/
     └── globals.css       ← design system
 ```
+
+---
+
+## 🗺️ Monorepo Roadmap (dari brief Riu, 2026-03-10)
+Lihat: `docs/MONOREPO.md` untuk detail lengkap.
+Urutan pengerjaan: types → utils → config → services/api → auth → stream → mobile
+Aturan: apps/web JANGAN import langsung dari services/ — harus lewat API. Semua shared logic ke packages/.

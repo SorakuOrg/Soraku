@@ -68,3 +68,11 @@ dengan arsitektur yang sepenuhnya berbeda dari versi sebelumnya.
 ---
 
 *空 · Langitku · Est. 2023*
+
+## [0.0.5] — 2026-03-10
+### Added
+- `docs/MONOREPO.md` — Full platform roadmap dari Riu
+- `apps/stream/` `apps/mobile/` — Placeholder scaffold
+- `services/api/` `services/bot/README.md` — Placeholder + docs
+- `packages/types/src/index.ts` — Shared TypeScript types (User, Post, Anime, Episode, dll)
+- `packages/ui/ utils/ auth/ config/` — Placeholder scaffold
