@@ -171,14 +171,23 @@ PORT=3001
 
 ---
 
-## v0.9.0 — Notifikasi & Real-time 🔜 PLANNED
+## v0.9.0 — Notifikasi & Real-time 🔄 IN PROGRESS
 
-| Feature                    | Owner | Status | Catatan                                              |
-|----------------------------|-------|--------|------------------------------------------------------|
-| Notification bell UI       | Bubu  | 🔜     | Bell icon + dot merah, lihat docs/revisi/BUBU.md     |
-| Notif API                  | Kaizo | 🔜     | GET /api/notifications + PATCH mark-as-read          |
-| Push via Discord DM        | Kaizo | 🔜     | Via services/bot webhook                             |
-| Supabase Realtime          | Sora  | 🔜     | Gallery approval live update, notif count            |
+| Feature                       | Owner | Status | Catatan                                                        |
+|-------------------------------|-------|--------|----------------------------------------------------------------|
+| Upload /public/logo.png       | Bubu  | ✅     | Chibi sticker + logo-full.png (3D render hoodie)              |
+| Footer → SORAKU_SOCIALS       | Bubu  | ✅     | Ganti inline SVG → import dari custom-icons.tsx               |
+| Footer → logo.png             | Bubu  | ✅     | Ganti karakter 空 teks → Image mascot                         |
+| Halaman /social               | Bubu  | ✅     | Grid semua sosmed pakai SORAKU_SOCIALS                        |
+| Nav items baru                | Bubu  | ✅     | Showcase, Sosial Media, Premium                               |
+| Notification bell UI          | Bubu  | ✅     | Bell lucide, badge unread count, panel dropdown, polling 30s  |
+| Notif lib + hook + API route  | Bubu  | ✅     | lib/notifications.ts · hooks/use-notifications.ts             |
+| User dropdown di Navbar       | Bubu  | ✅     | Avatar, nama, Profil/Settings/Admin/Keluar                    |
+| Logo mascot di Navbar         | Bubu  | ✅     | Image Next.js, hover scale                                    |
+| Notif API (Supabase)          | Kaizo | ❌     | GET /api/notifications + PATCH mark-as-read, schema di route  |
+| Push via Discord DM           | Kaizo | ❌     | Via services/bot webhook                                      |
+| Supabase Realtime             | Sora  | ❌     | Gallery approval live update, notif count                     |
+| Connect IS_LOGGED_IN → auth   | Sora  | ❌     | Ganti konstanta mock dengan useAuth() / session               |
 
 ---
 
@@ -215,22 +224,3 @@ await fetch("/api/gallery/upload", { method: "POST", body: formData })
 // ❌ JANGAN fetch /api/* dari Server Component
 const res = await fetch("/api/blog") // double round-trip, tidak perlu
 ```
-
----
-
-## v0.9.0 — Notification System & Navbar Polish ✅ (Bubu)
-
-| Feature                       | Owner | Status | Catatan                                                        |
-|-------------------------------|-------|--------|----------------------------------------------------------------|
-| Upload /public/logo.png       | Bubu  | ✅     | Chibi sticker + logo-full.png (3D render hoodie)              |
-| Footer → SORAKU_SOCIALS       | Bubu  | ✅     | Ganti inline SVG → import dari custom-icons.tsx               |
-| Footer → logo.png             | Bubu  | ✅     | Ganti karakter 空 teks → Image mascot                         |
-| Halaman /social               | Bubu  | ✅     | Grid semua sosmed pakai SORAKU_SOCIALS                        |
-| Nav items baru                | Bubu  | ✅     | Showcase, Sosial Media, Premium                               |
-| Notification bell             | Bubu  | ✅     | Bell icon, badge unread count, panel dropdown, polling 30s    |
-| Notif API + lib + hook        | Bubu  | ✅     | lib/notifications.ts · hooks/use-notifications.ts · api route |
-| User dropdown                 | Bubu  | ✅     | Avatar, nama, Profil/Settings/Admin/Keluar                    |
-| Logo mascot di Navbar         | Bubu  | ✅     | Image Next.js, hover scale                                    |
-| Tabel notifications DB        | Kaizo | ❌     | Schema ada di /api/notifications/route.ts                     |
-| Connect notif → Supabase      | Kaizo | ❌     | Ganti MOCK_NOTIFICATIONS dengan query DB                      |
-| Connect IS_LOGGED_IN → auth   | Sora  | ❌     | Ganti konstanta mock dengan useAuth() / session               |
