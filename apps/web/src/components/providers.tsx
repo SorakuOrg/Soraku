@@ -2,6 +2,8 @@
 
 import { ThemeProvider } from "next-themes";
 import type { ReactNode } from "react";
+import { MusicPlayerProvider } from "@/context/music-player";
+import { PlayerBar } from "@/components/music-player/player-bar";
 
 export function Providers({ children }: { children: ReactNode }) {
   return (
@@ -11,7 +13,11 @@ export function Providers({ children }: { children: ReactNode }) {
       enableSystem
       disableTransitionOnChange
     >
-      {children}
+      <MusicPlayerProvider>
+        {children}
+        {/* PlayerBar persistent — tampil di semua halaman */}
+        <PlayerBar />
+      </MusicPlayerProvider>
     </ThemeProvider>
   );
 }

@@ -79,7 +79,7 @@
 | Feature                    | Owner | Status | Catatan                                      |
 |----------------------------|-------|--------|----------------------------------------------|
 | Discord stats API          | Sora  | ✅     | /api/discord/stats — fallback ke mock        |
-| Music player persistent    | Bubu  | ❌     | Next session                                 |
+| Music player persistent    | Bubu  | ✅     | React Context, PlayerBar floating + minimized pill                                 |
 | Sitemap                    | Bubu  | ✅     | /sitemap.xml — static + dynamic pages        |
 | Loading skeletons          | Bubu  | ✅     | Blog, events, gallery                        |
 | Error boundaries           | Bubu  | ✅     | Blog, events                                 |
@@ -93,6 +93,6 @@
 | Supabase setup + schema | Kaizo | HIGH |
 | Auth middleware (Sora) | Sora | HIGH |
 | Ganti mock data → real API | Kaizo+Sora | MEDIUM |
-| Music player persistent | Bubu | LOW |
+| Music player persistent | Bubu | ✅ DONE |
 | Admin form create/edit | Bubu | LOW |
 | Performance audit | Sora | LOW |
