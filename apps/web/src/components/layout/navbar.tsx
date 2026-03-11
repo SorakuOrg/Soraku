@@ -32,27 +32,35 @@ interface SessionUser {
 
 const NAV_ITEMS: NavItem[] = [
   { type: "link", label: "Beranda", href: "/" },
+  { type: "link", label: "About",   href: "/about" },
   {
     type: "dropdown",
-    label: "Komunitas",
+    label: "Feature",
     children: [
-      { label: "Tentang Kami",  href: "/about",               desc: "Filosofi & tim Soraku"    },
-      { label: "Blog",          href: "/blog",                 desc: "Artikel & ulasan anime"   },
-      { label: "Event",         href: "/events",               desc: "Acara & gathering"        },
-      { label: "Galeri",        href: "/gallery",              desc: "Karya anggota"            },
-      { label: "Showcase",      href: "/community/showcase",   desc: "Karya terbaik komunitas"  },
-      { label: "Sosial Media",  href: "/about",               desc: "Ikuti Soraku di semua platform" },
+      { label: "Events",  href: "/events",  desc: "Acara & gathering komunitas" },
+      { label: "Blogs",   href: "/blog",    desc: "Artikel & ulasan anime"       },
+      { label: "Gallery", href: "/gallery", desc: "Karya anggota komunitas"      },
     ],
   },
   {
     type: "dropdown",
     label: "Agensi",
     children: [
-      { label: "VTuber", href: "/vtubers", desc: "Virtual YouTuber Soraku" },
-      { label: "Talent", href: "/agensi",        desc: "Profil kreator & talent" },
+      { label: "VTuber",       href: "/vtubers", desc: "Virtual YouTuber Soraku"     },
+      { label: "Cosplay 🔒",  href: "#",        desc: "Coming Soon"                  },
     ],
   },
-  { type: "link", label: "Premium", href: "/premium" },
+  {
+    type: "dropdown",
+    label: "Utility",
+    children: [
+      { label: "Privacy Policy", href: "/privacy-policy", desc: "Kebijakan privasi" },
+      { label: "Terms of Service",href: "/tos",           desc: "Syarat penggunaan" },
+      { label: "Feedback",       href: "/feedback",       desc: "Kirim masukan"      },
+      { label: "License",        href: "/license",        desc: "Lisensi konten"     },
+      { label: "Requirements",   href: "/requirements",   desc: "Rekrutmen terbuka"  },
+    ],
+  },
 ];
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -405,6 +413,16 @@ export function Navbar() {
 
         {/* Right actions */}
         <div className="flex items-center gap-2">
+          {/* Donate & Premium */}
+          <Link href="/donate"
+            className="hidden rounded-xl border border-accent/40 bg-accent/8 px-4 py-2 text-sm font-semibold text-accent/80 transition-all hover:bg-accent/15 hover:text-accent md:block">
+            Donate
+          </Link>
+          <Link href="/premium"
+            className="hidden rounded-xl bg-gradient-to-r from-yellow-500/80 to-amber-500/80 px-4 py-2 text-sm font-bold text-white shadow-md shadow-yellow-500/20 transition-all hover:-translate-y-0.5 hover:shadow-yellow-500/30 md:block">
+            ⭐ Premium
+          </Link>
+
           <ThemeToggle />
 
           {authLoading ? (
@@ -486,10 +504,6 @@ export function Navbar() {
                   <p className="text-xs text-muted-foreground/60">@{user.username ?? "—"}</p>
                 </div>
               </div>
-              <Link href="/dash/profile/me" onClick={() => setMobileOpen(false)}
-                className="rounded-xl border border-border px-3 py-2 text-xs font-medium text-muted-foreground">
-                Profil
-              </Link>
             </div>
           ) : (
             <div className="mt-3 flex gap-2 border-t border-border pt-3">
@@ -503,6 +517,17 @@ export function Navbar() {
               </Link>
             </div>
           )}
+          {/* Mobile Donate & Premium */}
+          <div className="mt-2 flex gap-2">
+            <Link href="/donate" onClick={() => setMobileOpen(false)}
+              className="flex-1 rounded-xl border border-accent/40 bg-accent/8 py-2.5 text-center text-sm font-semibold text-accent/80">
+              Donate
+            </Link>
+            <Link href="/premium" onClick={() => setMobileOpen(false)}
+              className="flex-1 rounded-xl bg-gradient-to-r from-yellow-500/80 to-amber-500/80 py-2.5 text-center text-sm font-bold text-white">
+              ⭐ Premium
+            </Link>
+          </div>
         </div>
       )}
     </header>

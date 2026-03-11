@@ -9,6 +9,7 @@ import { z } from 'zod'
 const SELECT = 'id,username,displayname,avatarurl,coverurl,bio,role,supporterrole,sociallinks,isprivate,createdat'
 
 const UpdateSchema = z.object({
+  username:    z.string().min(3).max(30).regex(/^[a-z0-9_]+$/, 'Hanya huruf kecil, angka, dan underscore').optional(),
   displayname: z.string().min(1).max(50).optional(),
   bio:         z.string().max(300).optional(),
   coverurl:    z.string().url().optional().or(z.literal('')),

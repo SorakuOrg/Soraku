@@ -186,6 +186,7 @@ export default function ProfilePage() {
   const [toast,    setToast]    = useState<{ msg: string; type: "ok" | "err" } | null>(null);
 
   const [displayname, setDisplayname] = useState("");
+  const [username,    setUsername]    = useState("");
   const [bio,         setBio]         = useState("");
   const [avatarurl,   setAvatarurl]   = useState("");
   const [coverurl,    setCoverurl]    = useState("");
@@ -210,6 +211,7 @@ export default function ProfilePage() {
       const p: Profile = d.data;
       setProfile(p);
       setDisplayname(p.displayname ?? "");
+      setUsername(p.username ?? "");
       setBio(p.bio ?? "");
       setAvatarurl(p.avatarurl ?? "");
       setCoverurl(p.coverurl ?? "");
@@ -230,7 +232,7 @@ export default function ProfilePage() {
     if (!mountRef.current) { mountRef.current = false; return; }
     if (!loading) setDirty(true);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [displayname, bio, avatarurl, coverurl, isprivate, socials]);
+  }, [displayname, username, bio, avatarurl, coverurl, isprivate, socials]);
 
   useEffect(() => { if (!loading) mountRef.current = true; }, [loading]);
 
@@ -240,7 +242,7 @@ export default function ProfilePage() {
       const res  = await fetch("/api/profile", {
         method:  "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ displayname: displayname || undefined, bio: bio || undefined, avatarurl: avatarurl || undefined, coverurl: coverurl || undefined, isprivate, sociallinks: socials }),
+        body: JSON.stringify({ username: username || undefined, displayname: displayname || undefined, bio: bio || undefined, avatarurl: avatarurl || undefined, coverurl: coverurl || undefined, isprivate, sociallinks: socials }),
       });
       const data = await res.json();
       if (!res.ok || data.error) {
@@ -374,7 +376,7 @@ export default function ProfilePage() {
             <Field label="Username" icon={AtSign} hint="Username tidak bisa diubah sendiri. Hubungi admin.">
               <div className="relative">
                 <span className="absolute left-4 top-1/2 -translate-y-1/2 text-xs text-muted-foreground/30 select-none">@</span>
-                <Input value={profile.username ?? ""} disabled className="pl-7" />
+                <Input value={username} onChange={e => { setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, '')); setDirty(true); }} placeholder="username_kamu" maxLength={30} className="pl-7" />
               </div>
             </Field>
 
