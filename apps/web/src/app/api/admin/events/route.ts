@@ -4,6 +4,8 @@ import { ok, err, FORBIDDEN, SERVER_ERROR } from '@/lib/api'
 import { NextRequest } from 'next/server'
 import { z } from 'zod'
 
+export const dynamic = 'force-dynamic'
+
 const EventSchema = z.object({
   slug:        z.string().min(1),
   title:       z.string().min(1),

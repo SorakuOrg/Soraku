@@ -1,6 +1,8 @@
 import { adminDb } from '@/lib/supabase/admin'
 import { NextRequest, NextResponse } from 'next/server'
 
+export const dynamic = 'force-dynamic'
+
 // POST /api/premium/xendit/webhook
 export async function POST(req: NextRequest) {
   try {

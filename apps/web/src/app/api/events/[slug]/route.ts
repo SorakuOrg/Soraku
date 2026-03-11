@@ -3,6 +3,8 @@ import { getSession, isStaff } from '@/lib/auth'
 import { ok, NOT_FOUND, SERVER_ERROR } from '@/lib/api'
 import { NextRequest } from 'next/server'
 
+export const dynamic = 'force-dynamic'
+
 type Params = { params: Promise<{ slug: string }> }
 
 // GET /api/events/[slug]

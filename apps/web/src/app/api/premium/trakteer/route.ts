@@ -1,6 +1,8 @@
 import { adminDb } from '@/lib/supabase/admin'
 import { NextRequest, NextResponse } from 'next/server'
 
+export const dynamic = 'force-dynamic'
+
 // ─── Trakteer Webhook Format ────────────────────────────────────────────────
 // Docs: https://trakteer.id/dashboard/webhook
 // Header: trakteer-signature (HMAC-SHA256 dari body + TRAKTEER_WEBHOOK_TOKEN)

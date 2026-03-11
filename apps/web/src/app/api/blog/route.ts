@@ -3,6 +3,8 @@ import { getSession, isStaff } from '@/lib/auth'
 import { ok, SERVER_ERROR } from '@/lib/api'
 import { NextRequest } from 'next/server'
 
+export const dynamic = 'force-dynamic'
+
 // GET /api/blog?page=1&limit=12&tag=
 export async function GET(req: NextRequest) {
   try {

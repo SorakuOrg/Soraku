@@ -2,6 +2,8 @@ import { adminDb } from '@/lib/supabase/admin'
 import { ok, SERVER_ERROR } from '@/lib/api'
 import { NextRequest } from 'next/server'
 
+export const dynamic = 'force-dynamic'
+
 // GET /api/premium/donatur?period=all|month
 export async function GET(req: NextRequest) {
   try {

@@ -4,6 +4,8 @@ import { ok, err, FORBIDDEN, SERVER_ERROR } from '@/lib/api'
 import { NextRequest } from 'next/server'
 import { z } from 'zod'
 
+export const dynamic = 'force-dynamic'
+
 const PatchSchema = z.object({
   id:            z.string().uuid(),
   role:          z.enum(['OWNER','MANAGER','ADMIN','AGENSI','KREATOR','USER']).optional(),

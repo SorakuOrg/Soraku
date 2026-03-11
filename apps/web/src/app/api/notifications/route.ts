@@ -4,6 +4,8 @@ import { ok, err, UNAUTHORIZED, SERVER_ERROR } from '@/lib/api'
 import { NextRequest } from 'next/server'
 import { z } from 'zod'
 
+export const dynamic = 'force-dynamic'
+
 const MarkReadSchema = z.object({
   ids: z.array(z.string().uuid()).min(1),
 })

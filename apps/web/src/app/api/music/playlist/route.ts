@@ -1,6 +1,8 @@
 import { adminDb } from '@/lib/supabase/admin'
 import { ok, SERVER_ERROR } from '@/lib/api'
 
+export const dynamic = 'force-dynamic'
+
 // GET /api/music/playlist
 // Response shape sesuai interface di src/context/music-player.tsx
 export async function GET() {

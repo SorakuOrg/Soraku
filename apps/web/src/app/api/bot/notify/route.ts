@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { z } from "zod";
 
+export const dynamic = 'force-dynamic'
+
 const Schema = z.object({
   discordId: z.string(),
   message:   z.string().max(2000),

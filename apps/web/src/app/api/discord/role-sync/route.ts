@@ -2,6 +2,8 @@ import { adminDb, createAdminClient } from '@/lib/supabase/admin'
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 
+export const dynamic = 'force-dynamic'
+
 const Schema = z.object({
   discordId:    z.string(),
   discordRoles: z.array(z.string()),

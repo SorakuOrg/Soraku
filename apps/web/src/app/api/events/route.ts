@@ -3,6 +3,8 @@ import { getSession, isStaff } from '@/lib/auth'
 import { ok, SERVER_ERROR } from '@/lib/api'
 import { NextRequest } from 'next/server'
 
+export const dynamic = 'force-dynamic'
+
 // GET /api/events?status=upcoming|past|all
 export async function GET(req: NextRequest) {
   try {

@@ -219,3 +219,30 @@ dengan arsitektur yang sepenuhnya berbeda dari versi sebelumnya.
   tapi package belum ada di `package.json`. Build akan gagal saat runtime.
 - `fix(bot): hapus @node-fetch/undici` — package tidak dipakai di mana-mana, hapus dari deps.
 - `fix(bot): bump version 0.0.1 → 0.1.0` — mencerminkan first working release
+
+## [0.1.0] — 2026-03-10 · Audit & Critical Fix
+
+### Fixed (Sora — Critical Security)
+- `fix(middleware): buat src/middleware.ts yang benar`
+  **Root cause:** Next.js HANYA membaca `middleware.ts`, bukan `proxy.ts`.
+  `proxy.ts` yang sudah ada sama sekali tidak dipanggil — route `/dashboard` dan `/admin`
+  **tidak terproteksi** siapapun bisa akses tanpa login.
+  **Fix:** Buat `src/middleware.ts` yang re-export `proxy as middleware` dari `proxy.ts`.
+  `proxy.ts` tetap ada sebagai logika modular.
+
+### Fixed (Sora — Coding Rule)
+- `fix(api): tambah force-dynamic ke 29 API routes`
+  Semua API routes di `src/app/api/**` tidak punya `export const dynamic = 'force-dynamic'`.
+  Tanpa ini Next.js/Vercel bisa cache response dan data tidak update realtime.
+  Fix otomatis ke semua 29 routes: admin/*, agensi/*, auth/*, blog/*, bot/*,
+  discord/*, events/*, gallery/*, music/*, notifications/*, premium/*
+
+### Pending → Revisi ke Bubu
+- 5 admin pages masih pakai mock data (API routes sudah siap di Kaizo):
+  `/admin` `/admin/blog` `/admin/events` `/admin/gallery` `/admin/users`
+- `force-dynamic` belum ada di 13 front-end pages
+  Detail: lihat `docs/revisi/BUBU.md` section Revisi Dari Sora
+
+### Pending → Catatan ke Kaizo
+- Mulai sekarang setiap API route baru wajib `export const dynamic = 'force-dynamic'`
+  Detail: lihat `docs/revisi/KAIZO.md` section Revisi Dari Sora

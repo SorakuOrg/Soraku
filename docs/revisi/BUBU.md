@@ -282,3 +282,67 @@ Semua halaman sudah siap UI. Kaizo sudah buat API routes berikut — Bubu tingga
 - [ ] Tambahkan nav items baru di navbar
 - [ ] Notification bell + user dropdown di navbar
 - [ ] Jangan ada inline SVG baru — semua dari `custom-icons.tsx`
+
+---
+
+## 🚨 REVISI DARI SORA — 2026-03-10 (Audit)
+
+### Temuan #1 — Admin pages MASIH pakai mock data (5 file)
+
+Kaizo sudah selesai buat semua API admin routes. Bubu tinggal connect UI ke API.
+
+File yang harus diupdate:
+```
+src/app/(admin)/admin/page.tsx         → MOCK_POSTS, MOCK_EVENTS → fetch /api/blog & /api/events
+src/app/(admin)/admin/blog/page.tsx    → MOCK_POSTS → fetch /api/blog
+src/app/(admin)/admin/events/page.tsx  → MOCK_EVENTS → fetch /api/events
+src/app/(admin)/admin/gallery/page.tsx → MOCK_GALLERY → fetch /api/gallery
+src/app/(admin)/admin/users/page.tsx   → MOCK_USERS inline → fetch /api/admin/users
+```
+
+Pattern yang Bubu pakai (admin pages adalah Client Component karena perlu state):
+```tsx
+"use client"
+import { useEffect, useState } from "react"
+
+export default function AdminBlogPage() {
+  const [posts, setPosts] = useState([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    fetch("/api/blog?limit=50")
+      .then(r => r.json())
+      .then(d => { setPosts(d.data ?? []); setLoading(false) })
+  }, [])
+
+  // render...
+}
+```
+
+### Temuan #2 — `force-dynamic` missing di front-end pages
+
+Aturan Soraku: semua pages wajib `export const dynamic = 'force-dynamic'`.
+Bubu tambahkan di baris pertama halaman-halaman ini:
+
+```tsx
+export const dynamic = 'force-dynamic'
+```
+
+Pages yang belum ada:
+```
+src/app/(admin)/admin/page.tsx
+src/app/(admin)/admin/blog/page.tsx
+src/app/(admin)/admin/events/page.tsx
+src/app/(admin)/admin/gallery/page.tsx
+src/app/(admin)/admin/users/page.tsx
+src/app/(auth)/login/page.tsx
+src/app/(auth)/register/page.tsx
+src/app/(public)/about/page.tsx
+src/app/(public)/donate/page.tsx
+src/app/(public)/gallery/upload/page.tsx
+src/app/(public)/page.tsx  (homepage)
+src/app/(public)/premium/page.tsx
+src/app/(public)/social/page.tsx
+```
+
+> Sora sudah handle `force-dynamic` di semua API routes (29 file). Bubu handle front-end pages.

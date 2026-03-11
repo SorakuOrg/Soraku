@@ -3,6 +3,8 @@ import { getSession } from '@/lib/auth'
 import { ok, err, UNAUTHORIZED, SERVER_ERROR } from '@/lib/api'
 import { NextRequest } from 'next/server'
 
+export const dynamic = 'force-dynamic'
+
 // POST /api/gallery/upload — FormData: { file, title?, description?, tags? }
 export async function POST(req: NextRequest) {
   try {

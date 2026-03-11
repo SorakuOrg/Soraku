@@ -203,3 +203,28 @@ const { data } = await db.schema("soraku").from("users").select()
 | 8 | `z.record(z.string())` | Zod v3 perlu 2 arg: `z.record(z.string(), z.string())` |
 | 9 | `ZodError.errors` tidak ada | Pakai `ZodError.issues` di Zod v3 |
 | 10 | `display_name` di UserSession | Field aslinya `displayname` (tanpa underscore) |
+
+---
+
+## 🚨 REVISI DARI SORA — 2026-03-10 (Audit)
+
+### Temuan — `force-dynamic` missing di semua API routes
+
+**Aturan wajib Soraku:** semua API routes harus ada `export const dynamic = 'force-dynamic'`
+agar Next.js tidak cache response di Vercel.
+
+**Sora sudah eksekusi fix ini** — semua 29 API routes sudah diinjeksi.
+Ini dokumentasi supaya Kaizo tahu aturannya dan TIDAK LUPA di API routes baru:
+
+```ts
+// Wajib di baris PERTAMA setiap route.ts baru
+export const dynamic = 'force-dynamic'
+
+import { adminDb } from '@/lib/supabase/admin'
+// ... sisa route
+```
+
+**Routes yang sudah difix oleh Sora (jangan diubah):**
+- Semua `src/app/api/**/*.ts` — 29 file total
+
+> Mulai sekarang setiap kali Kaizo buat API route baru, baris pertama harus `export const dynamic = 'force-dynamic'`.

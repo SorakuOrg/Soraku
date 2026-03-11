@@ -3,6 +3,8 @@ import { getSession, isStaff } from '@/lib/auth'
 import { ok, err, UNAUTHORIZED, SERVER_ERROR } from '@/lib/api'
 import { NextRequest } from 'next/server'
 
+export const dynamic = 'force-dynamic'
+
 // GET /api/gallery?category=&page=1&limit=20
 export async function GET(req: NextRequest) {
   try {

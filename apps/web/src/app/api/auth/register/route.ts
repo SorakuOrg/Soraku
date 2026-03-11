@@ -4,6 +4,8 @@ import { ok, err, SERVER_ERROR } from '@/lib/api'
 import { NextRequest } from 'next/server'
 import { z } from 'zod'
 
+export const dynamic = 'force-dynamic'
+
 const RegisterSchema = z.object({
   email:    z.string().email(),
   password: z.string().min(8, 'Password minimal 8 karakter'),
