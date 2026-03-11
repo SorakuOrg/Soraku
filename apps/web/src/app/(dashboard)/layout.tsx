@@ -77,9 +77,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             ))}
             <div className="pt-2 border-t border-border/50 mt-2">
               {user && IS_ADMIN(user.role) && (
-                <Link href="/admin"
+                <Link href="/dash/admin"
                   className={`flex items-center gap-2.5 rounded-xl px-3 py-2 text-sm font-medium transition-colors ${
-                    pathname.startsWith("/admin") ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-primary/8 hover:text-foreground"
+                    pathname.startsWith("/dash/admin") ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-primary/8 hover:text-foreground"
                   }`}>
                   <Shield className="h-4 w-4" />Admin Panel
                 </Link>

@@ -16,7 +16,7 @@ const OWNER_DISCORD_IDS = new Set([
 export async function GET(req: NextRequest) {
   const { searchParams, origin } = new URL(req.url)
   const code = searchParams.get('code')
-  const next = searchParams.get('next') ?? '/dashboard'
+  const next = searchParams.get('next') ?? '/dash/profile/me'
 
   if (!code) {
     return NextResponse.redirect(`${origin}/login?error=no_code`)
