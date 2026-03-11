@@ -227,3 +227,55 @@ Halaman ini perlu dibuat (bisa Sora atau Bubu):
 - `/tos`
 - `/feedback`
 - `/license`
+
+
+---
+
+## 📋 LAPORAN — 2026-03-12 (dari Bubu) — Profile Redesign
+
+### ✅ Selesai (Bubu — commit fd81b2d)
+
+**Profile /dash/profile/me — Redesign Identity Card:**
+- Identity card sekarang punya cover + avatar + bio dalam satu blok
+- Warna sesuai instruksi:
+  - Putih: Edit Profil & Lihat Profil button
+  - Kuning: Role badge (semua role = yellow tones)
+  - Hijau Muda: Supporter badge (Donatur/VIP/VVIP = green tones)
+  - Hijau Tua: Join date di bawah bio (text-green-400/40, redup)
+  - Merah: Sosial media icon buttons (red-400, border red-500/25)
+- Bio menyatu dalam box dengan join date di bawahnya
+- Navbar: hapus Donate & Premium dari user dropdown/mobile menu
+
+---
+
+### ❌ SORA — MASIH PERLU DIKERJAKAN
+
+**1. Supabase Auth URL Configuration (URGENT — login masih error)**
+- Dashboard → Authentication → URL Configuration
+- Site URL: `https://soraku.vercel.app`
+- Redirect URLs: `https://soraku.vercel.app/**`
+
+**2. Partnership Admin API**
+Bubu butuh endpoint ini untuk halaman admin partnerships:
+```
+POST   /api/admin/partnerships       → create
+PATCH  /api/admin/partnerships/[id]  → update
+DELETE /api/admin/partnerships/[id]  → delete
+GET    /api/admin/partnerships       → list all (termasuk inactive)
+```
+Setelah ada, Bubu langsung buat UI `/dash/admin/partnerships`.
+
+**3. Route Utility yang belum ada**
+Perlu dibuat (bisa Sora atau Bubu):
+- `/privacy-policy`
+- `/tos`  
+- `/feedback`
+- `/license`
+
+**4. Public Profile Page — enhancements**
+Lihat `/profile/[username]` — perlu color-code yang sama:
+- Role badge = yellow
+- Supporter badge = green
+- Join date = green muted
+- Sosial media = red icons
+Bubu bisa kerjakan ini setelah Sora konfirmasi DB fix.

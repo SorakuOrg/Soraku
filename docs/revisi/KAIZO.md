@@ -172,3 +172,33 @@ Setelah tambah → klik **Redeploy** di Vercel.
 Homepage sekarang fetch Discord Widget untuk stats real-time.
 Guild ID yang dipakai: `1033369620989124628`
 Pastikan Discord Widget **enabled** di: Server Settings → Widget → Enable Server Widget ✅
+
+
+---
+
+## 📋 LAPORAN — 2026-03-12 (dari Bubu) — Profile Redesign
+
+### ✅ Selesai
+Profile card `/dash/profile/me` sudah diredesign dengan color coding.
+Navbar user dropdown sudah bersih dari tombol Donate/Premium.
+
+### ❌ KAIZO — URGENT ACTIONS
+
+**1. SUPABASE_SERVICE_ROLE_KEY di Vercel** ← BELUM ADA, INI BIANG SEMUA ERROR
+Tanpa ini: profile gagal load, edit gagal, semua API server-side error.
+```
+Vercel Dashboard → soraku → Settings → Environment Variables:
+SUPABASE_SERVICE_ROLE_KEY = eyJ... (dari Supabase → Project Settings → API → service_role)
+```
+Setelah tambah → klik REDEPLOY.
+
+**2. OWNER_DISCORD_IDS**
+```
+OWNER_DISCORD_IDS = 1020644780075659356
+```
+Agar Riu otomatis dapat role OWNER saat login Discord.
+
+**3. Discord Widget**
+Aktifkan di: Soraku Discord Server → Settings → Widget → Enable Server Widget ✅
+Guild ID: `1033369620989124628`
+Ini untuk stats real-time di homepage.
