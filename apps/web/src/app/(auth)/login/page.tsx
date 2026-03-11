@@ -1,35 +1,54 @@
 "use client";
-
 export const dynamic = "force-dynamic";
 
 import Link from "next/link";
 import Image from "next/image";
 import { useState } from "react";
-import { Eye, EyeOff, ArrowRight } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { Eye, EyeOff, ArrowRight, AlertCircle } from "lucide-react";
 import { DiscordIcon, GoogleIcon } from "@/components/icons/custom-icons";
 
 export default function LoginPage() {
+  const router = useRouter();
   const [showPass, setShowPass] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const [loading,  setLoading]  = useState(false);
+  const [error,    setError]    = useState<string | null>(null);
+  const [form, setForm] = useState({ email: "", password: "" });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!form.email || !form.password) { setError("Isi email dan password dulu ya."); return; }
+    setError(null);
     setLoading(true);
-    // TODO Kaizo: POST /api/auth/login
-    setTimeout(() => setLoading(false), 1200);
+    try {
+      const res  = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: form.email, password: form.password }),
+      });
+      const data = await res.json();
+      if (!res.ok || data.error) {
+        setError(data.error ?? "Email atau password salah.");
+      } else {
+        router.push("/dashboard");
+        router.refresh();
+      }
+    } catch {
+      setError("Gagal terhubung ke server. Coba lagi.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <div className="relative flex min-h-[calc(100vh-4rem)] items-stretch">
 
-      {/* ── Left: Visual panel (desktop only) ── */}
+      {/* ── Kiri: Visual panel ── */}
       <div className="relative hidden flex-1 overflow-hidden lg:flex lg:flex-col lg:justify-between bg-gradient-to-br from-primary/12 via-background to-background/95 border-r border-border/40">
-        {/* Blobs */}
         <div className="pointer-events-none absolute inset-0">
           <div className="animate-blob absolute -top-32 -left-32 h-96 w-96 rounded-full bg-primary/12 blur-[120px]" />
           <div className="animate-blob animation-delay-2000 absolute bottom-0 right-0 h-80 w-80 rounded-full bg-accent/8 blur-[100px]" />
         </div>
-        {/* Mascot */}
         <div className="relative flex flex-1 items-center justify-center p-12">
           <div className="relative">
             <div className="absolute inset-0 -m-6 rounded-3xl bg-primary/6 blur-2xl" />
@@ -42,7 +61,6 @@ export default function LoginPage() {
             </div>
           </div>
         </div>
-        {/* Quote */}
         <div className="relative p-8 border-t border-border/30">
           <p className="text-sm text-muted-foreground/70 italic leading-relaxed">
             "Komunitas yang hangat untuk semua pecinta budaya pop Jepang di Indonesia."
@@ -51,9 +69,8 @@ export default function LoginPage() {
         </div>
       </div>
 
-      {/* ── Right: Form ── */}
+      {/* ── Kanan: Form ── */}
       <div className="relative flex flex-1 items-center justify-center px-4 py-12 sm:px-8 lg:max-w-[480px]">
-        {/* Mobile blobs */}
         <div className="pointer-events-none absolute inset-0 overflow-hidden lg:hidden">
           <div className="animate-blob absolute -top-20 -left-16 h-64 w-64 rounded-full bg-primary/7 blur-3xl" />
           <div className="animate-blob animation-delay-2000 absolute bottom-0 right-0 h-56 w-56 rounded-full bg-accent/5 blur-3xl" />
@@ -74,69 +91,79 @@ export default function LoginPage() {
           <h1 className="text-2xl font-black tracking-tight">Selamat Datang Kembali</h1>
           <p className="mt-1.5 text-sm text-muted-foreground">Masuk ke akun Soraku Community kamu</p>
 
-          {/* OAuth buttons */}
+          {/* OAuth */}
           <div className="mt-6 flex flex-col gap-2.5">
             <a href="/api/auth/discord"
               className="flex items-center justify-center gap-3 rounded-xl border border-indigo-500/30 bg-indigo-500/8 px-4 py-3 text-sm font-semibold text-indigo-300 transition-all hover:border-indigo-400/50 hover:bg-indigo-500/15 hover:-translate-y-0.5">
-              <DiscordIcon className="h-4 w-4" />
-              Masuk dengan Discord
+              <DiscordIcon className="h-5 w-5" />Masuk dengan Discord
             </a>
-            <button type="button"
-              className="flex items-center justify-center gap-3 rounded-xl border border-border/60 bg-card/50 px-4 py-3 text-sm font-medium text-muted-foreground transition-all hover:border-primary/30 hover:text-foreground hover:-translate-y-0.5">
-              <GoogleIcon className="h-4 w-4" />
-              Masuk dengan Google
-            </button>
+            <a href="/api/auth/google"
+              className="flex items-center justify-center gap-3 rounded-xl border border-border px-4 py-3 text-sm font-medium text-muted-foreground transition-all hover:border-primary/40 hover:bg-primary/5 hover:-translate-y-0.5">
+              <GoogleIcon className="h-5 w-5" />Masuk dengan Google
+            </a>
           </div>
 
           {/* Divider */}
           <div className="my-5 flex items-center gap-3">
-            <div className="h-px flex-1 bg-border/50" />
-            <span className="text-[11px] font-medium text-muted-foreground/40">atau masuk dengan email</span>
-            <div className="h-px flex-1 bg-border/50" />
+            <div className="flex-1 border-t border-border/50" />
+            <span className="text-xs text-muted-foreground/40 font-medium">atau</span>
+            <div className="flex-1 border-t border-border/50" />
           </div>
+
+          {/* Error */}
+          {error && (
+            <div className="mb-4 flex items-start gap-2.5 rounded-xl border border-destructive/30 bg-destructive/8 px-4 py-3">
+              <AlertCircle className="h-4 w-4 flex-shrink-0 text-destructive mt-0.5" />
+              <p className="text-sm text-destructive">{error}</p>
+            </div>
+          )}
 
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="mb-1.5 block text-sm font-medium">Email</label>
-              <input type="email" required placeholder="kamu@email.com"
-                className="w-full rounded-xl border border-border bg-card/50 px-4 py-2.5 text-sm placeholder:text-muted-foreground/40 focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all" />
+              <label className="mb-1.5 block text-xs font-semibold uppercase tracking-widest text-muted-foreground/60">Email</label>
+              <input
+                type="email"
+                autoComplete="email"
+                placeholder="kamu@example.com"
+                value={form.email}
+                onChange={e => setForm(p => ({ ...p, email: e.target.value }))}
+                className="w-full rounded-xl border border-border bg-card/50 px-4 py-3 text-sm outline-none placeholder:text-muted-foreground/40 focus:border-primary/50 focus:ring-1 focus:ring-primary/20 transition-colors"
+              />
             </div>
-
             <div>
               <div className="mb-1.5 flex items-center justify-between">
-                <label className="text-sm font-medium">Password</label>
-                <Link href="/forgot-password" className="text-xs text-primary/70 hover:text-primary transition-colors">
-                  Lupa password?
-                </Link>
+                <label className="text-xs font-semibold uppercase tracking-widest text-muted-foreground/60">Password</label>
+                <Link href="/forgot-password" className="text-xs text-primary/70 hover:text-primary transition-colors">Lupa password?</Link>
               </div>
               <div className="relative">
-                <input type={showPass ? "text" : "password"} required placeholder="••••••••"
-                  className="w-full rounded-xl border border-border bg-card/50 px-4 py-2.5 pr-10 text-sm placeholder:text-muted-foreground/40 focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all" />
-                <button type="button" onClick={() => setShowPass(!showPass)}
+                <input
+                  type={showPass ? "text" : "password"}
+                  autoComplete="current-password"
+                  placeholder="••••••••"
+                  value={form.password}
+                  onChange={e => setForm(p => ({ ...p, password: e.target.value }))}
+                  className="w-full rounded-xl border border-border bg-card/50 px-4 py-3 pr-11 text-sm outline-none placeholder:text-muted-foreground/40 focus:border-primary/50 focus:ring-1 focus:ring-primary/20 transition-colors"
+                />
+                <button type="button" onClick={() => setShowPass(p => !p)}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground/50 hover:text-muted-foreground transition-colors">
                   {showPass ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
               </div>
             </div>
-
             <button type="submit" disabled={loading}
-              className="group flex w-full items-center justify-center gap-2 rounded-xl bg-primary py-3 text-sm font-bold text-white shadow-md shadow-primary/20 transition-all hover:-translate-y-0.5 hover:shadow-primary/30 disabled:opacity-60 disabled:cursor-not-allowed">
+              className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 py-3 text-sm font-bold text-white shadow-lg shadow-primary/20 transition-all hover:-translate-y-0.5 disabled:opacity-60 disabled:pointer-events-none">
               {loading ? (
-                <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+                <><span className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />Masuk…</>
               ) : (
-                <>
-                  Masuk <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
-                </>
+                <>Masuk<ArrowRight className="h-4 w-4" /></>
               )}
             </button>
           </form>
 
-          <p className="mt-6 text-center text-sm text-muted-foreground/60">
+          <p className="mt-6 text-center text-sm text-muted-foreground">
             Belum punya akun?{" "}
-            <Link href="/register" className="font-semibold text-primary hover:underline">
-              Daftar gratis
-            </Link>
+            <Link href="/register" className="font-semibold text-primary hover:underline">Daftar gratis</Link>
           </p>
         </div>
       </div>

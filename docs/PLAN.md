@@ -174,6 +174,13 @@
 | Bot deploy Railway              | Kaizo | 🔴     | Set ENV vars di Railway + Vercel, lalu deploy         |
 | Admin form edit blog            | Bubu  | 🔜     | /admin/blog/[id]/edit — form prefill data existing    |
 | Admin form edit event           | Bubu  | 🔜     | /admin/events/[id]/edit — form prefill data existing  |
+| Login page → real API           | Bubu  | ✅     | POST /api/auth/login, error state, redirect dashboard |
+| Register page → real API        | Bubu  | ✅     | POST /api/auth/register, auto-login, 2-step form      |
+| Dashboard layout → real session | Bubu  | ✅     | fetch /api/auth/me, nama real, link admin jika staff  |
+| Profile page `/dashboard/profile`| Bubu | ✅     | CRUD: displayname, bio, avatar, cover, social links   |
+| API `/api/profile` GET + PATCH  | Bubu  | ✅     | Update profile user yang login, cek duplikat username |
+| Discord ID OWNER (Riu)          | Kaizo | 🔴     | ID 1020644780075659356 → role OWNER di auth callback  |
+| Admin form edit event           | Bubu  | 🔜     | /admin/events/[id]/edit — form prefill data existing  |
 
 ---
 

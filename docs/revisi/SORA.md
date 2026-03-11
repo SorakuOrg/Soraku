@@ -1,5 +1,5 @@
 # REVISI — SORA (Core / Full Stack Lead)
-> Update terakhir: 2026-03-11 — diupdate Kaizo
+> Update terakhir: 2026-03-11 — diupdate Bubu (v1.0 checklist)
 
 ---
 
@@ -33,141 +33,115 @@ Sora membaca file ini di awal setiap sesi, lalu lanjut kerja sesuai status di ba
 
 ---
 
-## ⚠️ WAJIB BACA — Perbedaan Schema DB vs Mock Data
+## ✅ v1.0 — Status Terkini
 
-> Kaizo sudah backup semua pages mock ke `docs/revisi/backup-v0.7.0/pages/`
-> dan implement real data. Sora tinggal connect sisa + bug fix.
+Semua core features sudah live. Berikut checklist final:
 
-### Nama tabel aktual di Supabase (`soraku` schema):
+| Area | Status |
+|------|--------|
+| Auth (login/register/OAuth) | ✅ Real API |
+| Navbar session real (fetch /api/auth/me) | ✅ |
+| Login page → POST /api/auth/login | ✅ Bubu fix |
+| Register page → POST /api/auth/register | ✅ Bubu fix |
+| Dashboard page → real DB stats | ✅ |
+| Dashboard layout → real session | ✅ Bubu fix |
+| Profile page `/dashboard/profile` | ✅ Bubu buat baru |
+| API `/api/profile` GET + PATCH | ✅ Bubu buat baru |
+| Admin panel → real API (semua 5 halaman) | ✅ |
+| Admin forms (new blog/event) | ✅ Sora |
+| Admin dashboard stats real | ✅ |
+| Blog, Events, Gallery, Agensi, Donatur | ✅ Real DB |
+| force-dynamic semua 13 front-end pages | ✅ |
+| Discord ID Riu → OWNER role | ⏳ Kaizo kerjakan |
+| Bot deploy Railway | 🔴 Kaizo urgent |
+| Tabel `partnerships` Supabase | 🔜 Kaizo |
+
+---
+
+## 🔜 Pending untuk Sora — v1.0 Post-Launch
+
+### 1. Supabase Realtime
+Ditunda dari v0.9.0. Implementasikan:
+- Gallery approval live update → `supabase.channel()` di `/gallery`
+- Notif count realtime → update badge bell tanpa polling
+- Online presence di `/about` stats
+
+Pattern:
+```ts
+import { createClient } from '@/lib/supabase/client'
+
+const supabase = createClient()
+const channel = supabase
+  .channel('gallery-updates')
+  .on('postgres_changes', { event: 'UPDATE', schema: 'soraku', table: 'gallery' }, (payload) => {
+    // update state
+  })
+  .subscribe()
+```
+
+### 2. Performance Audit (Lighthouse 90+)
+- Audit Core Web Vitals di Vercel Analytics
+- Optimize images (next/image sizes, lazy loading)
+- Review bundle size — identify heavy imports
+
+### 3. Security Audit
+- Rate limiting di auth routes (login brute force)
+- CORS headers review
+- CSP headers di next.config.ts
+- Review RLS Supabase — pastikan semua tabel protected
+
+### 4. Admin form edit blog & event
+Bubu sudah siapkan halaman: `/admin/blog/new` dan `/admin/events/new`.
+Yang belum ada:
+- `/admin/blog/[id]/edit` — form prefill existing post
+- `/admin/events/[id]/edit` — form prefill existing event
+
+Tombol Edit di tabel admin sudah ada (`href="/admin/blog/${post.id}/edit"`).
+**Koordinasi Bubu** untuk buat halaman ini di sprint berikutnya.
+
+### 5. E2E Tests (Playwright)
+- Auth flow: register → login → dashboard
+- Blog: list → detail
+- Gallery upload flow
+
+---
+
+## ⚠️ Schema DB — Perbedaan nama kolom
 
 | Mock pakai | DB sebenarnya |
-|-----------|--------------|
+|-----------|--------------| 
 | `blog_posts` | `posts` |
 | `gallery_items` | `gallery` |
-| `talents` | `vtubers` (hanya VTuber, tidak ada type field) |
 | `gallery.approved` (bool) | `gallery.status` ('pending'/'approved'/'rejected') |
-| `gallery.category` | **TIDAK ADA** — pakai `tags[0]` sebagai kategori |
-| `gallery.image_url` | `gallery.imageurl` |
-| `gallery.uploader_id` | `gallery.uploadedby` |
+| `gallery.category` | **TIDAK ADA** — pakai `tags[0]` |
 | `events.starts_at` | `events.startdate` |
-| `events.ends_at` | `events.enddate` |
 | `events.event_type` (string) | `events.isonline` (boolean) |
-| `events.discord_link` | **TIDAK ADA** |
-| `events.max_participants` | **TIDAK ADA** |
 | `posts.published` | `posts.ispublished` |
 | `posts.published_at` | `posts.publishedat` |
-| `posts.cover_url` | `posts.coverurl` |
-| `posts.author_id` | `posts.authorid` |
-| `posts.read_time` | **TIDAK ADA** |
-| `donatur.display_name` | `donatur.displayname` |
-| `donatur.is_public` | `donatur.ispublic` |
-| `donatur.user_id` | `donatur.userid` |
-| `donatur.created_at` | `donatur.createdat` |
 | `vtubers.bio` | `vtubers.description` |
 | `vtubers.avatar_url` | `vtubers.avatarurl` |
-| `vtubers.debut_date` | `vtubers.debutdate` |
-| `vtubers.is_active` | `vtubers.isactive` |
-| `vtubers.socials` | `vtubers.sociallinks` |
 
-### Pattern query wajib:
+---
+
+## Pattern Query Wajib
 
 ```ts
-// ✅ BENAR — Server Component query DB
+// ✅ Server Component → query DB langsung
 import { db } from "@/lib/supabase/server"
 const { data } = await (await db()).from("posts").select("...").eq("ispublished", true)
 
-// ✅ BENAR — wajib di semua page (Next.js 16)
+// ✅ force-dynamic wajib di semua page
 export const dynamic = "force-dynamic"
 
-// ✅ BENAR — searchParams di Next.js 16 harus awaited
+// ✅ searchParams Next.js 16 — wajib awaited
 export default async function Page({ searchParams }: { searchParams?: Promise<{ tag?: string }> }) {
   const params = await searchParams
   const tag = params?.tag ?? "Semua"
 }
 
-// ❌ JANGAN — fetch ke API dari Server Component
-const res = await fetch("/api/blog") // double round-trip, tidak perlu
+// ❌ JANGAN fetch ke API dari Server Component
+const res = await fetch("/api/blog") // double round-trip
 ```
-
----
-
-## Progress v0.7.0 (Kaizo backup + implement)
-
-| Halaman | Status | Catatan |
-|---------|--------|---------|
-| `/blog` | ✅ Kaizo | Real DB — `posts`, filter by `tags`, order by `publishedat` |
-| `/blog/[slug]` | ✅ Kaizo | Real DB + author join dari `users` |
-| `/events` | ✅ Kaizo | Real DB — filter `isonline` bool |
-| `/events/[slug]` | ✅ Kaizo | Real DB |
-| `/gallery` | ✅ Kaizo | Real DB — filter `status='approved'`, filter by `tags[0]` |
-| `/agensi` | ✅ Kaizo | Real DB — `vtubers`, ganti dari `MOCK_TALENTS` |
-| `/premium/donatur` | ✅ Kaizo | Real DB — order by `amount DESC` |
-| `/dashboard` | ✅ Kaizo | Real stats: post count + gallery count per user |
-
-### Backup mock pages ada di:
-```
-docs/revisi/backup-v0.7.0/pages/
-├── blog.page.tsx
-├── blog-slug.page.tsx
-├── events.page.tsx
-├── events-slug.page.tsx
-├── gallery.page.tsx
-├── agensi.page.tsx
-├── donatur.page.tsx
-└── dashboard.page.tsx
-```
-
----
-
-## Pending Tasks Sora — v0.7.0 Lanjutan
-
-### 🔴 Urgent — Belum dikerjakan Kaizo
-
-- [x] **`/agensi/vtuber`** — ✅ Kaizo — real DB, live badge, Image component
-  - Query: `vtubers` by slug, termasuk `islive`, `liveurl`, `subscribercount`
-  - Pattern sama: `await (await db()).from("vtubers").select(...).eq("slug", slug)`
-
-- [x] **`/gallery/upload`** — ✅ Kaizo — connect ke POST /api/gallery/upload, success state, error handling
-  - POST ke `/api/gallery/upload` (sudah ada) dengan `FormData: { file, title, tags }`
-  - Perlu `'use client'` + state management
-
-- [ ] **Connect IS_LOGGED_IN → auth session**
-  - File terkait: cek semua Navbar, UserDropdown yang masih pakai konstanta mock
-  - Pattern: `getSession()` dari `@/lib/auth` di Server Component
-  - Atau `createClient()` dari `@/lib/supabase/client` untuk Client Component
-
-### 🟠 Medium
-
-- [ ] **Admin panel → real data**
-  - `/admin/users` → GET `/api/admin/users` (sudah ada)
-  - `/admin/blog` → GET, POST, PATCH, DELETE via API routes (sudah ada)
-  - `/admin/events` → sama
-  - `/admin/gallery` → PATCH approve/reject, DELETE
-
-- [x] **packages/utils** — ✅ Kaizo — slugify, formatRupiah, formatDate, formatEventDate, truncate, generateAvatar, readingTime
-  ```ts
-  // packages/utils/src/index.ts — sudah ada tapi kosong
-  export function slugify(str: string): string
-  export function formatRupiah(amount: number): string
-  export function truncate(str: string, length: number): string
-  export function generateAvatar(name: string): string
-  ```
-
-- [x] **`/api/auth/register`** — ✅ Kaizo — POST, Zod validation, cek duplikat username
-  - POST body: `{ email, password, username }`
-  - Pakai: `supabase.auth.signUp()` + insert ke `soraku.users`
-
-- [x] **`/api/auth/login`** — ✅ Kaizo — POST signInWithPassword, return profile
-
-### 🟡 Low
-
-- [x] **Sitemap dynamic** — ✅ Kaizo — query real DB (posts + events), limit 200/100
-  - File sudah ada di `apps/web/src/app/sitemap.ts`
-  - Query `posts` dan `events` yang published, return array URL
-
-- [ ] **Supabase Realtime**
-  - Gallery approval live update
-  - Notif count realtime
 
 ---
 
@@ -176,50 +150,22 @@ docs/revisi/backup-v0.7.0/pages/
 ```
 apps/web/src/
 ├── app/
-│   ├── (public)/          ← semua halaman publik (Bubu design, Sora+Kaizo data)
-│   ├── (auth)/            ← login, register (Bubu design)
-│   ├── (dashboard)/       ← user dashboard — protected (Bubu design)
-│   ├── (admin)/           ← admin panel — ADMIN+ (Bubu design)
-│   └── api/               ← Route Handlers (Kaizo)
+│   ├── (public)/          ← semua halaman publik
+│   ├── (auth)/            ← login, register
+│   ├── (dashboard)/       ← user dashboard — protected
+│   ├── (admin)/           ← admin panel — ADMIN+
+│   └── api/               ← Route Handlers
 ├── components/
 │   ├── layout/            ← Navbar, Footer
-│   ├── icons/             ← custom-icons.tsx (registry SVG non-Lucide)
+│   ├── icons/             ← custom-icons.tsx
 │   └── ui/                ← shadcn primitives
-├── lib/
-│   ├── utils.ts           ← cn, formatDate, formatRupiah, formatEventDate
-│   ├── auth.ts            ← getSession(), isStaff(), isManager(), isOwner()
-│   ├── api.ts             ← ok(), err(), HTTP helpers
-│   ├── notifications.ts   ← NotifType, NOTIF_CONFIG
-│   └── supabase/
-│       ├── client.ts      ← browser client + db()
-│       ├── server.ts      ← server client (SSR) + db()
-│       └── admin.ts       ← admin client + adminDb() + createAdminClient()
-└── proxy.ts               ← Next.js 16 middleware (menggantikan middleware.ts)
-```
-
----
-
-## Rules Penting
-
-```ts
-// Semua pages wajib
-export const dynamic = "force-dynamic"
-
-// searchParams Next.js 16 — WAJIB awaited
-async function Page({ searchParams }: { searchParams?: Promise<{ key?: string }> }) {
-  const params = await searchParams  // ← wajib await
-}
-
-// Mutations via API routes — BUKAN Server Actions
-// ✅ fetch("/api/blog", { method: "POST", body: ... })
-// ❌ "use server" + action langsung
-
-// adminDb() → data queries
-// createAdminClient() → auth.admin operations
-
-// Semua DB queries → await (await db()) atau adminDb()
-const { data } = await (await db()).from("posts").select(...)
-const { data } = await adminDb().from("users").select(...)
+└── lib/
+    ├── auth.ts            ← getSession(), isStaff(), isManager(), isOwner()
+    ├── api.ts             ← ok(), err(), HTTP helpers
+    ├── notifications.ts   ← NotifType, NOTIF_CONFIG
+    └── supabase/
+        ├── server.ts      ← SSR client + db()
+        └── admin.ts       ← adminDb() + createAdminClient()
 ```
 
 ---
@@ -231,26 +177,8 @@ const { data } = await adminDb().from("users").select(...)
 | 1 | 2026-03-10 | Project reset → v0.0.1 | Riu |
 | 2 | 2026-03-10 | Schema `public` → `soraku` | Sora |
 | 3 | 2026-03-10 | `middleware.ts` → `proxy.ts` (Next.js 16) | Sora/Kaizo |
-| 4 | 2026-03-10 | Monorepo scaffold: stream, mobile, packages, services | Sora |
-| 5 | 2026-03-10 | Docs restructure: 4 file utama + `revisi/` | Sora |
-| 6 | 2026-03-11 | v0.7.0 — Backup mock + implement real DB di 8 pages | Kaizo |
-| 7 | 2026-03-11 | `CookieOptions` fix + `proxy.ts` + notif API | Kaizo |
-
----
-
-## Monorepo Roadmap
-
-Lihat `docs/MONOREPO.md` untuk detail lengkap.
-
-**Urutan pengerjaan:**
-1. ✅ `apps/web` v0.6.0
-2. 🔄 `packages/utils` + `packages/config` — isi content
-3. 🔜 `services/api` — central REST API
-4. 🔜 `packages/auth`
-5. 🔜 `apps/stream`
-6. 🔜 `apps/mobile`
-
-**Aturan arsitektur:**
-- `apps/web` JANGAN import langsung dari `services/`
-- Semua shared logic ke `packages/`
-- Jangan duplicate types — pakai dari `@soraku/types`
+| 4 | 2026-03-10 | Monorepo scaffold | Sora |
+| 5 | 2026-03-11 | v0.7.0 — Real DB di 8 pages | Kaizo |
+| 6 | 2026-03-11 | v0.9.0 — Redesign + Navbar auth | Bubu |
+| 7 | 2026-03-11 | v1.0 — Login/Register/Profile/Dashboard real | Bubu |
+| 8 | 2026-03-11 | Instruksi Discord ID OWNER ke Kaizo | Bubu |

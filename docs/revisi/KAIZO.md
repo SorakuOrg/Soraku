@@ -25,7 +25,57 @@
 
 ---
 
-## 🔴 URGENT — Bot Deploy Railway
+## 🔴 URGENT #1 — Discord ID Riu → Role OWNER
+
+**Permintaan dari Riu:** User dengan Discord ID `1020644780075659356` harus otomatis dapat role `OWNER` saat login via Discord OAuth.
+
+### Cara implementasinya:
+
+**Option A — Di `POST /api/auth/register` dan `/api/auth/callback`:**
+
+Cek apakah Discord ID user cocok dengan daftar OWNER, lalu set role di DB.
+
+```ts
+// Di src/app/api/auth/callback/route.ts atau register flow
+const OWNER_DISCORD_IDS = [
+  '1020644780075659356', // Riu
+]
+
+// Setelah user berhasil auth via Discord:
+const discordId = user.user_metadata?.provider_id ?? user.user_metadata?.sub
+const role = OWNER_DISCORD_IDS.includes(discordId) ? 'OWNER' : 'USER'
+
+await adminDb()
+  .from('users')
+  .upsert({
+    id:          user.id,
+    username:    ...,
+    displayname: ...,
+    role,           // ← OWNER jika Discord ID cocok
+  }, { onConflict: 'id' })
+```
+
+**Option B — Langsung update di Supabase Dashboard:**
+
+Buka Supabase → Table Editor → `soraku.users` → cari user Riu → ubah kolom `role` ke `OWNER`.
+
+> **Catatan Bubu:** Opsi B bisa dilakukan Riu sendiri setelah akun Discord-nya terdaftar. Tapi Kaizo perlu ensure Option A berjalan untuk akun baru di masa depan.
+
+### Yang harus Kaizo kerjakan:
+
+1. Update `apps/web/src/app/api/auth/callback/route.ts` — tambah OWNER check berdasarkan Discord ID
+2. Update `apps/web/src/app/api/auth/register/route.ts` — tambah logic yang sama untuk OAuth register
+3. Simpan `OWNER_DISCORD_IDS` di env var `OWNER_DISCORD_IDS=1020644780075659356` (bisa multiple, comma-separated) agar tidak hardcoded
+
+```ts
+// Pattern yang benar:
+const OWNER_IDS = (process.env.OWNER_DISCORD_IDS ?? '').split(',').map(s => s.trim())
+const isOwner   = OWNER_IDS.includes(discordId)
+```
+
+---
+
+## 🔴 URGENT #2 — Bot Deploy Railway
 
 Bot sudah selesai di-scaffold Sora dan siap deploy. **Kaizo yang set ENV dan deploy.**
 
@@ -47,23 +97,17 @@ PORT=3001
 BOT_WEBHOOK_URL=https://[project].up.railway.app
 BOT_WEBHOOK_SECRET=      # sama dengan WEBHOOK_SECRET di Railway
 SORAKU_API_SECRET=       # sama dengan di Railway
+OWNER_DISCORD_IDS=1020644780075659356   # ← TAMBAHKAN INI
 ```
 
 4. Deploy dari `services/bot/` — Railway sudah baca `railway.toml` otomatis
 5. Verifikasi: hit `GET https://[project].up.railway.app/health` → harus return `{ status: "ok" }`
 
-### Discord Role IDs (sudah hardcoded di bot):
-```
-DONATUR: 1436534227708543046
-VIP:     1447194092965728307
-VVIP:    1447194196401459320
-```
-
 ---
 
 ## 🔜 Task Selanjutnya untuk Kaizo
 
-### 1. Tabel `partnerships` di Supabase
+### 3. Tabel `partnerships` di Supabase
 `/api/partnerships` sudah ada tapi tabel belum dibuat. Bubu pakai ini di halaman `/about`.
 
 ```sql
@@ -77,12 +121,15 @@ CREATE TABLE soraku.partnerships (
   sortorder  INT DEFAULT 0,
   createdat  TIMESTAMPTZ DEFAULT now()
 );
+-- RLS: OWNER/MANAGER bisa CRUD, semua bisa READ
+ALTER TABLE soraku.partnerships ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "partnerships_select" ON soraku.partnerships FOR SELECT USING (isactive = true);
 ```
 
-Setelah tabel ada, isi data lewat Supabase dashboard atau buat admin form (koordinasi Bubu).
-
-### 2. Admin form untuk isi data `partnerships`
-Opsional — bisa diisi manual lewat Supabase dashboard dulu, nanti dibuat UI di admin panel.
+### 4. API `/api/profile` sudah dibuat Bubu — pastikan kompatibel
+Bubu sudah buat `apps/web/src/app/api/profile/route.ts` (GET + PATCH).
+Pastikan kolom yang di-update cocok dengan schema tabel `soraku.users`.
+Field yang di-update: `displayname`, `bio`, `avatarurl`, `coverurl`, `sociallinks`, `isprivate`, `updatedat`.
 
 ---
 
@@ -101,4 +148,3 @@ import { adminDb } from '@/lib/supabase/admin'
 - `adminDb()` untuk queries, `createAdminClient()` untuk auth.admin ops
 - Semua queries pakai `.schema('soraku')` (sudah include di `adminDb()`)
 - Response shape: `{ data, error, meta?: { total, page, limit } }`
-
