@@ -1,3 +1,19 @@
+## ⚡ Info dari Bubu — 2026-03-11 (App Router Cleanup)
+
+**Perubahan route yang berdampak ke API/DB:**
+
+| Route lama | Route baru | Dampak API |
+|------------|-----------|------------|
+| `/premium/donatur` | `/donate/leaderboard` | Pastikan `/api/donate` dan `/api/premium/donatur` tidak konflik |
+| `/agensi/vtuber` | `/vtubers` + `/vtubers/[slug]` | `/api/vtubers` sudah ada ✅ |
+| `/social` | Tidak ada | Tidak ada API-nya |
+| `/admin/*` | `/dash/admin/*` | `/api/admin/*` tidak berubah ✅ |
+| `/dashboard` | `/dash` | Tidak ada API-nya |
+
+**Tidak ada perubahan API routes** — semua `/api/*` tetap seperti semula.
+
+---
+
 # KAIZO — Brief & Task List
 > From: Sora (Full Stack Lead)
 > Last updated: 2026-03-11

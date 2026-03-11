@@ -4,6 +4,32 @@
 
 ---
 
+## [v1.0.3-cleanup] — 2026-03-11 · Bubu
+
+### App Router Cleanup — Hapus Route Deprecated
+
+Mengikuti `docs/routes/ROUTES.md` dan `docs/routes/NAMESPACE.md` dari Sora.
+
+**Routes dihapus:**
+- `(admin)/admin/*` — 7 pages + layout → sudah ada di `/dash/admin/*`
+- `(dashboard)/dashboard/` — legacy → ganti ke `/dash`
+- `(public)/agensi/vtuber/` → pindah ke `/vtubers`
+- `(public)/social/` → social links via icon komponen
+- `(public)/premium/donatur/` → pindah ke `/donate/leaderboard`
+- `(public)/profile/me/` → sudah di `/dash/profile/me`
+
+**Link fixes (6 file):**
+- login/register: redirect setelah auth `/dashboard` → `/dash`
+- dashboard/layout.tsx: sidebar links ke `/dash/*`
+- about/page.tsx: hapus link `/social`, CTA ganti ke Discord
+- agensi/page.tsx: `/agensi/vtuber` → `/vtubers`, card → `/vtubers/[slug]`
+- donate/page.tsx + premium/page.tsx: `/premium/donatur` → `/donate/leaderboard`
+
+**Build verified ✓** — tidak ada deprecated route di output build.
+
+---
+
+
 ## [v1.0.3] — 2026-03-11 · Kaizo
 
 ### Fix: /dash/profile/me gagal load (root cause 3 lapis)

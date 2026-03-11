@@ -1,3 +1,40 @@
+## ⚡ Update dari Bubu — 2026-03-11 (App Router Cleanup)
+
+### Route cleanup selesai — ikuti ROUTES.md & NAMESPACE.md
+
+**Dihapus:**
+- `(admin)/admin/*` (7 pages + layout) → sudah ada di `/dash/admin/*`
+- `(dashboard)/dashboard/` → pakai `/dash`
+- `(public)/agensi/vtuber/` → `/vtubers`
+- `(public)/social/` → icon komponen
+- `(public)/premium/donatur/` → `/donate/leaderboard`
+
+**Link fixes selesai (dari Checklist UI di ROUTES.md):**
+- ✅ Hapus link `/social`
+- ✅ Update link Top Donatur → `/donate/leaderboard`
+- ✅ Update link VTuber → `/vtubers` dan `/vtubers/[slug]`
+- ✅ Update link Admin → `/dash/admin`
+- ✅ Login/Register redirect → `/dash`
+
+**Build clean ✓** — hanya route valid yang muncul
+
+**Pending untuk Sora (dari ROUTES.md Checklist Backend):**
+| Task | Status |
+|------|--------|
+| API `/api/vtubers` | ✅ Sudah ada (Sora buat) |
+| Pisahkan endpoint `/api/donate` | ❌ TODO |
+| Update sitemap | ❌ TODO |
+| Supabase Realtime notifikasi | ❌ TODO |
+
+**Arsitektur yang benar sekarang (update dari ROUTES.md Section 5):**
+```
+(admin)/           ← KOSONG — semua sudah pindah ke /dash/admin
+(dashboard)/dash/  ← admin + profile/me
+(public)/          ← semua halaman publik (TANPA /social, /agensi/vtuber, /premium/donatur)
+```
+
+---
+
 ## ⚡ Update Paling Baru dari Kaizo — 2026-03-11
 
 ### Profile routing diubah lagi — PENTING
