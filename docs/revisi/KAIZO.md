@@ -1,230 +1,104 @@
-# REVISI — KAIZO (Back-end Developer)
-> Update terakhir: 2026-03-11
+# KAIZO — Revisi & Task List
+> Back-end Soraku Community
+> Last updated: 2026-03-11
 
 ---
 
-## 💙 Dari Riu & Sora
+## ✅ Sudah Selesai (dicatat Sora)
 
-Kaizo, lo adalah fondasi dari semua ini.
-
-Semua yang Bubu bangun di depan, semua yang Sora rancang di arsitektur — semuanya bisa jalan karena API dan auth yang lo handle di belakang. Kalau backend lo goyah, semua rubuh. Dan sejauh ini, lo yang jaga supaya itu gak terjadi.
-
-Bugs yang lo fix bukan cuma fix — itu pelajaran yang kita dokumentasikan supaya tim kita makin solid ke depannya. Gak ada yang expect lo sempurna. Tapi lo diharapkan jujur kalau ada yang berat atau bingung — supaya kita bisa solve bareng.
-
-> *"First, solve the problem. Then, write the code."*
-> — John Johnson
-
-Kalau ada yang aneh di DB atau auth, langsung ping Sora. Jangan dipendem sendiri.
-
-– Riu & Sora
-
----
-
-## Stack Kaizo
-
-- Supabase (Auth + PostgreSQL + RLS + Storage) — schema: `soraku`
-- Next.js Route Handlers di `apps/web/src/app/api/`
-- Zod untuk validasi semua input
-- Payments: Trakteer (aktif), Xendit (draft)
-
-### Supabase Project
-- Project ID: `jrgknsxqwuygcoocnnnb`
-- Region: Southeast Asia
-- Migration folder: `apps/web/supabase/migrations/`
+| Fitur | Keterangan |
+|-------|-----------|
+| Supabase schema + RLS | 15 tabel di schema soraku, RLS aktif |
+| Auth middleware | src/proxy.ts — role-based (Next.js 16) |
+| /api/auth/login + register | Zod validate, signInWithPassword, upsert profile |
+| /api/auth/me + signout + callback | Session management lengkap |
+| Semua GET API routes | blog, events, gallery, agensi, donatur, music, discord/stats |
+| Semua admin API routes | /api/admin/users + blog + events + gallery (CRUD) |
+| /api/gallery/upload | Upload file ke Supabase Storage |
+| /api/premium/trakteer | Webhook → update DB + insert notif + trigger bot DM + update Discord role |
+| /api/premium/xendit | Create invoice + webhook handler |
+| /api/notifications | GET list + PATCH mark-as-read |
+| /api/discord/role-sync | guildMemberUpdate dari bot → update DB |
+| /api/admin/stats | Single endpoint dashboard — Promise.all 6 queries |
+| packages/utils | slugify, formatDate, formatRupiah, truncate, readingTime, dll |
+| Sitemap dynamic | Query real DB posts + events |
 
 ---
 
-## Rules Wajib — Jangan Sampai Lupa
+## 🔴 URGENT — Bot Deploy Railway
 
-```ts
-// ✅ BENAR — z.record selalu 2 argumen
-z.record(z.string(), z.string()).default({})
+Bot sudah selesai di-scaffold Sora dan siap deploy. **Kaizo yang set ENV dan deploy.**
 
-// ❌ SALAH — z.record 1 argumen, akan error di Vercel
-z.record(z.string())
+### Langkah:
+1. Buka Railway project → pilih service `soraku-bot`
+2. Set semua ENV vars di Railway:
+```env
+DISCORD_TOKEN=           # dari Discord Developer Portal
+DISCORD_GUILD_ID=        # ID server Soraku Discord
+DISCORD_EVENT_CHANNEL_ID=# ID channel #event-soraku
+SORAKU_API_URL=https://soraku.vercel.app
+SORAKU_API_SECRET=       # generate random string, sama dengan di Vercel
+WEBHOOK_SECRET=          # generate random string, sama dengan BOT_WEBHOOK_SECRET Vercel
+PORT=3001
 ```
 
-```ts
-// ✅ BENAR — adminDb() untuk data queries
-const data = await adminDb().schema("soraku").from("users").select()
-
-// ✅ BENAR — createAdminClient() untuk auth.admin operations
-const admin = createAdminClient()
-await admin.auth.admin.listUsers()
-
-// ❌ SALAH — adminDb() tidak punya .auth
-await adminDb().auth.admin.listUsers()
+3. Set ENV vars di **Vercel** juga:
+```env
+BOT_WEBHOOK_URL=https://[project].up.railway.app
+BOT_WEBHOOK_SECRET=      # sama dengan WEBHOOK_SECRET di Railway
+SORAKU_API_SECRET=       # sama dengan di Railway
 ```
 
-```ts
-// ✅ BENAR — Cookie types di server.ts dan proxy.ts
-import { createServerClient, type CookieOptions } from "@supabase/ssr"
-setAll(cookiesToSet: { name: string; value: string; options: CookieOptions }[])
+4. Deploy dari `services/bot/` — Railway sudah baca `railway.toml` otomatis
+5. Verifikasi: hit `GET https://[project].up.railway.app/health` → harus return `{ status: "ok" }`
 
-// ❌ SALAH — implicit any akan error TypeScript strict
-setAll(cookiesToSet) // ERROR: Parameter 'cookiesToSet' implicitly has an 'any' type
+### Discord Role IDs (sudah hardcoded di bot):
 ```
-
-```ts
-// ✅ BENAR — proxy.ts Next.js 16: export function WAJIB bernama "proxy"
-export async function proxy(request: NextRequest) { ... }
-
-// ❌ SALAH — nama lama, akan error build
-export async function middleware(request: NextRequest) { ... }
-```
-
-```ts
-// Semua DB queries WAJIB pakai .schema("soraku")
-const { data } = await db.schema("soraku").from("users").select()
+DONATUR: 1436534227708543046
+VIP:     1447194092965728307
+VVIP:    1447194196401459320
 ```
 
 ---
 
-## Response Format — WAJIB Konsisten
+## 🔜 Task Selanjutnya untuk Kaizo
 
-```ts
-// Success
-{ data: T, error: null, meta?: { total: number, page: number, limit: number } }
+### 1. Tabel `partnerships` di Supabase
+`/api/partnerships` sudah ada tapi tabel belum dibuat. Bubu pakai ini di halaman `/about`.
 
-// Error
-{ data: null, error: { message: string, code?: string } }
+```sql
+CREATE TABLE soraku.partnerships (
+  id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  name       TEXT NOT NULL,
+  logourl    TEXT NOT NULL,
+  website    TEXT,
+  category   TEXT DEFAULT 'partner',
+  isactive   BOOLEAN DEFAULT true,
+  sortorder  INT DEFAULT 0,
+  createdat  TIMESTAMPTZ DEFAULT now()
+);
 ```
 
----
+Setelah tabel ada, isi data lewat Supabase dashboard atau buat admin form (koordinasi Bubu).
 
-## Database Schema (Aktual di Supabase)
-
-> ⚠️ Nama kolom DB berbeda dari mock data. Selalu cek nama kolom aktual!
-
-| Tabel | Kolom penting |
-|-------|--------------|
-| `users` | id, username, displayname, avatarurl, role, supporter_role, social_links, created_at |
-| `posts` | id, slug, title, excerpt, content, coverurl, tags, ispublished, publishedat, authorid |
-| `events` | id, slug, title, description, coverurl, startdate, enddate, location, isonline, ispublished, tags |
-| `gallery` | id, imageurl, title, description, tags, status('pending'/'approved'/'rejected'), uploadedby |
-| `vtubers` | id, slug, name, charactername, avatarurl, coverurl, description, debutdate, tags, sociallinks, isactive, islive, liveurl, subscribercount, ispublished |
-| `donatur` | id, userid, displayname, amount, tier, message, ispublic, createdat |
-| `musictracks` | id, title, artist, anime, coverurl, srcurl, duration, ordernum, isactive |
-| `notifications` | id, userid, type, title, body, href, isread, createdat |
+### 2. Admin form untuk isi data `partnerships`
+Opsional — bisa diisi manual lewat Supabase dashboard dulu, nanti dibuat UI di admin panel.
 
 ---
 
-## ✅ Semua Yang Sudah Dikerjakan Kaizo
-
-### v0.2.0 – v0.5.0 (Backend Foundation)
-| # | Selesai |
-|---|---------|
-| ✅ | Supabase project setup — schema `soraku`, 15 tabel, RLS |
-| ✅ | `src/lib/supabase/{types,client,server,admin}.ts` |
-| ✅ | `src/lib/auth.ts` — getSession(), isStaff(), isManager(), isOwner() |
-| ✅ | `src/lib/api.ts` — ok(), err(), HTTP helpers |
-| ✅ | `src/proxy.ts` — Next.js 16 route protection (ganti middleware.ts) |
-| ✅ | `/api/auth/{callback,signout,me}` |
-| ✅ | `/api/blog` + `/api/blog/[slug]` |
-| ✅ | `/api/events` + `/api/events/[slug]` |
-| ✅ | `/api/gallery` + `/api/gallery/upload` |
-| ✅ | `/api/agensi` + `/api/agensi/[slug]` |
-| ✅ | `/api/premium/donatur` |
-| ✅ | `/api/premium/xendit/create` + `/api/premium/xendit/webhook` |
-| ✅ | `/api/music/playlist` |
-| ✅ | `/api/discord/role-sync` |
-| ✅ | `/api/admin/users` |
-| ✅ | `/api/admin/blog` + `/api/admin/blog/[id]` |
-| ✅ | `/api/admin/events` + `/api/admin/events/[id]` |
-| ✅ | `/api/admin/gallery/[id]` |
-
-### v0.6.0 – v0.8.0 (Discord Bot)
-| # | Selesai |
-|---|---------|
-| ✅ | `services/bot/src/index.ts` — Discord.js v14, entry point |
-| ✅ | `services/bot/src/events/ready.ts` |
-| ✅ | `services/bot/src/events/guildMemberUpdate.ts` → POST /api/discord/role-sync |
-| ✅ | `services/bot/src/webhooks/server.ts` — Hono HTTP port 3001 |
-| ✅ | `POST /webhook/notify` — DM user Discord |
-| ✅ | `POST /webhook/role-update` — update role Discord |
-| ✅ | `POST /webhook/discord-event` — announce ke channel |
-| ✅ | `GET /health` — Railway healthcheck |
-| ✅ | `services/bot/Dockerfile` + `railway.toml` |
-| ✅ | Slash commands scaffold: /ping /member /event |
-| ✅ | `/api/bot/notify` + `/api/bot/announce` (web → bot) |
-
-### v0.9.0 (Notifikasi + Trakteer + Auth)
-| # | Selesai |
-|---|---------|
-| ✅ | Migration `soraku.notifications` — RLS, index |
-| ✅ | `GET /api/notifications` — real DB (ganti mock) |
-| ✅ | `PATCH /api/notifications` — mark as read by ids |
-| ✅ | `POST /api/premium/trakteer` — webhook lengkap |
-|   |   update DB supporter_tier + supporterhistory + donatur |
-|   |   notif in-app + bot DM + bot role Discord |
-| ✅ | `POST /api/auth/register` — Zod, cek duplikat username |
-| ✅ | `POST /api/auth/login` — signInWithPassword, return profile |
-
-### v0.7.0 (Real Data Integration — dikerjakan untuk Sora)
-| # | Selesai |
-|---|---------|
-| ✅ | Backup semua mock pages → `docs/revisi/backup-v0.7.0/pages/` |
-| ✅ | `/blog` → real DB (`posts`, filter tags, order publishedat) |
-| ✅ | `/blog/[slug]` → real DB + author join |
-| ✅ | `/events` → real DB (isonline bool, split upcoming/past) |
-| ✅ | `/events/[slug]` → real DB + notFound() |
-| ✅ | `/gallery` → real DB (status=approved, filter tags, Next.js Image) |
-| ✅ | `/agensi` → real DB (`vtubers`) |
-| ✅ | `/agensi/vtuber` → real DB (live badge, avatarurl, subscribercount) |
-| ✅ | `/premium/donatur` → real DB (order amount DESC, podium) |
-| ✅ | `/dashboard` → real stats per user (post count + gallery count) |
-| ✅ | `/gallery/upload` → connect ke POST /api/gallery/upload, success UI |
-| ✅ | `sitemap.ts` → real DB (posts limit 200 + events limit 100) |
-| ✅ | `packages/utils/src/index.ts` — slugify, formatRupiah, formatDate, formatEventDate, truncate, generateAvatar, readingTime, isValidUrl |
-
----
-
-## ❌ Yang Belum (Pending Sora / Tim)
-
-| # | Task | Owner |
-|---|------|-------|
-| ❌ | Connect `IS_LOGGED_IN` → real auth session di Navbar/UserDropdown | Sora |
-| ❌ | Admin panel pages connect ke API routes | Sora |
-| ❌ | Supabase Realtime — gallery approval live, notif count | Sora |
-
----
-
-## Log Bug Patterns (Jangan Diulang)
-
-| # | Bug | Fix |
-|---|-----|-----|
-| 1 | `z.record(z.string())` — Zod v3 error | Selalu 2 arg: `z.record(z.string(), z.string())` |
-| 2 | `adminDb().auth` tidak ada | Gunakan `createAdminClient().auth.admin` |
-| 3 | Cookie handler implicit `any` | Import `CookieOptions` dari `@supabase/ssr` |
-| 4 | `middleware.ts` + `proxy.ts` konflik | Hapus middleware.ts, pakai proxy.ts saja |
-| 5 | `onError` di `<Image>` di Server Component | Hapus — event handler tidak bisa di server component |
-| 6 | `Parameters<CookieMethodsServer['setAll']>` error | Method optional — pakai `CookieOptions` dari `@supabase/ssr` |
-| 7 | `proxy.ts` export nama salah | Export function **wajib** bernama `proxy`, bukan `middleware` |
-| 8 | `z.record(z.string())` | Zod v3 perlu 2 arg: `z.record(z.string(), z.string())` |
-| 9 | `ZodError.errors` tidak ada | Pakai `ZodError.issues` di Zod v3 |
-| 10 | `display_name` di UserSession | Field aslinya `displayname` (tanpa underscore) |
-
----
-
-## 🚨 REVISI DARI SORA — 2026-03-10 (Audit)
-
-### Temuan — `force-dynamic` missing di semua API routes
-
-**Aturan wajib Soraku:** semua API routes harus ada `export const dynamic = 'force-dynamic'`
-agar Next.js tidak cache response di Vercel.
-
-**Sora sudah eksekusi fix ini** — semua 29 API routes sudah diinjeksi.
-Ini dokumentasi supaya Kaizo tahu aturannya dan TIDAK LUPA di API routes baru:
+## 📌 Rules Wajib
 
 ```ts
-// Wajib di baris PERTAMA setiap route.ts baru
+// WAJIB di baris pertama setiap route.ts baru
 export const dynamic = 'force-dynamic'
 
 import { adminDb } from '@/lib/supabase/admin'
-// ... sisa route
+// ...
 ```
 
-**Routes yang sudah difix oleh Sora (jangan diubah):**
-- Semua `src/app/api/**/*.ts` — 29 file total
+- Semua response pakai `ok()` / `err()` dari `@/lib/api`
+- Zod validasi semua input POST/PATCH
+- `adminDb()` untuk queries, `createAdminClient()` untuk auth.admin ops
+- Semua queries pakai `.schema('soraku')` (sudah include di `adminDb()`)
+- Response shape: `{ data, error, meta?: { total, page, limit } }`
 
-> Mulai sekarang setiap kali Kaizo buat API route baru, baris pertama harus `export const dynamic = 'force-dynamic'`.

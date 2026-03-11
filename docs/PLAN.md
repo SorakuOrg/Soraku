@@ -1,5 +1,8 @@
 # SORAKU — PLAN.md
 > Koordinasi Tim: Riu (Owner) · Sora (Full Stack) · Bubu (Front-end) · Kaizo (Back-end)
+> Last updated: 2026-03-11
+
+---
 
 ## v0.0.1 — Foundation ✅
 
@@ -11,7 +14,7 @@
 | Homepage              | Bubu  | ✅     | Hero blob, badges, marquee                   |
 | About page            | Bubu  | ✅     | Filosofi, pilar, tim, CTA                   |
 | UI primitives         | Bubu  | ✅     | Button, Badge, Avatar, Separator             |
-| Types                 | Sora  | ✅     | User, BlogPost, Event, GalleryItem + Talent/VTuber/Donatur |
+| Types                 | Sora  | ✅     | User, BlogPost, Event, GalleryItem + Talent  |
 | 404 page              | Bubu  | ✅     | Custom dengan kanji 空                       |
 | Vercel deploy         | Sora  | ✅     | soraku.vercel.app — LIVE                     |
 
@@ -31,17 +34,17 @@
 | Schema DB                  | Kaizo | ✅     | 15 tabel di schema soraku, RLS aktif         |
 | Login page UI              | Bubu  | ✅     | 2 step + Discord OAuth button                |
 | Register page UI           | Bubu  | ✅     | 2 step form + benefits panel                 |
-| Auth middleware             | Kaizo | ✅     | src/proxy.ts — role-based protection (Next.js 16) |
+| Auth middleware             | Kaizo | ✅     | src/proxy.ts — role-based (Next.js 16)       |
 | Dashboard layout + page    | Bubu  | ✅     | Sidebar, stats, quick links                  |
 
-## v0.3.0 — Konten ✅ (UI + mock data)
+## v0.3.0 — Konten ✅
 
 | Feature                    | Owner | Status | Catatan                                      |
 |----------------------------|-------|--------|----------------------------------------------|
 | Blog listing page          | Bubu  | ✅     | Filter tag, featured post, grid              |
 | Blog detail page           | Bubu  | ✅     | /blog/[slug], related posts, metadata        |
 | Blog API (GET)             | Kaizo | ✅     | /api/blog + /api/blog/[slug]                 |
-| Events listing page        | Bubu  | ✅     | Upcoming/past, card grid, info lengkap       |
+| Events listing page        | Bubu  | ✅     | Upcoming/past, card grid                     |
 | Events detail page         | Bubu  | ✅     | /events/[slug], Discord CTA                  |
 | Events API (GET)           | Kaizo | ✅     | /api/events + /api/events/[slug]             |
 | Galeri grid page           | Bubu  | ✅     | Masonry layout, filter kategori              |
@@ -50,7 +53,7 @@
 | Loading skeletons          | Bubu  | ✅     | Blog, events, gallery loading.tsx            |
 | Error boundaries           | Bubu  | ✅     | Blog, events error.tsx                       |
 
-## v0.4.0 — Agensi & Premium ✅ (UI + mock data)
+## v0.4.0 — Agensi & Premium ✅
 
 | Feature                    | Owner | Status | Catatan                                      |
 |----------------------------|-------|--------|----------------------------------------------|
@@ -62,7 +65,7 @@
 | Donate page                | Bubu  | ✅     | Trakteer redirect, how-to, usage             |
 | Top Donatur page           | Bubu  | ✅     | Podium 🥇🥈🥉, full list, gold glow          |
 
-## v0.5.0 — Admin Panel ✅ (UI + mock data)
+## v0.5.0 — Admin Panel UI ✅
 
 | Feature                    | Owner | Status | Catatan                                      |
 |----------------------------|-------|--------|----------------------------------------------|
@@ -81,168 +84,110 @@
 | Discord stats API          | Sora  | ✅     | /api/discord/stats — fallback ke mock        |
 | Music player persistent    | Bubu  | ✅     | React Context, PlayerBar floating            |
 | Sitemap                    | Bubu  | ✅     | /sitemap.xml — static + dynamic pages        |
-| Loading skeletons          | Bubu  | ✅     | Blog, events, gallery                        |
-| Error boundaries           | Bubu  | ✅     | Blog, events                                 |
 | OG image meta              | Bubu  | ✅     | layout.tsx — OG, Twitter card, robots        |
-| Performance audit          | Sora  | ❌     | Ditunda ke v1.0.0                            |
 
----
-
-## v0.7.0 — Real Data Integration ✅ DONE
-> **Owner: Sora → dikerjakan Kaizo (backup + implement)**
-> Server Components query langsung via `db()` dari `@/lib/supabase/server`.
-> Backup mock pages: `docs/revisi/backup-v0.7.0/pages/`
+## v0.7.0 — Real Data Integration ✅
 
 | Feature                    | Owner | Status | Catatan                                              |
 |----------------------------|-------|--------|------------------------------------------------------|
-| Blog listing → real DB     | Kaizo | ✅     | `posts` table, filter tags, order publishedat        |
+| Blog → real DB             | Kaizo | ✅     | posts table, filter tags, order publishedat          |
 | Blog detail → real DB      | Kaizo | ✅     | Query by slug + author join, notFound()              |
-| Events → real DB           | Kaizo | ✅     | `events` table, filter isonline bool, split upcoming/past |
-| Gallery → real DB          | Kaizo | ✅     | status='approved', filter by tags, Next.js Image    |
-| Agensi → real DB           | Kaizo | ✅     | `vtubers` table (/agensi + /agensi/vtuber)           |
-| Top Donatur → real DB      | Kaizo | ✅     | `donatur` table, order amount DESC, podium top 3     |
-| Music playlist → real DB   | Kaizo | ✅     | /api/music/playlist → musictracks isactive + ordernum|
+| Events → real DB           | Kaizo | ✅     | events table, filter isonline, upcoming/past         |
+| Gallery → real DB          | Kaizo | ✅     | status='approved', filter tags, Next.js Image        |
+| Agensi → real DB           | Kaizo | ✅     | vtubers table (/agensi + /agensi/vtuber)             |
+| Top Donatur → real DB      | Kaizo | ✅     | donatur table, order amount DESC, podium top 3       |
+| Music playlist → real DB   | Kaizo | ✅     | /api/music/playlist → musictracks                    |
 | Dashboard → real user data | Kaizo | ✅     | getSession() + count posts & gallery per user        |
-| Admin panel → real data    | Sora  | ❌     | Pending — API routes sudah ada, UI belum connect     |
-| packages/utils             | Kaizo | ✅     | slugify, formatDate, formatRupiah, formatEventDate, truncate, generateAvatar, readingTime |
-| Trakteer webhook handler   | Kaizo | ✅     | /api/premium/trakteer → update DB + bot DM + role Discord    |
-| /api/auth/register         | Kaizo | ✅     | POST — Zod validate, cek duplikat username, signUp   |
+| packages/utils             | Kaizo | ✅     | slugify, formatDate, formatRupiah, truncate, dll     |
+| Trakteer webhook           | Kaizo | ✅     | /api/premium/trakteer → update DB + bot DM + role   |
+| /api/auth/register         | Kaizo | ✅     | POST — Zod validate, cek duplikat username           |
 | /api/auth/login            | Kaizo | ✅     | POST — signInWithPassword, return full profile       |
-| /gallery/upload → real API | Kaizo | ✅     | Connect form ke POST /api/gallery/upload, success UI |
-| Sitemap dynamic            | Kaizo | ✅     | Query real DB — posts (200) + events (100)           |
+| /gallery/upload → real API | Kaizo | ✅     | Connect form ke POST /api/gallery/upload             |
+| Sitemap dynamic            | Kaizo | ✅     | Query real DB — posts + events                       |
 
----
-
-## v0.8.0 — Discord Bot (services/bot) ✅ DONE
-> **Owner: Sora (scaffold + arsitektur) · Kaizo (fitur + maintenance)**
-> Bot Discord terintegrasi penuh dengan web via internal webhooks.
-
-### Alur Integrasi Web ↔ Bot
-
-```
-1. User donasi Trakteer
-   Trakteer → POST /api/premium/trakteer/webhook (Vercel)
-   → Update DB supporter_tier
-   → POST {BOT_WEBHOOK_URL}/webhook/notify (Bot)
-   → Bot DM user Discord + update role Discord
-
-2. Admin ubah role di web
-   Admin → PATCH /api/admin/users/[id] (Vercel)
-   → Update DB
-   → POST {BOT_WEBHOOK_URL}/webhook/role-update (Bot)
-   → Bot update role Discord user
-
-3. Event baru dibuat di web
-   Admin → POST /api/admin/events (Vercel)
-   → Simpan DB
-   → POST {BOT_WEBHOOK_URL}/webhook/discord-event (Bot)
-   → Bot post announcement ke #event-soraku
-
-4. User join/update role di Discord
-   Discord → Bot guildMemberUpdate event
-   → Bot POST /api/discord/role-sync (Vercel)
-   → Update DB supporter_tier user
-```
+## v0.8.0 — Discord Bot ✅
 
 | Feature                          | Owner | Status | Catatan                                              |
 |----------------------------------|-------|--------|------------------------------------------------------|
-| Scaffold services/bot            | Sora  | 🔜     | Discord.js v14, TypeScript, Railway-ready            |
-| HTTP server internal (Hono)      | Sora  | 🔜     | Terima webhooks dari web, port 3001                  |
-| Bot login & ready handler        | Sora  | 🔜     | Bot online, set activity status                      |
-| Slash command: /ping             | Sora  | 🔜     | Health check command                                 |
-| Slash command: /member           | Kaizo | ✅     | Scaffold di services/bot/src/commands/register.ts    |
-| Slash command: /event            | Kaizo | ✅     | Scaffold di services/bot/src/commands/register.ts    |
-| guildMemberUpdate → role-sync    | Kaizo | ✅     | services/bot/src/events/guildMemberUpdate.ts         |
-| POST /webhook/notify             | Kaizo | ✅     | services/bot/src/webhooks/server.ts                  |
-| POST /webhook/role-update        | Kaizo | ✅     | services/bot/src/webhooks/server.ts — role Discord   |
-| POST /webhook/discord-event      | Kaizo | ✅     | services/bot/src/webhooks/server.ts — announce event |
-| GET  /health                     | Sora  | 🔜     | Railway healthcheck                                  |
-| API web: POST /api/bot/notify    | Sora  | 🔜     | Web endpoint untuk kirim request ke bot              |
-| API web: POST /api/bot/announce  | Sora  | 🔜     | Web endpoint untuk trigger bot announcement          |
-| Dockerfile + Railway config      | Kaizo | ✅     | Dockerfile + railway.toml di services/bot/           |
+| Scaffold services/bot            | Sora  | ✅     | Discord.js v14, TypeScript, Railway-ready            |
+| HTTP server internal (Hono)      | Sora  | ✅     | Terima webhooks dari web, port 3001                  |
+| Bot login & ready handler        | Sora  | ✅     | Bot online, set activity status                      |
+| guildMemberUpdate → role-sync    | Sora  | ✅     | services/bot/src/events/guildMemberUpdate.ts         |
+| GET /health                      | Sora  | ✅     | Railway healthcheck                                  |
+| POST /webhook/notify             | Sora  | ✅     | DM user Discord                                      |
+| POST /webhook/role-update        | Sora  | ✅     | Update role Discord user                             |
+| POST /webhook/discord-event      | Sora  | ✅     | Announce event ke channel                            |
+| Slash command: /ping             | Sora  | ✅     | Health check command                                 |
+| Slash command: /member           | Sora  | ✅     | Member count dari web API                            |
+| Slash command: /event            | Sora  | ✅     | List 5 event upcoming                                |
+| API web: POST /api/bot/notify    | Sora  | ✅     | Web → trigger bot DM                                 |
+| API web: POST /api/bot/announce  | Sora  | ✅     | Web → trigger bot announcement                       |
+| Dockerfile + Railway config      | Sora  | ✅     | Multi-stage Node 20 Alpine, non-root user            |
+| Bot deploy Railway               | Kaizo | 🔴     | ENV vars belum di-set di Railway — pending Kaizo     |
 
-### ENV yang dibutuhkan (services/bot)
-```env
-DISCORD_TOKEN=
-DISCORD_GUILD_ID=
-DISCORD_EVENT_CHANNEL_ID=   # channel #event-soraku
-SORAKU_API_URL=https://soraku.vercel.app
-SORAKU_API_SECRET=           # sama dengan di Vercel
-WEBHOOK_SECRET=              # sama dengan BOT_WEBHOOK_SECRET di Vercel
-PORT=3001
-```
+## v0.9.0 — UI Redesign & Notifikasi ✅
 
----
+| Feature                       | Owner | Status | Catatan                                               |
+|-------------------------------|-------|--------|-------------------------------------------------------|
+| Upload /public/logo.png       | Bubu  | ✅     | Chibi sticker + logo-full.png                         |
+| Footer → SORAKU_SOCIALS       | Bubu  | ✅     | Import dari custom-icons.tsx                          |
+| Halaman /social               | Bubu  | ✅     | Grid semua sosmed pakai SORAKU_SOCIALS                |
+| Nav items baru                | Bubu  | ✅     | Showcase, Sosial Media, Premium                       |
+| Notification bell UI          | Bubu  | ✅     | Bell, badge unread, panel dropdown, polling 30s       |
+| User dropdown di Navbar       | Bubu  | ✅     | Avatar, nama, Profil/Settings/Admin/Keluar            |
+| Redesign homepage             | Bubu  | ✅     | Mascot hero, stats grid, DiscordIcon CTA              |
+| Redesign blog                 | Bubu  | ✅     | Featured post besar, emoji tags                       |
+| Redesign events               | Bubu  | ✅     | Upcoming/past section, countdown timer                |
+| Redesign gallery              | Bubu  | ✅     | Masonry grid, hover overlay, category filter          |
+| Redesign login                | Bubu  | ✅     | Split layout mascot, OAuth custom icons               |
+| Redesign register             | Bubu  | ✅     | Split layout benefits, 2-step form                    |
+| Redesign /about               | Bubu  | ✅     | Hero mascot, stats real-time, marquee, timeline       |
+| Navbar → real session         | Bubu  | ✅     | IS_LOGGED_IN → fetch /api/auth/me, hapus MOCK_USER    |
+| Login/register accessible     | Bubu  | ✅     | Tombol Masuk/Daftar muncul saat belum login           |
+| force-dynamic front-end pages | Bubu  | ✅     | 13 pages: login, register, about, donate, dll         |
+| custom-icons registry         | Sora  | ✅     | DiscordIcon, TrakteerIcon, SORAKU_SOCIALS, dll        |
+| force-dynamic semua API routes| Sora  | ✅     | 29 routes diinjeksi sekaligus                         |
+| Notif API                     | Kaizo | ✅     | GET /api/notifications + PATCH mark-as-read           |
+| Push notif via Trakteer flow  | Kaizo | ✅     | Insert ke notifications table saat donasi berhasil    |
+| Supabase Realtime             | Sora  | ❌     | Ditunda ke v1.0.0                                     |
 
-## v0.9.0 — Notifikasi & Real-time 🔄 IN PROGRESS (partial)
+## v1.0.0 — Admin Panel Complete + Launch Ready ✅ / 🔜
 
-| Feature                       | Owner | Status | Catatan                                                        |
-|-------------------------------|-------|--------|----------------------------------------------------------------|
-| Upload /public/logo.png       | Bubu  | ✅     | Chibi sticker + logo-full.png (3D render hoodie)              |
-| Footer → SORAKU_SOCIALS       | Bubu  | ✅     | Ganti inline SVG → import dari custom-icons.tsx               |
-| Footer → logo.png             | Bubu  | ✅     | Ganti karakter 空 teks → Image mascot                         |
-| Halaman /social               | Bubu  | ✅     | Grid semua sosmed pakai SORAKU_SOCIALS                        |
-| Nav items baru                | Bubu  | ✅     | Showcase, Sosial Media, Premium                               |
-| Notification bell UI          | Bubu  | ✅     | Bell lucide, badge unread count, panel dropdown, polling 30s  |
-| Notif lib + hook + API route  | Bubu  | ✅     | lib/notifications.ts · hooks/use-notifications.ts             |
-| User dropdown di Navbar       | Bubu  | ✅     | Avatar, nama, Profil/Settings/Admin/Keluar                    |
-| Logo mascot di Navbar         | Bubu  | ✅     | Image Next.js, hover scale                                    |
-| Redesign homepage             | Bubu  | ✅     | Mascot hero visual, stats grid, DiscordIcon CTA, features     |
-| Redesign blog                 | Bubu  | ✅     | Featured post besar, emoji tags, search placeholder           |
-| Redesign events               | Bubu  | ✅     | Upcoming/past section, countdown timer, filter tipe           |
-| Redesign gallery              | Bubu  | ✅     | Masonry grid, hover overlay, category filter                  |
-| Redesign login                | Bubu  | ✅     | Split layout mascot, DiscordIcon+GoogleIcon dari custom-icons |
-| Redesign register             | Bubu  | ✅     | Split layout benefits, 2-step form, OAuth dari custom-icons   |
-<<<<<<< Updated upstream
-| Redesign /about               | Bubu  | ✅     | Kanji hero 空, mascot card, pilar gradient, tim, hierarki     |
-| Notif API (Supabase)          | Kaizo | ✅     | GET /api/notifications + PATCH mark-as-read, tabel DB aktif   |
-| Push via Discord DM           | Kaizo | ✅     | Via bot /webhook/notify — Trakteer + premium flow             |
-=======
-| Redesign /about v1            | Bubu  | ✅     | Hero+mascot, stats real-time, marquee, kenapa Soraku          |
-| /about — 3 Pilar              | Bubu  | ✅     | Manager/Agensi/Admin (bukan 4 pilar lama)                     |
-| /about — Timeline             | Bubu  | ✅     | 2023 Sora → 2026 Soraku v1 (7 milestone)                     |
-| /about — Sosmed marquee       | Bubu  | ✅     | Scrolling berjalan seperti homepage                           |
-| /about — Partnership marquee  | Bubu  | ✅     | Scrolling, data dari /api/partnerships (admin manual)         |
-| /api/stats                    | Bubu  | ✅     | Discord real + event count + website online placeholder       |
-| /api/partnerships             | Bubu  | ✅     | Mock data, TODO Kaizo: tabel DB + admin form                  |
-| Notif API (Supabase)          | Kaizo | ❌     | GET /api/notifications + PATCH mark-as-read, schema di route  |
-| Push via Discord DM           | Kaizo | ❌     | Via services/bot webhook                                      |
->>>>>>> Stashed changes
-| Supabase Realtime             | Sora  | ❌     | Gallery approval live update, notif count                     |
-| Connect IS_LOGGED_IN → auth   | Sora  | ❌     | Ganti konstanta mock dengan useAuth() / session               |
-
----
-
-## v1.0.0 — Launch Ready 🔜 PLANNED
-
-| Feature                    | Owner | Status | Catatan                                              |
-|----------------------------|-------|--------|------------------------------------------------------|
-| Performance audit          | Sora  | 🔜     | Lighthouse 90+, Core Web Vitals                      |
-| Security audit             | Sora  | 🔜     | Rate limiting, CORS, CSP headers                     |
-| E2E tests (Playwright)     | Sora  | 🔜     | Auth flow, blog, gallery upload                      |
-| Error monitoring           | Sora  | 🔜     | Sentry / Vercel monitoring                           |
-| Custom domain              | Riu   | 🔜     | soraku.id atau soraku.moe                            |
+| Feature                         | Owner | Status | Catatan                                               |
+|---------------------------------|-------|--------|-------------------------------------------------------|
+| Admin panel → real data         | Sora  | ✅     | Semua 5 halaman connect ke real DB via API            |
+| Admin dashboard stats           | Sora  | ✅     | /api/admin/stats — Promise.all 6 queries              |
+| Admin blog CRUD lengkap         | Sora  | ✅     | Publish/draft toggle + hapus + form buat baru         |
+| Admin events CRUD lengkap       | Sora  | ✅     | Publish/draft toggle + hapus + form buat baru         |
+| Admin gallery moderasi          | Sora  | ✅     | Approve/Reject via PATCH /api/admin/gallery/[id]      |
+| Admin users — ubah role         | Sora  | ✅     | Dropdown role langsung PATCH /api/admin/users         |
+| Admin users — ban/unban         | Sora  | ✅     | Toggle isbanned via PATCH /api/admin/users            |
+| Admin layout active state       | Sora  | ✅     | Sidebar highlight + dot indicator per halaman         |
+| Admin mobile bottom nav         | Sora  | ✅     | Fixed bottom nav 5 item untuk mobile                  |
+| Fix d.total → d.meta.total      | Sora  | ✅     | Struktur response API { data, meta: { total } }       |
+| Fix partnerships mock → real DB | Sora  | ✅     | Graceful fallback [] jika tabel belum ada             |
+| Performance audit               | Sora  | 🔜     | Lighthouse 90+, Core Web Vitals                       |
+| Security audit                  | Sora  | 🔜     | Rate limiting, CORS, CSP headers                      |
+| E2E tests (Playwright)          | Sora  | 🔜     | Auth flow, blog, gallery upload                       |
+| Error monitoring                | Sora  | 🔜     | Sentry / Vercel monitoring                            |
+| Custom domain                   | Riu   | 🔜     | soraku.id atau soraku.moe                             |
+| Bot deploy Railway              | Kaizo | 🔴     | Set ENV vars di Railway + Vercel, lalu deploy         |
+| Admin form edit blog            | Bubu  | 🔜     | /admin/blog/[id]/edit — form prefill data existing    |
+| Admin form edit event           | Bubu  | 🔜     | /admin/events/[id]/edit — form prefill data existing  |
 
 ---
 
-## Catatan Teknis Sora — Pattern v0.7.0
+## Coding Rules (WAJIB semua tim)
 
 ```ts
-// ✅ Server Component — query langsung ke DB (efisien)
-import { db } from "@/lib/supabase/server"
-export default async function BlogPage() {
-  const { data: posts } = await (await db())
-    .from("blog_posts")
-    .select("id, slug, title, excerpt, tags, created_at, author:users(username, display_name, avatar_url)")
-    .eq("published", true)
-    .order("created_at", { ascending: false })
-    .limit(12)
-  return <BlogGrid posts={posts ?? []} />
-}
-
-// ✅ Client Component mutation — lewat API routes
-await fetch("/api/gallery/upload", { method: "POST", body: formData })
-
-// ❌ JANGAN fetch /api/* dari Server Component
-const res = await fetch("/api/blog") // double round-trip, tidak perlu
+export const dynamic = 'force-dynamic'  // baris pertama SETIAP page.tsx & route.ts
 ```
+
+- Mutations via API routes — BUKAN Server Actions
+- Server Components query DB langsung via `db()` — JANGAN fetch /api/* dari server
+- `adminDb()` untuk data queries, `createAdminClient()` untuk auth.admin
+- Semua DB queries pakai `.schema('soraku')`
+- Zod validasi semua input API
+- Import icons dari `@/components/icons/custom-icons` atau Lucide — JANGAN inline SVG
+- Commit convention: `feat|fix|refactor|docs|chore(scope): deskripsi`
+- Git: `git add -A -- ':!.github/workflows/ci.yml'`
