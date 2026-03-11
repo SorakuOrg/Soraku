@@ -1,88 +1,12 @@
-## ⚡ Update dari Bubu — 2026-03-11 (App Router Cleanup)
-
-### Route cleanup selesai — ikuti ROUTES.md & NAMESPACE.md
-
-**Dihapus:**
-- `(admin)/admin/*` (7 pages + layout) → sudah ada di `/dash/admin/*`
-- `(dashboard)/dashboard/` → pakai `/dash`
-- `(public)/agensi/vtuber/` → `/vtubers`
-- `(public)/social/` → icon komponen
-- `(public)/premium/donatur/` → `/donate/leaderboard`
-
-**Link fixes selesai (dari Checklist UI di ROUTES.md):**
-- ✅ Hapus link `/social`
-- ✅ Update link Top Donatur → `/donate/leaderboard`
-- ✅ Update link VTuber → `/vtubers` dan `/vtubers/[slug]`
-- ✅ Update link Admin → `/dash/admin`
-- ✅ Login/Register redirect → `/dash`
-
-**Build clean ✓** — hanya route valid yang muncul
-
-**Pending untuk Sora (dari ROUTES.md Checklist Backend):**
-| Task | Status |
-|------|--------|
-| API `/api/vtubers` | ✅ Sudah ada (Sora buat) |
-| Pisahkan endpoint `/api/donate` | ❌ TODO |
-| Update sitemap | ❌ TODO |
-| Supabase Realtime notifikasi | ❌ TODO |
-
-**Arsitektur yang benar sekarang (update dari ROUTES.md Section 5):**
-```
-(admin)/           ← KOSONG — semua sudah pindah ke /dash/admin
-(dashboard)/dash/  ← admin + profile/me
-(public)/          ← semua halaman publik (TANPA /social, /agensi/vtuber, /premium/donatur)
-```
-
----
-
-## ⚡ Update Paling Baru dari Kaizo — 2026-03-11
-
-### Profile routing diubah lagi — PENTING
-- `/profile/me` → **`/dash/profile/me`** (fix Vercel build error)
-- Root cause: Next.js Turbopack konflik `/profile/me` vs `/profile/[username]` (karena `me` bisa jadi username)
-- Semua link di navbar, sidebar, dashboard sudah diupdate
-
-### Data real — website_online dihapus dari stats
-- `website_online` di `/about` stats diganti `member_count` (real DB)
-- Keputusan Riu: semua data harus real — yang belum real diganti
-
-### Yang masih pending untuk Sora:
-| Task | Note |
-|------|------|
-| ❌ Supabase Realtime notif count | Kalau mau `website_online` balik, perlu Realtime presence |
-| ❌ Admin panel real data | Connect UI ke API routes |
-
----
-
-
-## Update Terbaru dari Kaizo — 2026-03-11
-
-### Yang baru diselesaikan Kaizo:
-
-| Task | Keterangan |
-|------|-----------|
-| ✅ Profile routing | `/dash/profile/me` (edit pribadi, dashboard layout) + `/profile/[username]` (public) |
-| ✅ `/api/stats` fix | Real DB counts: event, member, post — hapus semua TODO mock |
-| ✅ `soraku.partnerships` | Tabel baru di Supabase, RLS, `/api/partnerships` ready |
-
-### Yang Sora perlu kerjakan:
-
-| Task | Keterangan |
-|------|-----------|
-| ❌ Supabase Realtime | Gallery approval live update + notif count realtime |
-| ❌ `website_online` di stats | Perlu Realtime presence channel di Supabase |
-| ❌ Admin panel real data | Bubu sudah buat UI, Sora connect ke API |
-
----
-
-# REVISI — SORA (Core / Full Stack Lead)
-> Update terakhir: 2026-03-11 — diupdate Bubu (v1.0 checklist)
+# SORA — Brief & Task List
+> From: Kaizo (Back-end)
+> Last updated: 2026-03-11
 
 ---
 
 ## Identitas
 
-Sora adalah AI Core / Full Stack Lead di tim Soraku — bukan anggota manusia biasa.
+Sora adalah Full Stack Lead di tim Soraku.
 Sora membaca file ini di awal setiap sesi, lalu lanjut kerja sesuai status di bawah.
 
 ---
@@ -90,7 +14,7 @@ Sora membaca file ini di awal setiap sesi, lalu lanjut kerja sesuai status di ba
 ## Stack
 
 - Next.js 16 App Router (arsitektur, routing, middleware)
-- Supabase (client setup, env, admin client)
+- Supabase (client setup, env, admin client, migrations)
 - TypeScript strict mode — semua types harus benar
 - Vercel deployment & monitoring
 - Turborepo untuk monorepo build
@@ -106,93 +30,124 @@ Sora membaca file ini di awal setiap sesi, lalu lanjut kerja sesuai status di ba
 | Branch | `master` → auto-deploy ke Vercel |
 | Vercel project | `prj_xlkSNQGFtoVGd1XmbxqXmqvPkMug` |
 | Root Directory | `apps/web` |
-| Bot | Railway (services/bot/) |
+| Supabase project | `jrgknsxqwuygcoocnnnb` |
 
 ---
 
-## ✅ v1.0 — Status Terkini
-
-Semua core features sudah live. Berikut checklist final:
+## ✅ Status Terkini — v1.0 Live
 
 | Area | Status |
 |------|--------|
-| Auth (login/register/OAuth) | ✅ Real API |
+| Auth (login/register/Discord OAuth/Google OAuth) | ✅ Real API |
 | Navbar session real (fetch /api/auth/me) | ✅ |
-| Login page → POST /api/auth/login | ✅ Bubu fix |
-| Register page → POST /api/auth/register | ✅ Bubu fix |
-| Dashboard page → real DB stats | ✅ |
-| Dashboard layout → real session | ✅ Bubu fix |
-| Profile page `/dashboard/profile` | ✅ Bubu buat baru |
-| API `/api/profile` GET + PATCH | ✅ Bubu buat baru |
-| Admin panel → real API (semua 5 halaman) | ✅ |
-| Admin forms (new blog/event) | ✅ Sora |
-| Admin dashboard stats real | ✅ |
-| Blog, Events, Gallery, Agensi, Donatur | ✅ Real DB |
-| force-dynamic semua 13 front-end pages | ✅ |
-| Discord ID Riu → OWNER role | ⏳ Kaizo kerjakan |
-| Bot deploy Railway | 🔴 Kaizo urgent |
-| Tabel `partnerships` Supabase | 🔜 Kaizo |
+| Profile page `/dash/profile/me` | ✅ |
+| API `/api/profile` GET + PATCH | ✅ |
+| Admin panel → real API (5 halaman) | ✅ |
+| Blog, Events, Gallery, VTubers, Donate | ✅ Real DB |
+| force-dynamic semua pages | ✅ |
+| Route architecture cleanup | ✅ |
+| API `/api/vtubers` + `/api/vtubers/[slug]` | ✅ Kaizo buat |
+| API `/api/donate` | ✅ Kaizo buat |
+| Auto-trigger create soraku.users saat signup | ✅ Kaizo buat |
+| Login sudah-login screen | ✅ |
 
 ---
 
-## 🔜 Pending untuk Sora — v1.0 Post-Launch
+## ⚠️ ACTION REQUIRED — Segera
+
+### Set ENV di Vercel
+
+Buka: **Vercel Dashboard → Project `soraku` → Settings → Environment Variables**
+
+Pastikan ENV berikut ada dan benar:
+
+```
+SUPABASE_SERVICE_ROLE_KEY   ← ambil dari Supabase Dashboard → Settings → API → service_role
+```
+
+Tanpa ENV ini → semua query `adminDb()` gagal diam-diam → error 500 di `/api/profile`,
+`/api/auth/callback`, `/api/auth/me`, dan semua admin routes.
+
+Nama lama `SUPABASE_SERVICE_KEY` masih di-support sebagai fallback tapi pakai nama standar lebih baik.
+
+### Cek Supabase Redirect URLs
+
+Buka: **Supabase Dashboard → Authentication → URL Configuration**
+
+- **Site URL** harus: `https://soraku.vercel.app`
+- **Redirect URLs** harus include:
+  ```
+  https://soraku.vercel.app/**
+  https://soraku.vercel.app/api/auth/callback
+  ```
+
+---
+
+## 🔴 Pending untuk Sora
 
 ### 1. Supabase Realtime
-Ditunda dari v0.9.0. Implementasikan:
-- Gallery approval live update → `supabase.channel()` di `/gallery`
-- Notif count realtime → update badge bell tanpa polling
-- Online presence di `/about` stats
 
-Pattern:
+Enable di Supabase Dashboard → Database → Replication → Tables, lalu implement:
+
 ```ts
 import { createClient } from '@/lib/supabase/client'
 
 const supabase = createClient()
+
+// Gallery approval live update
 const channel = supabase
   .channel('gallery-updates')
-  .on('postgres_changes', { event: 'UPDATE', schema: 'soraku', table: 'gallery' }, (payload) => {
-    // update state
+  .on('postgres_changes', {
+    event: 'UPDATE',
+    schema: 'soraku',
+    table: 'gallery'
+  }, (payload) => {
+    // update state di UI
   })
   .subscribe()
 ```
 
-### 2. Performance Audit (Lighthouse 90+)
-- Audit Core Web Vitals di Vercel Analytics
-- Optimize images (next/image sizes, lazy loading)
-- Review bundle size — identify heavy imports
+Yang butuh Realtime:
+- Gallery approval live update di `/gallery`
+- Notif count realtime — update badge bell tanpa polling
+- `website_online` presence counter di `/about` stats
 
-### 3. Security Audit
-- Rate limiting di auth routes (login brute force)
-- CORS headers review
-- CSP headers di next.config.ts
-- Review RLS Supabase — pastikan semua tabel protected
+### 2. Admin Panel Real Data
 
-### 4. Admin form edit blog & event
-Bubu sudah siapkan halaman: `/admin/blog/new` dan `/admin/events/new`.
-Yang belum ada:
-- `/admin/blog/[id]/edit` — form prefill existing post
-- `/admin/events/[id]/edit` — form prefill existing event
-
-Tombol Edit di tabel admin sudah ada (`href="/admin/blog/${post.id}/edit"`).
-**Koordinasi Bubu** untuk buat halaman ini di sprint berikutnya.
-
-### 5. E2E Tests (Playwright)
-- Auth flow: register → login → dashboard
-- Blog: list → detail
-- Gallery upload flow
+Bubu sudah buat semua UI admin. Sora connect UI ke API routes:
+- `/dash/admin/blog` → connect ke `GET /api/blog` + `DELETE /api/admin/blog/[id]`
+- `/dash/admin/events` → connect ke `GET /api/events` + `DELETE /api/admin/events/[id]`
+- `/dash/admin/gallery` → connect ke `GET /api/gallery` + approval action
+- `/dash/admin/users` → connect ke `GET /api/users`
 
 ---
 
-## ⚠️ Schema DB — Perbedaan nama kolom
+## ⚠️ Schema DB — Naming Convention
 
-| Mock pakai | DB sebenarnya |
-|-----------|--------------| 
+Semua kolom di schema `soraku.*` pakai **lowercase tanpa underscore**:
+
+| ✅ Benar | ❌ Salah |
+|---------|---------|
+| `displayname` | `display_name` |
+| `avatarurl` | `avatar_url` |
+| `coverurl` | `cover_url` |
+| `isprivate` | `is_private` |
+| `isbanned` | `is_banned` |
+| `createdat` | `created_at` |
+| `updatedat` | `updated_at` |
+| `supporterrole` | `supporter_role` |
+
+Exception: tabel `follows` masih pakai `created_at` karena dibuat sebelum konvensi ditetapkan.
+
+Tabel lain — nama kolom berbeda dari mock lama:
+
+| Mock lama | DB sebenarnya |
+|-----------|--------------|
 | `blog_posts` | `posts` |
 | `gallery_items` | `gallery` |
 | `gallery.approved` (bool) | `gallery.status` ('pending'/'approved'/'rejected') |
-| `gallery.category` | **TIDAK ADA** — pakai `tags[0]` |
 | `events.starts_at` | `events.startdate` |
-| `events.event_type` (string) | `events.isonline` (boolean) |
+| `events.event_type` | `events.isonline` (boolean) |
 | `posts.published` | `posts.ispublished` |
 | `posts.published_at` | `posts.publishedat` |
 | `vtubers.bio` | `vtubers.description` |
@@ -200,12 +155,22 @@ Tombol Edit di tabel admin sudah ada (`href="/admin/blog/${post.id}/edit"`).
 
 ---
 
+## Migration Rules
+
+- Format nama file: `supabase/migrations/YYYYMMDD_nama.sql`
+- Setiap tabel baru **wajib enable RLS**
+- Tambah index untuk kolom yang sering di-query (`username`, `role`, `slug`, dll)
+- **Jangan drop/recreate** tabel yang sudah ada data → pakai `ALTER TABLE ADD COLUMN IF NOT EXISTS`
+- Setelah migration selesai, update `docs/PLAN.md` dan `docs/CHANGELOG.md`
+
+---
+
 ## Pattern Query Wajib
 
 ```ts
-// ✅ Server Component → query DB langsung
-import { db } from "@/lib/supabase/server"
-const { data } = await (await db()).from("posts").select("...").eq("ispublished", true)
+// ✅ Server Component → query DB langsung via adminDb()
+import { adminDb } from "@/lib/supabase/admin"
+const { data } = await adminDb().from("posts").select("...").eq("ispublished", true)
 
 // ✅ force-dynamic wajib di semua page
 export const dynamic = "force-dynamic"
@@ -217,7 +182,7 @@ export default async function Page({ searchParams }: { searchParams?: Promise<{ 
 }
 
 // ❌ JANGAN fetch ke API dari Server Component
-const res = await fetch("/api/blog") // double round-trip
+const res = await fetch("/api/blog") // double round-trip — langsung query DB
 ```
 
 ---
@@ -229,8 +194,10 @@ apps/web/src/
 ├── app/
 │   ├── (public)/          ← semua halaman publik
 │   ├── (auth)/            ← login, register
-│   ├── (dashboard)/       ← user dashboard — protected
-│   ├── (admin)/           ← admin panel — ADMIN+
+│   ├── (dashboard)/       ← user dashboard & admin — semua protected
+│   │   └── dash/
+│   │       ├── profile/me/
+│   │       └── admin/     ← blog, events, gallery, users
 │   └── api/               ← Route Handlers
 ├── components/
 │   ├── layout/            ← Navbar, Footer
@@ -241,9 +208,32 @@ apps/web/src/
     ├── api.ts             ← ok(), err(), HTTP helpers
     ├── notifications.ts   ← NotifType, NOTIF_CONFIG
     └── supabase/
-        ├── server.ts      ← SSR client + db()
+        ├── types.ts       ← UserSession type
+        ├── server.ts      ← SSR client
+        ├── client.ts      ← Client component client
         └── admin.ts       ← adminDb() + createAdminClient()
 ```
+
+> ⚠️ Folder `(admin)/` sudah dihapus — semua admin page sekarang di `(dashboard)/dash/admin/`
+
+---
+
+## Bug Log — Fix yang Sudah Dilakukan Kaizo
+
+| # | Bug | Root Cause | Fix | Status |
+|---|-----|-----------|-----|--------|
+| 1 | `z.record()` error | Zod v3 butuh 2 argumen | `z.record(z.string(), z.string())` | ✅ |
+| 2 | `adminDb().auth` error | adminDb() return schema client | Pakai `createAdminClient().auth.admin` | ✅ |
+| 3 | Cookie handler `any` type | Type tidak dideklarasi | `import { type CookieOptions }` | ✅ |
+| 4 | middleware + proxy konflik | Dua file export matcher | Hapus middleware.ts, pakai proxy.ts | ✅ |
+| 5 | `/profile/me` route conflict | Clash dengan `/profile/[username]` | Pindah ke `/dash/profile/me` | ✅ |
+| 6 | `ZodError.errors` undefined | Zod v3 pakai `.issues` | `.issues[0]?.message` | ✅ |
+| 7 | Kolom DB snake_case mismatch | DB `display_name`, kode `displayname` | Migration rename 9 kolom | ✅ |
+| 8 | Riu hilang dari soraku.users | Migration Sora reset tabel | Re-insert manual dari auth.users | ✅ |
+| 9 | OAuth `bad_oauth_state` | PKCE cookie ke response yang salah | `pendingCookies[]` → attach ke `redirect(url)` | ✅ |
+| 10 | Profile GET return 500 | adminDb() gagal (ENV kosong) | Fallback ke session data + flag `_fallback:true` | ✅ |
+| 11 | Logout tidak berfungsi | signout tidak menulis cookie ke response | `createServerClient` + manual clear `sb-*` | ✅ |
+| 12 | Trigger `updated_at` error | Kolom sudah rename, trigger belum | `CREATE OR REPLACE FUNCTION → NEW.updatedat` | ✅ |
 
 ---
 
@@ -258,49 +248,7 @@ apps/web/src/
 | 5 | 2026-03-11 | v0.7.0 — Real DB di 8 pages | Kaizo |
 | 6 | 2026-03-11 | v0.9.0 — Redesign + Navbar auth | Bubu |
 | 7 | 2026-03-11 | v1.0 — Login/Register/Profile/Dashboard real | Bubu |
-| 8 | 2026-03-11 | Instruksi Discord ID OWNER ke Kaizo | Bubu |
-| 9 | 2026-03-11 | Discord + Google OAuth routes baru  | Bubu |
-| 10 | 2026-03-11 | Profile page redesign minimalis     | Bubu |
-
-
----
-
-## ⚠ LAPORAN BUG — 2026-03-11 (dari Bubu)
-
-### Bug 1: `bad_oauth_state` saat login Discord/Google ❌ → ✅ FIXED (code)
-
-**Root cause:**
-OAuth routes (`/api/auth/discord`, `/api/auth/google`) menggunakan pola cookie yang salah.
-`signInWithOAuth()` set PKCE `code_verifier` via `cookies()` dari `next/headers`,
-tapi `NextResponse.redirect()` yang dikembalikan adalah object response baru yang
-**tidak mewarisi cookie dari cookieStore**. Browser tidak menerima cookie → callback
-tidak bisa verifikasi state → Supabase throw `bad_oauth_state`.
-
-**Fix (Bubu, commit `fe36207`):**
-Semua 3 route (`discord`, `google`, `callback`) sekarang buat response object dulu,
-lalu `createServerClient` tulis PKCE cookies **langsung ke response.cookies**, bukan via
-`cookies()` next/headers. Sudah di-push dan deploy.
-
-**Yang masih perlu dikonfirmasi Sora (Supabase Dashboard):**
-1. **Site URL** → Supabase Dashboard → Authentication → URL Configuration
-   - Pastikan: `https://soraku.vercel.app` (BUKAN `http://localhost:3000`)
-2. **Redirect URLs** → Tambahkan jika belum ada:
-   ```
-   https://soraku.vercel.app/**
-   https://soraku.vercel.app/api/auth/callback
-   ```
-   Tanpa ini, Supabase menolak semua callback dari production domain.
-
----
-
-### Bug 2: Profile "Gagal memuat profil" — root cause ENV ❌ → ⚠ PARTIAL FIX
-
-Kemungkinan `SUPABASE_SERVICE_ROLE_KEY` belum di-set di Vercel ENV.
-
-**Cek Vercel ENV:**
-- `NEXT_PUBLIC_SUPABASE_URL` ✓ (pasti ada, anon auth jalan)
-- `NEXT_PUBLIC_SUPABASE_ANON_KEY` ✓
-- `SUPABASE_SERVICE_ROLE_KEY` ← **Cek ini di Vercel Dashboard**
-
-Tanpa `SUPABASE_SERVICE_ROLE_KEY`, semua query server-side yang pakai `adminDb()` gagal diam-diam.
-Ini dipakai oleh: `/api/profile`, `/api/auth/callback`, `/api/auth/me`, semua admin routes.
+| 8 | 2026-03-11 | Route architecture cleanup | Sora/Kaizo |
+| 9 | 2026-03-11 | API vtubers + donate + auto-trigger | Kaizo |
+| 10 | 2026-03-11 | Fix semua auth bugs + logout | Kaizo |
+| 11 | 2026-03-11 | Laporan bug + schema migration baru | Sora |
