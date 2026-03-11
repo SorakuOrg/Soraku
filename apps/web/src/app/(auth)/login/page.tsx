@@ -3,17 +3,73 @@ export const dynamic = "force-dynamic";
 
 import Link from "next/link";
 import Image from "next/image";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Eye, EyeOff, ArrowRight, AlertCircle } from "lucide-react";
+import { Eye, EyeOff, ArrowRight, AlertCircle, Home, User, LogOut } from "lucide-react";
 import { DiscordIcon, GoogleIcon } from "@/components/icons/custom-icons";
+
+// ── Already logged-in screen ──────────────────────────────────────────────────
+function AlreadyLoggedIn({ displayname, onLogout }: { displayname: string; onLogout: () => void }) {
+  return (
+    <div className="relative flex min-h-[calc(100vh-4rem)] items-center justify-center px-4">
+      <div className="glass-card w-full max-w-sm rounded-2xl p-8 text-center">
+        <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10 text-primary mx-auto">
+          <User className="h-8 w-8" />
+        </div>
+        <h1 className="text-xl font-black mb-1">Kamu sudah login</h1>
+        <p className="text-sm text-muted-foreground mb-8">
+          Halo, <span className="font-semibold text-foreground">{displayname}</span>! Mau ngapain?
+        </p>
+        <div className="flex flex-col gap-3">
+          <Link href="/"
+            className="flex items-center justify-center gap-2 rounded-xl border border-border/60 px-4 py-3 text-sm font-medium text-muted-foreground hover:border-primary/30 hover:text-foreground transition-all">
+            <Home className="h-4 w-4" /> Kembali ke Beranda
+          </Link>
+          <Link href="/dash/profile/me"
+            className="flex items-center justify-center gap-2 rounded-xl bg-primary px-4 py-3 text-sm font-bold text-white shadow-md shadow-primary/20 hover:bg-primary/90 hover:-translate-y-0.5 transition-all">
+            <User className="h-4 w-4" /> Lihat Profil Saya
+          </Link>
+          <button onClick={onLogout}
+            className="flex items-center justify-center gap-2 rounded-xl border border-destructive/20 bg-destructive/5 px-4 py-3 text-sm font-medium text-destructive hover:bg-destructive/10 transition-all">
+            <LogOut className="h-4 w-4" /> Keluar dari Akun
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default function LoginPage() {
   const router = useRouter();
-  const [showPass, setShowPass] = useState(false);
-  const [loading,  setLoading]  = useState(false);
-  const [error,    setError]    = useState<string | null>(null);
-  const [form, setForm] = useState({ email: "", password: "" });
+  const [showPass,    setShowPass]    = useState(false);
+  const [loading,     setLoading]     = useState(false);
+  const [error,       setError]       = useState<string | null>(null);
+  const [form,        setForm]        = useState({ email: "", password: "" });
+  const [loggedIn,    setLoggedIn]    = useState<{ displayname: string } | null>(null);
+  const [checkingAuth, setCheckingAuth] = useState(true);
+
+  // Cek apakah sudah login
+  useEffect(() => {
+    fetch("/api/auth/me")
+      .then(r => r.json())
+      .then(d => {
+        if (d.data?.id) setLoggedIn({ displayname: d.data.displayname ?? d.data.username ?? "Kamu" });
+      })
+      .catch(() => {})
+      .finally(() => setCheckingAuth(false));
+  }, []);
+
+  const handleLogout = async () => {
+    await fetch("/api/auth/signout", { method: "POST" }).catch(() => {});
+    setLoggedIn(null);
+    router.refresh();
+  };
+
+  // Tampilkan loading sebentar saat cek auth
+  if (checkingAuth) return null;
+
+  // Sudah login — tampilkan 3 pilihan
+  if (loggedIn) return <AlreadyLoggedIn displayname={loggedIn.displayname} onLogout={handleLogout} />;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

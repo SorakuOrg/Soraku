@@ -4,6 +4,37 @@
 
 ---
 
+## [v1.0.3] — 2026-03-11 · Kaizo
+
+### Fix: /dash/profile/me gagal load (root cause 3 lapis)
+
+**Bug 1 — Kolom DB mismatch (paling kritis)**
+- `soraku.users` dibuat dengan kolom snake_case (`display_name`, `avatar_url`, `is_private`, dll)
+- Semua kode dan tabel lain sudah pakai format tanpa underscore (`displayname`, `avatarurl`, dll)
+- Fix: migration rename semua kolom `soraku.users` agar konsisten:
+  `display_name→displayname`, `avatar_url→avatarurl`, `cover_url→coverurl`,
+  `supporter_role→supporterrole`, `social_links→sociallinks`, `is_private→isprivate`,
+  `is_banned→isbanned`, `created_at→createdat`, `updated_at→updatedat`
+
+**Bug 2 — Riu belum ada di soraku.users**
+- OAuth callback dulu gagal silent karena kolom DB salah → upsert tidak pernah berhasil
+- Fix: insert manual record Riu + update dari Discord metadata:
+  username=`riu`, displayname=`riu.me`, avatarurl dari CDN Discord, role=`OWNER`
+
+**Bug 3 — Trigger updatedat masih pakai nama lama**
+- Trigger `set_updated_at()` masih referensi `NEW.updated_at` → error saat UPDATE
+- Fix: replace function body → `NEW.updatedat = now()`
+
+### Tambahan: /login sudah login → 3 pilihan
+- Login page sekarang cek session via `GET /api/auth/me` saat mount
+- Jika sudah login, tampilkan screen "Kamu sudah login, {nama}" dengan 3 button:
+  1. Kembali ke Beranda (`/`)
+  2. Lihat Profil Saya (`/dash/profile/me`)
+  3. Keluar dari Akun (POST /api/auth/signout)
+- Jika belum login, tampilkan form login seperti biasa
+
+---
+
 ## [v1.0.2] — 2026-03-11 · Kaizo
 
 ### Fix Vercel Build Error — Profile Route Conflict
@@ -64,6 +95,37 @@
   - Index: `(isactive, sortorder)` untuk query cepat
 - `/api/partnerships` sudah siap konsumsi tabel ini (tidak perlu ubah kode)
 - Admin bisa tambah partnership via Supabase Dashboard atau admin panel
+
+---
+
+## [v1.0.3] — 2026-03-11 · Kaizo
+
+### Fix: /dash/profile/me gagal load (root cause 3 lapis)
+
+**Bug 1 — Kolom DB mismatch (paling kritis)**
+- `soraku.users` dibuat dengan kolom snake_case (`display_name`, `avatar_url`, `is_private`, dll)
+- Semua kode dan tabel lain sudah pakai format tanpa underscore (`displayname`, `avatarurl`, dll)
+- Fix: migration rename semua kolom `soraku.users` agar konsisten:
+  `display_name→displayname`, `avatar_url→avatarurl`, `cover_url→coverurl`,
+  `supporter_role→supporterrole`, `social_links→sociallinks`, `is_private→isprivate`,
+  `is_banned→isbanned`, `created_at→createdat`, `updated_at→updatedat`
+
+**Bug 2 — Riu belum ada di soraku.users**
+- OAuth callback dulu gagal silent karena kolom DB salah → upsert tidak pernah berhasil
+- Fix: insert manual record Riu + update dari Discord metadata:
+  username=`riu`, displayname=`riu.me`, avatarurl dari CDN Discord, role=`OWNER`
+
+**Bug 3 — Trigger updatedat masih pakai nama lama**
+- Trigger `set_updated_at()` masih referensi `NEW.updated_at` → error saat UPDATE
+- Fix: replace function body → `NEW.updatedat = now()`
+
+### Tambahan: /login sudah login → 3 pilihan
+- Login page sekarang cek session via `GET /api/auth/me` saat mount
+- Jika sudah login, tampilkan screen "Kamu sudah login, {nama}" dengan 3 button:
+  1. Kembali ke Beranda (`/`)
+  2. Lihat Profil Saya (`/dash/profile/me`)
+  3. Keluar dari Akun (POST /api/auth/signout)
+- Jika belum login, tampilkan form login seperti biasa
 
 ---
 
