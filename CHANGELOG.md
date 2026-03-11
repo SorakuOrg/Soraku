@@ -255,3 +255,29 @@ dengan arsitektur yang sepenuhnya berbeda dari versi sebelumnya.
   Commit sebelumnya (0.1.0) Sora buat `middleware.ts` berdasarkan asumsi Next.js versi lama.
   Hasilnya: build Vercel error "Both middleware file and proxy file are detected".
   **Fix:** Hapus `src/middleware.ts`. `proxy.ts` sudah benar dan cukup untuk Next.js 16.
+
+## [0.1.2] — 2026-03-11 · Admin Panel Real Data Fix
+
+### Fixed (Sora — Admin Panel)
+- `fix(admin/events): field mismatch DB`
+  `starts_at` → `startdate`, `event_type === "online"` → `isonline: boolean`
+  
+- `fix(admin/gallery): wrong API route untuk approve/reject`
+  PATCH ke `/api/gallery/${id}` (tidak ada) → `/api/admin/gallery/${id}` (benar)
+  
+- `fix(admin/gallery): field mismatch DB`
+  `item.category` → `item.tags[0]`, hapus `item.author?.display_name` (tidak ada join)
+
+- `fix(api/gallery): tambah status filter untuk staff`
+  Staff sekarang bisa filter `?status=pending|approved|rejected|all`
+  Public tetap hanya lihat `approved`
+
+- `fix(admin/page): stats fetch dari 4 endpoint → 1 endpoint /api/admin/stats`
+  Sebelumnya baca `blog.total` (undefined) — response API ada di `meta.total`
+  Sekarang pakai `/api/admin/stats` yang return semua data dalam 1 request via Promise.all
+
+### Added (Sora)
+- `feat(api): POST /api/admin/stats`
+  Single endpoint untuk admin dashboard overview:
+  blog_count, event_count, gallery_pending, member_count, recent_posts, pending_gallery
+  Semua query dijalankan parallel via Promise.all

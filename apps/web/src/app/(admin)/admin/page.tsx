@@ -5,42 +5,33 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { BookOpen, Calendar, ImageIcon, Users, Loader2 } from "lucide-react";
 
-interface DashboardStats {
+interface AdminStats {
   blog_count:      number;
   event_count:     number;
   gallery_pending: number;
   member_count:    number;
-  recent_posts:    Array<{ id: string; title: string }>;
-  pending_gallery: Array<{ id: string; title: string }>;
+  recent_posts:    Array<{ id: string; title: string; slug: string; ispublished: boolean }>;
+  pending_gallery: Array<{ id: string; title: string | null; imageurl: string; tags: string[] }>;
 }
 
 export default function AdminDashboardPage() {
-  const [stats,   setStats]   = useState<DashboardStats | null>(null);
+  const [stats,   setStats]   = useState<AdminStats | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    Promise.all([
-      fetch("/api/blog?limit=4").then(r => r.json()),
-      fetch("/api/events?status=all&limit=1").then(r => r.json()),
-      fetch("/api/gallery?status=pending&limit=3").then(r => r.json()),
-      fetch("/api/discord/stats").then(r => r.json()),
-    ]).then(([blog, events, gallery, discord]) => {
-      setStats({
-        blog_count:      blog.total ?? blog.data?.length ?? 0,
-        event_count:     events.total ?? events.data?.length ?? 0,
-        gallery_pending: gallery.data?.length ?? 0,
-        member_count:    discord.memberCount ?? 500,
-        recent_posts:    blog.data?.slice(0, 4) ?? [],
-        pending_gallery: gallery.data?.slice(0, 3) ?? [],
-      });
-    }).catch(() => {}).finally(() => setLoading(false));
+    // Satu fetch ke /api/admin/stats — lebih efisien dari 4 fetch terpisah
+    fetch("/api/admin/stats")
+      .then(r => r.json())
+      .then(d => setStats(d.data ?? null))
+      .catch(() => {})
+      .finally(() => setLoading(false));
   }, []);
 
   const STAT_CARDS = [
-    { label: "Total Blog",      value: stats?.blog_count,      icon: BookOpen,  href: "/admin/blog",    color: "text-blue-400 bg-blue-500/10"   },
-    { label: "Total Event",     value: stats?.event_count,     icon: Calendar,  href: "/admin/events",  color: "text-green-400 bg-green-500/10"  },
-    { label: "Galeri Pending",  value: stats?.gallery_pending, icon: ImageIcon, href: "/admin/gallery", color: "text-amber-400 bg-amber-500/10"  },
-    { label: "Total Member",    value: stats?.member_count,    icon: Users,     href: "/admin/users",   color: "text-primary bg-primary/10"      },
+    { label: "Total Blog",     value: stats?.blog_count,      icon: BookOpen,  href: "/admin/blog",    color: "text-blue-400 bg-blue-500/10"   },
+    { label: "Total Event",    value: stats?.event_count,     icon: Calendar,  href: "/admin/events",  color: "text-green-400 bg-green-500/10"  },
+    { label: "Galeri Pending", value: stats?.gallery_pending, icon: ImageIcon, href: "/admin/gallery", color: "text-amber-400 bg-amber-500/10"  },
+    { label: "Total Member",   value: stats?.member_count,    icon: Users,     href: "/admin/users",   color: "text-primary bg-primary/10"      },
   ];
 
   return (
@@ -81,13 +72,18 @@ export default function AdminDashboardPage() {
               <Link href="/admin/blog" className="text-xs text-primary hover:underline">Kelola →</Link>
             </div>
             <div className="space-y-3">
-              {stats?.recent_posts.length === 0 && (
+              {(stats?.recent_posts.length ?? 0) === 0 ? (
                 <p className="text-xs text-muted-foreground/50">Belum ada artikel.</p>
-              )}
-              {stats?.recent_posts.map(p => (
+              ) : stats?.recent_posts.map(p => (
                 <div key={p.id} className="flex items-start justify-between gap-3 text-sm">
                   <p className="line-clamp-1 text-muted-foreground flex-1">{p.title}</p>
-                  <span className="rounded-full bg-green-500/10 px-2 py-0.5 text-xs text-green-400 flex-shrink-0">Live</span>
+                  <span className={`flex-shrink-0 rounded-full px-2 py-0.5 text-xs ${
+                    p.ispublished
+                      ? "bg-green-500/10 text-green-400"
+                      : "bg-amber-500/10 text-amber-400"
+                  }`}>
+                    {p.ispublished ? "Live" : "Draft"}
+                  </span>
                 </div>
               ))}
             </div>
@@ -100,13 +96,12 @@ export default function AdminDashboardPage() {
               <Link href="/admin/gallery" className="text-xs text-primary hover:underline">Review →</Link>
             </div>
             <div className="space-y-3">
-              {stats?.pending_gallery.length === 0 && (
+              {(stats?.pending_gallery.length ?? 0) === 0 ? (
                 <p className="text-xs text-muted-foreground/50">Tidak ada item pending.</p>
-              )}
-              {stats?.pending_gallery.map(g => (
+              ) : stats?.pending_gallery.map(g => (
                 <div key={g.id} className="flex items-center justify-between gap-3 text-sm">
-                  <p className="line-clamp-1 text-muted-foreground flex-1">{g.title}</p>
-                  <span className="rounded-full bg-amber-500/10 px-2 py-0.5 text-xs text-amber-400 flex-shrink-0">Pending</span>
+                  <p className="line-clamp-1 text-muted-foreground flex-1">{g.title ?? "Tanpa judul"}</p>
+                  <span className="flex-shrink-0 rounded-full bg-amber-500/10 px-2 py-0.5 text-xs text-amber-400">Pending</span>
                 </div>
               ))}
             </div>

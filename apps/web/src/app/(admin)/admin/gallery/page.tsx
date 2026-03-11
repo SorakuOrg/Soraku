@@ -6,9 +6,12 @@ import Image from "next/image";
 import { Check, X, ImageIcon, Loader2 } from "lucide-react";
 
 interface GalleryItem {
-  id: string; title: string; imageurl: string;
-  category: string; createdat: string;
-  author?: { display_name?: string };
+  id: string;
+  title: string | null;
+  imageurl: string;
+  tags: string[];      // ← bukan category, DB pakai tags array
+  createdat: string;
+  status: string;
 }
 
 export default function AdminGalleryPage() {
@@ -24,7 +27,8 @@ export default function AdminGalleryPage() {
   }, []);
 
   const handle = async (id: string, action: "approved" | "rejected") => {
-    await fetch(`/api/gallery/${id}`, {
+    // ← fix: pakai /api/admin/gallery/[id], bukan /api/gallery/[id]
+    await fetch(`/api/admin/gallery/${id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ status: action }),
@@ -59,7 +63,7 @@ export default function AdminGalleryPage() {
             <div key={item.id} className="glass-card overflow-hidden">
               <div className="relative h-36 bg-gradient-to-br from-primary/10 to-accent/5">
                 {item.imageurl ? (
-                  <Image src={item.imageurl} alt={item.title} fill className="object-cover" />
+                  <Image src={item.imageurl} alt={item.title ?? "Galeri"} fill className="object-cover" />
                 ) : (
                   <div className="flex h-full items-center justify-center">
                     <ImageIcon className="h-10 w-10 text-foreground/10" />
@@ -67,18 +71,22 @@ export default function AdminGalleryPage() {
                 )}
               </div>
               <div className="p-4">
-                <p className="text-sm font-medium line-clamp-1">{item.title}</p>
+                <p className="text-sm font-medium line-clamp-1">{item.title ?? "Tanpa judul"}</p>
+                {/* tags — tampilkan tag pertama sebagai kategori */}
                 <p className="text-xs text-muted-foreground mt-0.5">
-                  by {item.author?.display_name ?? "—"} · {item.category}
+                  {item.tags?.[0] ?? "Umum"} · {fmt(item.createdat)}
                 </p>
-                <p className="text-xs text-muted-foreground/50 mt-0.5">{fmt(item.createdat)}</p>
                 <div className="mt-4 flex gap-2">
-                  <button onClick={() => handle(item.id, "approved")}
-                    className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-green-500/10 py-2 text-xs font-bold text-green-400 hover:bg-green-500/20 transition-colors">
+                  <button
+                    onClick={() => handle(item.id, "approved")}
+                    className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-green-500/10 py-2 text-xs font-bold text-green-400 hover:bg-green-500/20 transition-colors"
+                  >
                     <Check className="h-3.5 w-3.5" />Approve
                   </button>
-                  <button onClick={() => handle(item.id, "rejected")}
-                    className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-destructive/10 py-2 text-xs font-bold text-destructive hover:bg-destructive/20 transition-colors">
+                  <button
+                    onClick={() => handle(item.id, "rejected")}
+                    className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-destructive/10 py-2 text-xs font-bold text-destructive hover:bg-destructive/20 transition-colors"
+                  >
                     <X className="h-3.5 w-3.5" />Reject
                   </button>
                 </div>
