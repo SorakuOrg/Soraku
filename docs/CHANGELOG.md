@@ -4,6 +4,35 @@
 
 ---
 
+## [v1.0.2] — 2026-03-11 · Kaizo
+
+### Fix Vercel Build Error — Profile Route Conflict
+- **Root cause**: `/profile/me` dari `(dashboard)` group konflik dengan `/profile/[username]` dari `(public)` group — Next.js Turbopack menganggap `me` bisa jadi value dari `[username]` parameter
+- **Fix**: Pindah semua profile pribadi ke `/dash/profile/me`
+  - `(dashboard)/profile/me/page.tsx` → `(dashboard)/dash/profile/me/page.tsx`
+  - Hapus `(public)/profile/me/page.tsx` (redirect lama yang menyebabkan triple conflict)
+  - Update `proxy.ts` — protect `/dash/*` sama seperti `/dashboard/*` (harus login)
+- Update semua referensi `/profile/me` → `/dash/profile/me`:
+  - `(dashboard)/layout.tsx` sidebar
+  - `(dashboard)/dashboard/page.tsx` quick links
+  - `(public)/profile/[username]/page.tsx` tombol edit
+  - `navbar.tsx` dropdown menu (2 lokasi)
+
+### Struktur routing profile final:
+```
+/dash/profile/me        ← Profile Pribadi (edit, butuh login, sidebar dashboard)
+/profile/[username]     ← Profile Publik (view, siapa saja bisa akses)
+```
+
+### Stats real data — website_online dihapus
+- Hapus `website_online` dari `stats-client.tsx` (data tidak tersedia tanpa Supabase Realtime)
+- Ganti dengan `member_count` — jumlah user terdaftar di platform (real DB ✅)
+- Sesuai instruksi Riu: semua data harus real, yang belum real diganti
+
+> ⚠️ Versi ini bukan keputusan Kaizo — menunggu konfirmasi Riu & Sora untuk bump versi resmi
+
+---
+
 ## [v1.0.1] — 2026-03-11 · Kaizo (backup Bubu + lanjutan)
 
 ### Profile Routing — Restruktur (Backup Tugas Bubu)
@@ -35,6 +64,35 @@
   - Index: `(isactive, sortorder)` untuk query cepat
 - `/api/partnerships` sudah siap konsumsi tabel ini (tidak perlu ubah kode)
 - Admin bisa tambah partnership via Supabase Dashboard atau admin panel
+
+---
+
+## [v1.0.2] — 2026-03-11 · Kaizo
+
+### Fix Vercel Build Error — Profile Route Conflict
+- **Root cause**: `/profile/me` dari `(dashboard)` group konflik dengan `/profile/[username]` dari `(public)` group — Next.js Turbopack menganggap `me` bisa jadi value dari `[username]` parameter
+- **Fix**: Pindah semua profile pribadi ke `/dash/profile/me`
+  - `(dashboard)/profile/me/page.tsx` → `(dashboard)/dash/profile/me/page.tsx`
+  - Hapus `(public)/profile/me/page.tsx` (redirect lama yang menyebabkan triple conflict)
+  - Update `proxy.ts` — protect `/dash/*` sama seperti `/dashboard/*` (harus login)
+- Update semua referensi `/profile/me` → `/dash/profile/me`:
+  - `(dashboard)/layout.tsx` sidebar
+  - `(dashboard)/dashboard/page.tsx` quick links
+  - `(public)/profile/[username]/page.tsx` tombol edit
+  - `navbar.tsx` dropdown menu (2 lokasi)
+
+### Struktur routing profile final:
+```
+/dash/profile/me        ← Profile Pribadi (edit, butuh login, sidebar dashboard)
+/profile/[username]     ← Profile Publik (view, siapa saja bisa akses)
+```
+
+### Stats real data — website_online dihapus
+- Hapus `website_online` dari `stats-client.tsx` (data tidak tersedia tanpa Supabase Realtime)
+- Ganti dengan `member_count` — jumlah user terdaftar di platform (real DB ✅)
+- Sesuai instruksi Riu: semua data harus real, yang belum real diganti
+
+> ⚠️ Versi ini bukan keputusan Kaizo — menunggu konfirmasi Riu & Sora untuk bump versi resmi
 
 ---
 

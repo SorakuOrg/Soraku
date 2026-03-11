@@ -6,7 +6,7 @@ import { db } from "@/lib/supabase/server";
 export const dynamic = "force-dynamic";
 
 const QUICK_LINKS = [
-  { label: "Edit Profil",    href: "/profile/me",             desc: "Update bio, avatar, dan info akun" },
+  { label: "Edit Profil",    href: "/dash/profile/me",             desc: "Update bio, avatar, dan info akun" },
   { label: "Upload Galeri",  href: "/gallery/upload",                desc: "Bagikan karya ke komunitas" },
   { label: "Lihat Event",    href: "/events",                        desc: "Cek event & gathering terbaru" },
   { label: "Gabung Discord", href: "https://discord.gg/qm3XJvRa6B", desc: "Chat langsung dengan komunitas" },

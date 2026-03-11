@@ -175,7 +175,7 @@
 | Custom domain                   | Riu   | 🔜     | soraku.id atau soraku.moe                             |
 | Bot deploy Railway              | Kaizo | 🔴     | Set ENV vars di Railway + Vercel, lalu deploy         |
 | Admin form edit blog            | Bubu  | 🔜     | /admin/blog/[id]/edit — form prefill data existing    |
-| Profile routing restruktur      | Kaizo | ✅     | /dashboard/profile → /profile/me (dashboard group), /profile/[username] public |
+| Profile routing restruktur      | Kaizo | ✅     | /dash/profile/me (pribadi edit) + /profile/[username] (publik) — fix build conflict |
 | Admin form edit event           | Bubu  | 🔜     | /admin/events/[id]/edit — form prefill data existing  |
 | Login page → real API           | Bubu  | ✅     | POST /api/auth/login, error state, redirect dashboard |
 | Register page → real API        | Bubu  | ✅     | POST /api/auth/register, auto-login, 2-step form      |

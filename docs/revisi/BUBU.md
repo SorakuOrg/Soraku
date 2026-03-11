@@ -28,7 +28,7 @@
 
 | Fitur | Keterangan |
 |-------|-----------|
-| Profile routing restruktur | `/profile/me` ← edit pribadi, `/profile/[username]` ← publik |
+| Profile routing restruktur | `/dash/profile/me` ← edit pribadi, `/profile/[username]` ← publik |
 | Hapus `/dashboard/profile` | Dipindah ke `(dashboard)/profile/me/page.tsx` |
 | Update semua link | sidebar, quick links, public profile "Edit" button |
 
@@ -110,4 +110,4 @@ Semua API yang Bubu butuhkan untuk form edit sudah tersedia. Tinggal UI-nya.
 - Icons sosmed: `DiscordIcon`, `InstagramIcon`, `TiktokIcon`, dll dari `custom-icons.tsx`
 - Mutations selalu lewat `fetch("/api/...")` — bukan Server Actions
 - **JANGAN update versi** — keputusan versi ada di tangan Riu & Sora
-- Profile edit sekarang ada di `/profile/me` (bukan `/dashboard/profile`)
+- Profile edit sekarang ada di `/dash/profile/me` (bukan `/dashboard/profile`)

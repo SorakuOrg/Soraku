@@ -1,3 +1,22 @@
+## ⚡ Update Paling Baru dari Kaizo — 2026-03-11
+
+### Profile routing diubah lagi — PENTING
+- `/profile/me` → **`/dash/profile/me`** (fix Vercel build error)
+- Root cause: Next.js Turbopack konflik `/profile/me` vs `/profile/[username]` (karena `me` bisa jadi username)
+- Semua link di navbar, sidebar, dashboard sudah diupdate
+
+### Data real — website_online dihapus dari stats
+- `website_online` di `/about` stats diganti `member_count` (real DB)
+- Keputusan Riu: semua data harus real — yang belum real diganti
+
+### Yang masih pending untuk Sora:
+| Task | Note |
+|------|------|
+| ❌ Supabase Realtime notif count | Kalau mau `website_online` balik, perlu Realtime presence |
+| ❌ Admin panel real data | Connect UI ke API routes |
+
+---
+
 
 ## Update Terbaru dari Kaizo — 2026-03-11
 
@@ -5,7 +24,7 @@
 
 | Task | Keterangan |
 |------|-----------|
-| ✅ Profile routing | `/profile/me` (edit pribadi, dashboard layout) + `/profile/[username]` (public) |
+| ✅ Profile routing | `/dash/profile/me` (edit pribadi, dashboard layout) + `/profile/[username]` (public) |
 | ✅ `/api/stats` fix | Real DB counts: event, member, post — hapus semua TODO mock |
 | ✅ `soraku.partnerships` | Tabel baru di Supabase, RLS, `/api/partnerships` ready |
 

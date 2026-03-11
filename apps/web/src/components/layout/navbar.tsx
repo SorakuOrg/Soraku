@@ -249,7 +249,7 @@ function UserDropdown({ user }: { user: SessionUser }) {
 
           {/* Links */}
           <div className="p-1.5">
-            <Link href="/profile/me" onClick={() => setOpen(false)}
+            <Link href="/dash/profile/me" onClick={() => setOpen(false)}
               className="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm text-muted-foreground transition-colors hover:bg-primary/8 hover:text-foreground">
               <LayoutDashboard className="h-4 w-4" />Profil Saya
             </Link>
@@ -486,7 +486,7 @@ export function Navbar() {
                   <p className="text-xs text-muted-foreground/60">@{user.username ?? "—"}</p>
                 </div>
               </div>
-              <Link href="/profile/me" onClick={() => setMobileOpen(false)}
+              <Link href="/dash/profile/me" onClick={() => setMobileOpen(false)}
                 className="rounded-xl border border-border px-3 py-2 text-xs font-medium text-muted-foreground">
                 Profil
               </Link>
