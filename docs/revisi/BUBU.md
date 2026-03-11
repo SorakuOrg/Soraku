@@ -346,3 +346,83 @@ src/app/(public)/social/page.tsx
 ```
 
 > Sora sudah handle `force-dynamic` di semua API routes (29 file). Bubu handle front-end pages.
+
+---
+
+## 🔴 URGENT — Login & Register Tidak Bisa Diakses
+
+> **Laporan:** User tidak bisa mengakses `/login` dan `/register`
+> **Ditemukan Sora:** 2026-03-11
+> **File:** `src/components/layout/navbar.tsx`
+
+### Root Cause — `IS_LOGGED_IN = true` hardcoded
+
+Di dua tempat di navbar, Bubu set flag ini sebagai mock:
+
+```ts
+// Baris 88 — di dalam NotificationBell()
+const IS_LOGGED_IN = true  // ❌ HARDCODED
+
+// Baris 331 — di Navbar utama
+const IS_LOGGED_IN = true  // ❌ HARDCODED
+```
+
+**Dampaknya:**
+
+1. Navbar selalu render **user dropdown** (seolah user sudah login)
+2. Tombol **"Masuk / Daftar"** tidak pernah muncul — user tidak ada jalan masuk
+3. `useNotifications(true)` selalu polling `/api/notifications` → return 401 terus dari semua halaman
+
+### Fix yang Bubu harus kerjakan
+
+Ganti `IS_LOGGED_IN = true` dengan check session nyata. Kaizo sudah buat `GET /api/auth/me`.
+
+**Pattern yang benar:**
+
+```tsx
+"use client"
+import { useState, useEffect } from "react"
+
+// Di dalam Navbar component:
+const [user, setUser] = useState<{
+  id: string
+  username: string | null
+  displayname: string | null
+  avatarurl: string | null
+  role: string
+} | null>(null)
+
+useEffect(() => {
+  fetch("/api/auth/me", { cache: "no-store" })
+    .then(r => r.json())
+    .then(d => setUser(d.data ?? null))
+    .catch(() => setUser(null))
+}, [])
+
+const IS_LOGGED_IN = user !== null
+```
+
+**Yang berubah:**
+- `IS_LOGGED_IN` sekarang `false` saat user belum login → tombol "Masuk / Daftar" muncul
+- `IS_LOGGED_IN = true` saat user login → user dropdown muncul
+- `useNotifications(IS_LOGGED_IN)` → polling hanya aktif saat user sudah login
+- User dropdown pakai data real dari `/api/auth/me` (bukan `MOCK_USER`)
+
+**Ganti juga `MOCK_USER` di baris 199–211:**
+```tsx
+// Hapus ini:
+const MOCK_USER = { name: "...", username: "anon", ... }
+const user = MOCK_USER
+
+// Ganti dengan state dari useEffect di atas
+// user sudah ada dari state, tinggal dipakai langsung
+```
+
+### Checklist Fix Bubu
+
+- [ ] Hapus `IS_LOGGED_IN = true` di `NotificationBell` — ganti pakai prop dari parent
+- [ ] Hapus `IS_LOGGED_IN = true` di `Navbar` — ganti pakai fetch `/api/auth/me`
+- [ ] Hapus `MOCK_USER` — ganti pakai data real dari session
+- [ ] `NotificationBell` terima prop `enabled: boolean` dari Navbar parent
+- [ ] Test: buka `/login` saat tidak login → tombol Masuk harus muncul di navbar
+- [ ] Test: setelah login → user dropdown muncul, nama real tampil
