@@ -5,8 +5,64 @@ import Link from "next/link";
 import Image from "next/image";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Eye, EyeOff, ArrowRight, AlertCircle, Home, User, LogOut } from "lucide-react";
+import { Eye, EyeOff, ArrowRight, AlertCircle, Home, User, LogOut, CheckCircle2 } from "lucide-react";
 import { DiscordIcon, GoogleIcon } from "@/components/icons/custom-icons";
+import { cn } from "@/lib/utils";
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+const isValidEmail = (v: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
+
+// ── Sub-components ─────────────────────────────────────────────────────────────
+function FieldError({ msg }: { msg?: string }) {
+  if (!msg) return null;
+  return (
+    <p className="mt-1.5 flex items-center gap-1.5 text-[11px] font-medium text-destructive animate-in fade-in slide-in-from-top-1 duration-150">
+      <AlertCircle className="h-3 w-3 flex-shrink-0" />{msg}
+    </p>
+  );
+}
+function FieldOk({ msg }: { msg?: string }) {
+  if (!msg) return null;
+  return (
+    <p className="mt-1.5 flex items-center gap-1.5 text-[11px] font-medium text-green-400 animate-in fade-in duration-150">
+      <CheckCircle2 className="h-3 w-3 flex-shrink-0" />{msg}
+    </p>
+  );
+}
+
+function InputField({
+  type = "text", value, onChange, onBlur, placeholder, autoComplete,
+  error, ok: okMsg, suffix, disabled,
+}: {
+  type?: string; value: string;
+  onChange: (v: string) => void; onBlur?: () => void;
+  placeholder?: string; autoComplete?: string;
+  error?: string; ok?: string;
+  suffix?: React.ReactNode; disabled?: boolean;
+}) {
+  return (
+    <div>
+      <div className="relative">
+        <input
+          type={type} value={value} disabled={disabled}
+          onChange={e => onChange(e.target.value)} onBlur={onBlur}
+          placeholder={placeholder} autoComplete={autoComplete}
+          className={cn(
+            "w-full rounded-xl border bg-card/50 px-4 py-3 text-sm outline-none",
+            "placeholder:text-muted-foreground/40 transition-all duration-150 focus:ring-1",
+            suffix ? "pr-11" : "",
+            disabled && "opacity-60 cursor-not-allowed",
+            error  ? "border-destructive/60 focus:border-destructive/70 focus:ring-destructive/15"
+            : okMsg ? "border-green-500/40 focus:border-green-500/50 focus:ring-green-500/10"
+            :         "border-border focus:border-primary/50 focus:ring-primary/20"
+          )}
+        />
+        {suffix && <div className="absolute right-3 top-1/2 -translate-y-1/2">{suffix}</div>}
+      </div>
+      {error ? <FieldError msg={error} /> : okMsg ? <FieldOk msg={okMsg} /> : null}
+    </div>
+  );
+}
 
 // ── Already logged-in screen ──────────────────────────────────────────────────
 function AlreadyLoggedIn({ displayname, onLogout }: { displayname: string; onLogout: () => void }) {
@@ -23,15 +79,15 @@ function AlreadyLoggedIn({ displayname, onLogout }: { displayname: string; onLog
         <div className="flex flex-col gap-3">
           <Link href="/"
             className="flex items-center justify-center gap-2 rounded-xl border border-border/60 px-4 py-3 text-sm font-medium text-muted-foreground hover:border-primary/30 hover:text-foreground transition-all">
-            <Home className="h-4 w-4" /> Kembali ke Beranda
+            <Home className="h-4 w-4" />Kembali ke Beranda
           </Link>
           <Link href="/dash/profile/me"
             className="flex items-center justify-center gap-2 rounded-xl bg-primary px-4 py-3 text-sm font-bold text-white shadow-md shadow-primary/20 hover:bg-primary/90 hover:-translate-y-0.5 transition-all">
-            <User className="h-4 w-4" /> Lihat Profil Saya
+            <User className="h-4 w-4" />Lihat Profil Saya
           </Link>
           <button onClick={onLogout}
             className="flex items-center justify-center gap-2 rounded-xl border border-destructive/20 bg-destructive/5 px-4 py-3 text-sm font-medium text-destructive hover:bg-destructive/10 transition-all">
-            <LogOut className="h-4 w-4" /> Keluar dari Akun
+            <LogOut className="h-4 w-4" />Keluar dari Akun
           </button>
         </div>
       </div>
@@ -39,25 +95,32 @@ function AlreadyLoggedIn({ displayname, onLogout }: { displayname: string; onLog
   );
 }
 
+// ── Page ──────────────────────────────────────────────────────────────────────
 export default function LoginPage() {
   const router = useRouter();
-  const [showPass,    setShowPass]    = useState(false);
-  const [loading,     setLoading]     = useState(false);
-  const [error,       setError]       = useState<string | null>(null);
-  const [form,        setForm]        = useState({ email: "", password: "" });
-  const [loggedIn,    setLoggedIn]    = useState<{ displayname: string } | null>(null);
+  const [showPass,     setShowPass]     = useState(false);
+  const [loading,      setLoading]      = useState(false);
+  const [formError,    setFormError]    = useState("");
+  const [loggedIn,     setLoggedIn]     = useState<{ displayname: string } | null>(null);
   const [checkingAuth, setCheckingAuth] = useState(true);
 
-  // Cek apakah sudah login
+  const [email,    setEmail]    = useState("");
+  const [password, setPassword] = useState("");
+  const [touched,  setTouched]  = useState({ email: false, password: false });
+  const [emailErr,    setEmailErr]    = useState("");
+  const [passwordErr, setPasswordErr] = useState("");
+
   useEffect(() => {
-    fetch("/api/auth/me")
-      .then(r => r.json())
-      .then(d => {
-        if (d.data?.id) setLoggedIn({ displayname: d.data.displayname ?? d.data.username ?? "Kamu" });
-      })
-      .catch(() => {})
-      .finally(() => setCheckingAuth(false));
+    fetch("/api/auth/me").then(r => r.json())
+      .then(d => { if (d.data?.id) setLoggedIn({ displayname: d.data.displayname ?? d.data.username ?? "Kamu" }); })
+      .catch(() => {}).finally(() => setCheckingAuth(false));
   }, []);
+
+  const validateEmail    = (v: string) => !v.trim() ? "Email wajib diisi" : !isValidEmail(v) ? "Format email tidak valid" : "";
+  const validatePassword = (v: string) => !v ? "Password wajib diisi" : "";
+
+  useEffect(() => { if (touched.email)    setEmailErr(validateEmail(email));       }, [email, touched.email]);
+  useEffect(() => { if (touched.password) setPasswordErr(validatePassword(password)); }, [password, touched.password]);
 
   const handleLogout = async () => {
     await fetch("/api/auth/signout", { method: "POST" }).catch(() => {});
@@ -65,41 +128,33 @@ export default function LoginPage() {
     router.refresh();
   };
 
-  // Tampilkan loading sebentar saat cek auth
   if (checkingAuth) return null;
-
-  // Sudah login — tampilkan 3 pilihan
   if (loggedIn) return <AlreadyLoggedIn displayname={loggedIn.displayname} onLogout={handleLogout} />;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.email || !form.password) { setError("Isi email dan password dulu ya."); return; }
-    setError(null);
-    setLoading(true);
+    setTouched({ email: true, password: true });
+    const eErr = validateEmail(email);
+    const pErr = validatePassword(password);
+    setEmailErr(eErr); setPasswordErr(pErr);
+    if (eErr || pErr) return;
+    setFormError(""); setLoading(true);
     try {
       const res  = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: form.email, password: form.password }),
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
       });
       const data = await res.json();
-      if (!res.ok || data.error) {
-        setError(data.error ?? "Email atau password salah.");
-      } else {
-        router.push("/dash");
-        router.refresh();
-      }
+      if (!res.ok || data.error) { setFormError(data.error ?? "Email atau password salah."); }
+      else { router.push("/dash"); router.refresh(); }
     } catch {
-      setError("Gagal terhubung ke server. Coba lagi.");
-    } finally {
-      setLoading(false);
-    }
+      setFormError("Gagal terhubung ke server. Coba lagi.");
+    } finally { setLoading(false); }
   };
 
   return (
     <div className="relative flex min-h-[calc(100vh-4rem)] items-stretch">
-
-      {/* ── Kiri: Visual panel ── */}
+      {/* Visual panel */}
       <div className="relative hidden flex-1 overflow-hidden lg:flex lg:flex-col lg:justify-between bg-gradient-to-br from-primary/12 via-background to-background/95 border-r border-border/40">
         <div className="pointer-events-none absolute inset-0">
           <div className="animate-blob absolute -top-32 -left-32 h-96 w-96 rounded-full bg-primary/12 blur-[120px]" />
@@ -125,7 +180,7 @@ export default function LoginPage() {
         </div>
       </div>
 
-      {/* ── Kanan: Form ── */}
+      {/* Form */}
       <div className="relative flex flex-1 items-center justify-center px-4 py-12 sm:px-8 lg:max-w-[480px]">
         <div className="pointer-events-none absolute inset-0 overflow-hidden lg:hidden">
           <div className="animate-blob absolute -top-20 -left-16 h-64 w-64 rounded-full bg-primary/7 blur-3xl" />
@@ -133,7 +188,6 @@ export default function LoginPage() {
         </div>
 
         <div className="relative w-full max-w-sm">
-          {/* Logo */}
           <div className="mb-8 flex items-center gap-3">
             <div className="h-10 w-10 overflow-hidden rounded-xl border border-border/60">
               <Image src="/logo.png" alt="Soraku" width={40} height={40} className="h-full w-full object-cover object-top" />
@@ -159,61 +213,58 @@ export default function LoginPage() {
             </a>
           </div>
 
-          {/* Divider */}
           <div className="my-5 flex items-center gap-3">
             <div className="flex-1 border-t border-border/50" />
-            <span className="text-xs text-muted-foreground/40 font-medium">atau</span>
+            <span className="text-xs text-muted-foreground/40 font-medium">atau email</span>
             <div className="flex-1 border-t border-border/50" />
           </div>
 
-          {/* Error */}
-          {error && (
-            <div className="mb-4 flex items-start gap-2.5 rounded-xl border border-destructive/30 bg-destructive/8 px-4 py-3">
+          {/* Form-level error */}
+          {formError && (
+            <div className="mb-4 flex items-start gap-2.5 rounded-xl border border-destructive/30 bg-destructive/8 px-4 py-3 animate-in fade-in slide-in-from-top-2 duration-200">
               <AlertCircle className="h-4 w-4 flex-shrink-0 text-destructive mt-0.5" />
-              <p className="text-sm text-destructive">{error}</p>
+              <p className="text-sm text-destructive">{formError}</p>
             </div>
           )}
 
-          {/* Form */}
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} noValidate className="space-y-4">
             <div>
               <label className="mb-1.5 block text-xs font-semibold uppercase tracking-widest text-muted-foreground/60">Email</label>
-              <input
-                type="email"
-                autoComplete="email"
-                placeholder="kamu@example.com"
-                value={form.email}
-                onChange={e => setForm(p => ({ ...p, email: e.target.value }))}
-                className="w-full rounded-xl border border-border bg-card/50 px-4 py-3 text-sm outline-none placeholder:text-muted-foreground/40 focus:border-primary/50 focus:ring-1 focus:ring-primary/20 transition-colors"
+              <InputField type="email" autoComplete="email" placeholder="kamu@example.com"
+                value={email}
+                onChange={v => { setEmail(v); setFormError(""); }}
+                onBlur={() => { setTouched(p => ({ ...p, email: true })); setEmailErr(validateEmail(email)); }}
+                error={touched.email ? emailErr : undefined}
+                ok={touched.email && !emailErr && email ? "Email valid" : undefined}
               />
             </div>
+
             <div>
               <div className="mb-1.5 flex items-center justify-between">
                 <label className="text-xs font-semibold uppercase tracking-widest text-muted-foreground/60">Password</label>
                 <Link href="/forgot-password" className="text-xs text-primary/70 hover:text-primary transition-colors">Lupa password?</Link>
               </div>
-              <div className="relative">
-                <input
-                  type={showPass ? "text" : "password"}
-                  autoComplete="current-password"
-                  placeholder="••••••••"
-                  value={form.password}
-                  onChange={e => setForm(p => ({ ...p, password: e.target.value }))}
-                  className="w-full rounded-xl border border-border bg-card/50 px-4 py-3 pr-11 text-sm outline-none placeholder:text-muted-foreground/40 focus:border-primary/50 focus:ring-1 focus:ring-primary/20 transition-colors"
-                />
-                <button type="button" onClick={() => setShowPass(p => !p)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground/50 hover:text-muted-foreground transition-colors">
-                  {showPass ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                </button>
-              </div>
+              <InputField
+                type={showPass ? "text" : "password"} autoComplete="current-password"
+                placeholder="Masukkan password kamu"
+                value={password}
+                onChange={v => { setPassword(v); setFormError(""); }}
+                onBlur={() => { setTouched(p => ({ ...p, password: true })); setPasswordErr(validatePassword(password)); }}
+                error={touched.password ? passwordErr : undefined}
+                suffix={
+                  <button type="button" onClick={() => setShowPass(p => !p)}
+                    className="text-muted-foreground/50 hover:text-muted-foreground transition-colors">
+                    {showPass ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                }
+              />
             </div>
+
             <button type="submit" disabled={loading}
               className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 py-3 text-sm font-bold text-white shadow-lg shadow-primary/20 transition-all hover:-translate-y-0.5 disabled:opacity-60 disabled:pointer-events-none">
-              {loading ? (
-                <><span className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />Masuk…</>
-              ) : (
-                <>Masuk<ArrowRight className="h-4 w-4" /></>
-              )}
+              {loading
+                ? <><span className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />Masuk…</>
+                : <>Masuk<ArrowRight className="h-4 w-4" /></>}
             </button>
           </form>
 

@@ -3,11 +3,16 @@ export const dynamic = "force-dynamic";
 
 import Link from "next/link";
 import Image from "next/image";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { Eye, EyeOff, ArrowRight, Check, AlertCircle } from "lucide-react";
+import {
+  Eye, EyeOff, ArrowRight, Check, AlertCircle,
+  CheckCircle2, Loader2, XCircle,
+} from "lucide-react";
 import { DiscordIcon, GoogleIcon } from "@/components/icons/custom-icons";
+import { cn } from "@/lib/utils";
 
+// ── Constants ─────────────────────────────────────────────────────────────────
 const BENEFITS = [
   { icon: "🎌", text: "Akses ke semua konten komunitas" },
   { icon: "🗓️", text: "Ikut event & gathering eksklusif" },
@@ -15,76 +20,259 @@ const BENEFITS = [
   { icon: "🏅", text: "Badge & role member Soraku" },
 ];
 
+// ── Helpers ───────────────────────────────────────────────────────────────────
+const isValidEmail = (v: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
+const isValidUsername = (v: string) => /^[a-z0-9_]+$/.test(v);
+
+function getPasswordStrength(p: string): { score: 0 | 1 | 2 | 3; label: string; color: string } {
+  if (!p) return { score: 0, label: "", color: "" };
+  let score = 0;
+  if (p.length >= 8)  score++;
+  if (p.length >= 12) score++;
+  if (/[A-Z]/.test(p) || /[0-9]/.test(p)) score++;
+  if (/[^A-Za-z0-9]/.test(p)) score = Math.min(3, score + 1) as 0|1|2|3;
+  const map: Record<number, { label: string; color: string }> = {
+    0: { label: "",        color: "" },
+    1: { label: "Lemah",  color: "bg-destructive" },
+    2: { label: "Sedang", color: "bg-yellow-500" },
+    3: { label: "Kuat",   color: "bg-green-500" },
+  };
+  return { score: score as 0|1|2|3, ...map[score] };
+}
+
+// ── Sub-components ─────────────────────────────────────────────────────────────
+function FieldError({ msg }: { msg?: string }) {
+  if (!msg) return null;
+  return (
+    <p className="mt-1.5 flex items-center gap-1.5 text-[11px] font-medium text-destructive animate-in fade-in slide-in-from-top-1 duration-150">
+      <AlertCircle className="h-3 w-3 flex-shrink-0" />{msg}
+    </p>
+  );
+}
+function FieldOk({ msg }: { msg?: string }) {
+  if (!msg) return null;
+  return (
+    <p className="mt-1.5 flex items-center gap-1.5 text-[11px] font-medium text-green-400 animate-in fade-in duration-150">
+      <CheckCircle2 className="h-3 w-3 flex-shrink-0" />{msg}
+    </p>
+  );
+}
+
+function InputField({
+  type = "text", value, onChange, onBlur, placeholder, autoComplete,
+  error, ok: okMsg, suffix, disabled, prefix,
+}: {
+  type?: string; value: string;
+  onChange: (v: string) => void; onBlur?: () => void;
+  placeholder?: string; autoComplete?: string;
+  error?: string; ok?: string;
+  suffix?: React.ReactNode; prefix?: React.ReactNode;
+  disabled?: boolean;
+}) {
+  return (
+    <div>
+      <div className="relative">
+        {prefix && <div className="absolute left-4 top-1/2 -translate-y-1/2">{prefix}</div>}
+        <input
+          type={type} value={value} disabled={disabled}
+          onChange={e => onChange(e.target.value)} onBlur={onBlur}
+          placeholder={placeholder} autoComplete={autoComplete}
+          className={cn(
+            "w-full rounded-xl border bg-card/50 py-3 text-sm outline-none",
+            "placeholder:text-muted-foreground/40 transition-all duration-150 focus:ring-1",
+            prefix ? "pl-8" : "pl-4",
+            suffix ? "pr-11" : "pr-4",
+            disabled && "opacity-60 cursor-not-allowed",
+            error  ? "border-destructive/60 focus:border-destructive/70 focus:ring-destructive/15"
+            : okMsg ? "border-green-500/40 focus:border-green-500/50 focus:ring-green-500/10"
+            :         "border-border focus:border-primary/50 focus:ring-primary/20"
+          )}
+        />
+        {suffix && <div className="absolute right-3 top-1/2 -translate-y-1/2">{suffix}</div>}
+      </div>
+      {error ? <FieldError msg={error} /> : okMsg ? <FieldOk msg={okMsg} /> : null}
+    </div>
+  );
+}
+
+// ── Password Strength Meter ───────────────────────────────────────────────────
+function StrengthMeter({ password }: { password: string }) {
+  const { score, label, color } = getPasswordStrength(password);
+  if (!password) return null;
+  return (
+    <div className="mt-2 space-y-1.5 animate-in fade-in duration-200">
+      <div className="flex gap-1">
+        {[1, 2, 3].map(i => (
+          <div key={i} className={cn(
+            "h-1 flex-1 rounded-full transition-all duration-300",
+            score >= i ? color : "bg-border/50"
+          )} />
+        ))}
+      </div>
+      {label && (
+        <p className={cn("text-[11px] font-medium", {
+          "text-destructive":  score === 1,
+          "text-yellow-400": score === 2,
+          "text-green-400":  score === 3,
+        })}>
+          Keamanan: {label}
+          {score === 1 && " — tambah angka atau huruf kapital"}
+          {score === 2 && " — tambah simbol untuk lebih aman"}
+        </p>
+      )}
+    </div>
+  );
+}
+
+// ── Username Availability Status ──────────────────────────────────────────────
+type AvailStatus = "idle" | "checking" | "available" | "taken" | "invalid";
+
+function UsernameStatus({ status, username }: { status: AvailStatus; username: string }) {
+  if (!username || status === "idle") return null;
+  return (
+    <p className={cn(
+      "mt-1.5 flex items-center gap-1.5 text-[11px] font-medium animate-in fade-in duration-150",
+      status === "available" ? "text-green-400"
+      : status === "taken" || status === "invalid" ? "text-destructive"
+      : "text-muted-foreground/50"
+    )}>
+      {status === "checking"  && <Loader2  className="h-3 w-3 animate-spin flex-shrink-0" />}
+      {status === "available" && <CheckCircle2 className="h-3 w-3 flex-shrink-0" />}
+      {(status === "taken" || status === "invalid") && <XCircle className="h-3 w-3 flex-shrink-0" />}
+      {status === "checking"  ? "Mengecek ketersediaan…"
+       : status === "available" ? "Username tersedia!"
+       : status === "taken"     ? "Username sudah dipakai"
+       : "Hanya huruf kecil, angka, underscore"}
+    </p>
+  );
+}
+
+// ── Page ──────────────────────────────────────────────────────────────────────
 export default function RegisterPage() {
   const router = useRouter();
-  const [showPass, setShowPass] = useState(false);
-  const [loading,  setLoading]  = useState(false);
-  const [error,    setError]    = useState<string | null>(null);
-  const [step, setStep] = useState(1);
-  const [form, setForm] = useState({
-    email: "", password: "", username: "", displayname: "",
+
+  const [showPass,    setShowPass]    = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [loading,     setLoading]     = useState(false);
+  const [formError,   setFormError]   = useState("");
+  const [step,        setStep]        = useState(1);
+
+  const [email,       setEmail]       = useState("");
+  const [password,    setPassword]    = useState("");
+  const [confirm,     setConfirm]     = useState("");
+  const [username,    setUsername]    = useState("");
+  const [displayname, setDisplayname] = useState("");
+
+  // Touched state
+  const [touched, setTouched] = useState({
+    email: false, password: false, confirm: false, username: false,
   });
 
-  const set = (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement>) =>
-    setForm(p => ({ ...p, [k]: e.target.value }));
+  // Per-field errors
+  const [emailErr,   setEmailErr]   = useState("");
+  const [passwordErr,setPasswordErr]= useState("");
+  const [confirmErr, setConfirmErr] = useState("");
 
+  // Username availability
+  const [availStatus, setAvailStatus] = useState<AvailStatus>("idle");
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // ── Validators ──
+  const validateEmail    = (v: string) => !v.trim() ? "Email wajib diisi" : !isValidEmail(v) ? "Format email tidak valid" : "";
+  const validatePassword = (v: string) => {
+    if (!v) return "Password wajib diisi";
+    if (v.length < 8) return "Password minimal 8 karakter";
+    return "";
+  };
+  const validateConfirm = (v: string, p: string) =>
+    !v ? "Konfirmasi password wajib diisi" : v !== p ? "Password tidak cocok" : "";
+  const validateUsername = (v: string) =>
+    !v.trim() ? "Username wajib diisi"
+    : v.length < 3 ? "Username minimal 3 karakter"
+    : v.length > 30 ? "Username maksimal 30 karakter"
+    : !isValidUsername(v) ? "Hanya huruf kecil, angka, underscore"
+    : "";
+
+  // ── Live validation ──
+  useEffect(() => { if (touched.email)    setEmailErr(validateEmail(email));                    }, [email,    touched.email]);
+  useEffect(() => { if (touched.password) setPasswordErr(validatePassword(password));          }, [password, touched.password]);
+  useEffect(() => { if (touched.confirm)  setConfirmErr(validateConfirm(confirm, password));   }, [confirm, password, touched.confirm]);
+
+  // ── Username availability check (debounce 600ms) ──
+  useEffect(() => {
+    if (!username) { setAvailStatus("idle"); return; }
+    const formatErr = validateUsername(username);
+    if (formatErr) { setAvailStatus("invalid"); return; }
+
+    setAvailStatus("checking");
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(async () => {
+      try {
+        const res  = await fetch(`/api/auth/check-username?username=${encodeURIComponent(username)}`);
+        const data = await res.json();
+        setAvailStatus(res.ok && data.data?.available ? "available" : "taken");
+      } catch {
+        setAvailStatus("idle");
+      }
+    }, 600);
+    return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
+  }, [username]);
+
+  // ── Step 1 submit (validasi & next) ──
+  const handleStep1 = () => {
+    setTouched(p => ({ ...p, email: true, password: true, confirm: true }));
+    const eErr = validateEmail(email);
+    const pErr = validatePassword(password);
+    const cErr = validateConfirm(confirm, password);
+    setEmailErr(eErr); setPasswordErr(pErr); setConfirmErr(cErr);
+    if (eErr || pErr || cErr) return;
+    setFormError("");
+    setStep(2);
+  };
+
+  // ── Step 2 submit (register) ──
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError(null);
+    if (step === 1) { handleStep1(); return; }
 
-    if (step === 1) {
-      if (!form.email || !form.password) { setError("Isi email dan password dulu ya."); return; }
-      if (form.password.length < 8) { setError("Password minimal 8 karakter."); return; }
-      setStep(2);
-      return;
-    }
+    setTouched(p => ({ ...p, username: true }));
+    const uErr = validateUsername(username);
+    if (uErr) return;
+    if (availStatus === "taken" || availStatus === "invalid") return;
+    if (availStatus === "checking") { setFormError("Menunggu cek username selesai…"); return; }
 
-    // Step 2 — submit
-    if (!form.username) { setError("Username wajib diisi."); return; }
-    if (!/^[a-z0-9_]+$/.test(form.username)) {
-      setError("Username hanya huruf kecil, angka, dan underscore."); return;
-    }
-
-    setLoading(true);
+    setFormError(""); setLoading(true);
     try {
       const res  = await fetch("/api/auth/register", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+        method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          email:    form.email,
-          password: form.password,
-          username: form.username.toLowerCase(),
+          email, password,
+          username: username.toLowerCase(),
+          ...(displayname.trim() ? { displayname: displayname.trim() } : {}),
         }),
       });
       const data = await res.json();
-      if (!res.ok || data.error) {
-        setError(data.error ?? "Pendaftaran gagal. Coba lagi.");
-      } else {
-        // Langsung login setelah register berhasil
-        const loginRes  = await fetch("/api/auth/login", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email: form.email, password: form.password }),
-        });
-        if (loginRes.ok) {
-          router.push("/dash");
-          router.refresh();
-        } else {
-          // Register berhasil tapi login gagal — redirect ke login
-          router.push("/login?registered=1");
-        }
-      }
+      if (!res.ok || data.error) { setFormError(data.error ?? "Pendaftaran gagal. Coba lagi."); return; }
+
+      // Auto-login setelah register
+      const loginRes = await fetch("/api/auth/login", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+      if (loginRes.ok) { router.push("/dash"); router.refresh(); }
+      else             { router.push("/login?registered=1"); }
     } catch {
-      setError("Gagal terhubung ke server. Coba lagi.");
-    } finally {
-      setLoading(false);
-    }
+      setFormError("Gagal terhubung ke server. Coba lagi.");
+    } finally { setLoading(false); }
   };
+
+  const canStep1 = !emailErr && !passwordErr && !confirmErr && email && password && confirm;
+  const canStep2 = availStatus === "available" && username;
 
   return (
     <div className="relative flex min-h-[calc(100vh-4rem)] items-stretch">
 
-      {/* ── Kiri: Benefits ── */}
+      {/* Kiri: Benefits */}
       <div className="relative hidden flex-1 overflow-hidden lg:flex lg:flex-col bg-gradient-to-br from-accent/8 via-background to-background border-r border-border/40">
         <div className="pointer-events-none absolute inset-0">
           <div className="animate-blob absolute -top-20 -right-20 h-80 w-80 rounded-full bg-accent/10 blur-[120px]" />
@@ -122,7 +310,7 @@ export default function RegisterPage() {
         </div>
       </div>
 
-      {/* ── Kanan: Form ── */}
+      {/* Kanan: Form */}
       <div className="relative flex flex-1 items-center justify-center px-4 py-12 sm:px-8 lg:max-w-[480px]">
         <div className="pointer-events-none absolute inset-0 overflow-hidden lg:hidden">
           <div className="animate-blob absolute -top-16 left-0 h-64 w-64 rounded-full bg-accent/7 blur-3xl" />
@@ -134,14 +322,15 @@ export default function RegisterPage() {
           <div className="mb-8 flex items-center gap-2">
             {["Akun", "Profil"].map((s, i) => (
               <div key={s} className="flex items-center gap-2">
-                <div className={`flex h-6 w-6 items-center justify-center rounded-full text-[11px] font-black transition-all ${
-                  step > i + 1 ? "bg-green-500 text-white"
+                <div className={cn(
+                  "flex h-6 w-6 items-center justify-center rounded-full text-[11px] font-black transition-all",
+                  step > i + 1  ? "bg-green-500 text-white"
                   : step === i + 1 ? "bg-primary text-white"
-                  : "bg-muted text-muted-foreground"
-                }`}>
+                  :                  "bg-muted/60 text-muted-foreground/50"
+                )}>
                   {step > i + 1 ? <Check className="h-3.5 w-3.5" /> : i + 1}
                 </div>
-                <span className={`text-xs font-semibold ${step === i + 1 ? "text-foreground" : "text-muted-foreground/50"}`}>{s}</span>
+                <span className={cn("text-xs font-semibold", step === i + 1 ? "text-foreground" : "text-muted-foreground/50")}>{s}</span>
                 {i === 0 && <div className="mx-1 h-px w-8 bg-border/60" />}
               </div>
             ))}
@@ -154,7 +343,7 @@ export default function RegisterPage() {
             {step === 1 ? "Daftar ke Soraku Community — gratis!" : "Username unikmu di komunitas Soraku"}
           </p>
 
-          {/* OAuth — hanya di step 1 */}
+          {/* OAuth — hanya step 1 */}
           {step === 1 && (
             <>
               <div className="mt-6 flex flex-col gap-2.5">
@@ -169,83 +358,155 @@ export default function RegisterPage() {
               </div>
               <div className="my-5 flex items-center gap-3">
                 <div className="flex-1 border-t border-border/50" />
-                <span className="text-xs text-muted-foreground/40 font-medium">atau</span>
+                <span className="text-xs text-muted-foreground/40 font-medium">atau email</span>
                 <div className="flex-1 border-t border-border/50" />
               </div>
             </>
           )}
 
-          {/* Error */}
-          {error && (
-            <div className="mb-4 flex items-start gap-2.5 rounded-xl border border-destructive/30 bg-destructive/8 px-4 py-3">
+          {/* Form-level error */}
+          {formError && (
+            <div className="mb-4 flex items-start gap-2.5 rounded-xl border border-destructive/30 bg-destructive/8 px-4 py-3 animate-in fade-in slide-in-from-top-2 duration-200">
               <AlertCircle className="h-4 w-4 flex-shrink-0 text-destructive mt-0.5" />
-              <p className="text-sm text-destructive">{error}</p>
+              <p className="text-sm text-destructive">{formError}</p>
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} noValidate className="space-y-4">
             {step === 1 ? (
               <>
+                {/* Email */}
                 <div>
                   <label className="mb-1.5 block text-xs font-semibold uppercase tracking-widest text-muted-foreground/60">Email</label>
-                  <input type="email" autoComplete="email" placeholder="kamu@example.com"
-                    value={form.email} onChange={set("email")}
-                    className="w-full rounded-xl border border-border bg-card/50 px-4 py-3 text-sm outline-none placeholder:text-muted-foreground/40 focus:border-primary/50 focus:ring-1 focus:ring-primary/20 transition-colors" />
+                  <InputField type="email" autoComplete="email" placeholder="kamu@example.com"
+                    value={email}
+                    onChange={v => { setEmail(v); setFormError(""); }}
+                    onBlur={() => { setTouched(p => ({ ...p, email: true })); setEmailErr(validateEmail(email)); }}
+                    error={touched.email ? emailErr : undefined}
+                    ok={touched.email && !emailErr && email ? "Email valid" : undefined}
+                  />
                 </div>
+
+                {/* Password */}
                 <div>
                   <label className="mb-1.5 block text-xs font-semibold uppercase tracking-widest text-muted-foreground/60">Password</label>
-                  <div className="relative">
-                    <input type={showPass ? "text" : "password"} autoComplete="new-password" placeholder="Min 8 karakter"
-                      value={form.password} onChange={set("password")}
-                      className="w-full rounded-xl border border-border bg-card/50 px-4 py-3 pr-11 text-sm outline-none placeholder:text-muted-foreground/40 focus:border-primary/50 focus:ring-1 focus:ring-primary/20 transition-colors" />
-                    <button type="button" onClick={() => setShowPass(p => !p)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground/50 hover:text-muted-foreground">
-                      {showPass ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                    </button>
-                  </div>
+                  <InputField
+                    type={showPass ? "text" : "password"} autoComplete="new-password"
+                    placeholder="Min 8 karakter"
+                    value={password}
+                    onChange={v => { setPassword(v); setFormError(""); }}
+                    onBlur={() => { setTouched(p => ({ ...p, password: true })); setPasswordErr(validatePassword(password)); }}
+                    error={touched.password ? passwordErr : undefined}
+                    suffix={
+                      <button type="button" onClick={() => setShowPass(p => !p)}
+                        className="text-muted-foreground/50 hover:text-muted-foreground transition-colors">
+                        {showPass ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      </button>
+                    }
+                  />
+                  <StrengthMeter password={password} />
                 </div>
+
+                {/* Confirm password */}
+                <div>
+                  <label className="mb-1.5 block text-xs font-semibold uppercase tracking-widest text-muted-foreground/60">Konfirmasi Password</label>
+                  <InputField
+                    type={showConfirm ? "text" : "password"} autoComplete="new-password"
+                    placeholder="Ulangi password"
+                    value={confirm}
+                    onChange={v => { setConfirm(v); setFormError(""); }}
+                    onBlur={() => { setTouched(p => ({ ...p, confirm: true })); setConfirmErr(validateConfirm(confirm, password)); }}
+                    error={touched.confirm ? confirmErr : undefined}
+                    ok={touched.confirm && !confirmErr && confirm ? "Password cocok" : undefined}
+                    suffix={
+                      <button type="button" onClick={() => setShowConfirm(p => !p)}
+                        className="text-muted-foreground/50 hover:text-muted-foreground transition-colors">
+                        {showConfirm ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      </button>
+                    }
+                  />
+                </div>
+
+                <button type="submit" disabled={!canStep1}
+                  className={cn(
+                    "flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-bold text-white shadow-lg shadow-primary/20 transition-all",
+                    canStep1 ? "bg-primary hover:-translate-y-0.5" : "bg-primary/50 cursor-not-allowed"
+                  )}>
+                  Lanjut<ArrowRight className="h-4 w-4" />
+                </button>
               </>
             ) : (
               <>
+                {/* Username */}
                 <div>
                   <label className="mb-1.5 block text-xs font-semibold uppercase tracking-widest text-muted-foreground/60">Username</label>
-                  <div className="relative">
-                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm text-muted-foreground/40 font-medium">@</span>
-                    <input type="text" autoComplete="username" placeholder="contoh: anon_weebs"
-                      value={form.username} onChange={set("username")}
-                      className="w-full rounded-xl border border-border bg-card/50 pl-8 pr-4 py-3 text-sm outline-none placeholder:text-muted-foreground/40 focus:border-primary/50 focus:ring-1 focus:ring-primary/20 transition-colors" />
-                  </div>
-                  <p className="mt-1 text-[11px] text-muted-foreground/40">Huruf kecil, angka, underscore. Tidak bisa diubah setelah daftar.</p>
+                  <InputField
+                    type="text" autoComplete="username"
+                    placeholder="contoh: anon_weebs"
+                    value={username}
+                    onChange={v => { setUsername(v.toLowerCase().replace(/[^a-z0-9_]/g, "")); setFormError(""); }}
+                    onBlur={() => setTouched(p => ({ ...p, username: true }))}
+                    error={touched.username && validateUsername(username) ? validateUsername(username) : undefined}
+                    ok={availStatus === "available" ? undefined : undefined}
+                    prefix={<span className="text-sm text-muted-foreground/40 font-medium">@</span>}
+                  />
+                  <UsernameStatus status={availStatus} username={username} />
+                  <p className="mt-1 text-[11px] text-muted-foreground/35">Huruf kecil, angka, underscore. Tidak bisa diubah setelah daftar.</p>
                 </div>
+
+                {/* Nama tampilan */}
                 <div>
-                  <label className="mb-1.5 block text-xs font-semibold uppercase tracking-widest text-muted-foreground/60">Nama Tampilan <span className="normal-case text-muted-foreground/30">(opsional)</span></label>
-                  <input type="text" placeholder="Nama yang tampil ke orang lain"
-                    value={form.displayname} onChange={set("displayname")}
-                    className="w-full rounded-xl border border-border bg-card/50 px-4 py-3 text-sm outline-none placeholder:text-muted-foreground/40 focus:border-primary/50 focus:ring-1 focus:ring-primary/20 transition-colors" />
+                  <label className="mb-1.5 block text-xs font-semibold uppercase tracking-widest text-muted-foreground/60">
+                    Nama Tampilan <span className="normal-case text-muted-foreground/30">(opsional)</span>
+                  </label>
+                  <InputField
+                    type="text" placeholder="Nama yang tampil ke orang lain"
+                    value={displayname}
+                    onChange={v => setDisplayname(v.slice(0, 50))}
+                  />
+                  {displayname && (
+                    <p className="mt-1 text-[11px] text-muted-foreground/30 text-right tabular-nums">{displayname.length}/50</p>
+                  )}
                 </div>
-                <button type="button" onClick={() => { setStep(1); setError(null); }}
-                  className="text-xs text-muted-foreground/50 hover:text-muted-foreground transition-colors">
-                  ← Kembali ke step sebelumnya
-                </button>
+
+                {/* Summary akun */}
+                <div className="rounded-xl border border-border/30 bg-muted/10 divide-y divide-border/20">
+                  <div className="flex items-center justify-between px-4 py-2.5">
+                    <span className="text-xs text-muted-foreground/40">Email</span>
+                    <span className="text-xs font-medium text-foreground/70 max-w-[180px] truncate">{email}</span>
+                  </div>
+                  <div className="flex items-center justify-between px-4 py-2.5">
+                    <span className="text-xs text-muted-foreground/40">Password</span>
+                    <span className="text-xs text-muted-foreground/40">{"•".repeat(Math.min(password.length, 10))}</span>
+                  </div>
+                </div>
+
+                <div className="flex gap-2">
+                  <button type="button" onClick={() => { setStep(1); setFormError(""); }}
+                    className="flex items-center gap-1.5 rounded-xl border border-border/50 px-4 py-3 text-xs font-medium text-muted-foreground hover:border-border hover:text-foreground transition-all">
+                    ← Kembali
+                  </button>
+                  <button type="submit" disabled={loading || !canStep2}
+                    className={cn(
+                      "flex flex-1 items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-bold text-white shadow-lg shadow-primary/20 transition-all",
+                      !loading && canStep2 ? "bg-primary hover:-translate-y-0.5" : "bg-primary/50 cursor-not-allowed"
+                    )}>
+                    {loading
+                      ? <><Loader2 className="h-4 w-4 animate-spin" />Mendaftar…</>
+                      : <>Daftar Sekarang<ArrowRight className="h-4 w-4" /></>}
+                  </button>
+                </div>
               </>
             )}
-
-            <button type="submit" disabled={loading}
-              className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 py-3 text-sm font-bold text-white shadow-lg shadow-primary/20 transition-all hover:-translate-y-0.5 disabled:opacity-60 disabled:pointer-events-none">
-              {loading ? (
-                <><span className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />Mendaftar…</>
-              ) : (
-                <>{step === 1 ? "Lanjut" : "Daftar Sekarang"}<ArrowRight className="h-4 w-4" /></>
-              )}
-            </button>
           </form>
 
-          <p className="mt-6 text-center text-xs text-muted-foreground/50 leading-relaxed">
-            Dengan mendaftar kamu setuju dengan{" "}
-            <Link href="/terms" className="text-primary/70 hover:text-primary">Syarat & Ketentuan</Link>{" "}dan{" "}
-            <Link href="/privacy" className="text-primary/70 hover:text-primary">Kebijakan Privasi</Link> Soraku.
-          </p>
-
+          {step === 1 && (
+            <p className="mt-5 text-center text-xs text-muted-foreground/50 leading-relaxed">
+              Dengan mendaftar kamu setuju dengan{" "}
+              <Link href="/terms" className="text-primary/70 hover:text-primary">Syarat & Ketentuan</Link>{" "}dan{" "}
+              <Link href="/privacy" className="text-primary/70 hover:text-primary">Kebijakan Privasi</Link> Soraku.
+            </p>
+          )}
           <p className="mt-4 text-center text-sm text-muted-foreground">
             Sudah punya akun?{" "}
             <Link href="/login" className="font-semibold text-primary hover:underline">Masuk</Link>
