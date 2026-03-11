@@ -41,14 +41,14 @@ const NAV_ITEMS: NavItem[] = [
       { label: "Event",         href: "/events",               desc: "Acara & gathering"        },
       { label: "Galeri",        href: "/gallery",              desc: "Karya anggota"            },
       { label: "Showcase",      href: "/community/showcase",   desc: "Karya terbaik komunitas"  },
-      { label: "Sosial Media",  href: "/social",               desc: "Semua platform Soraku"    },
+      { label: "Sosial Media",  href: "/about",               desc: "Ikuti Soraku di semua platform" },
     ],
   },
   {
     type: "dropdown",
     label: "Agensi",
     children: [
-      { label: "VTuber", href: "/agensi/vtuber", desc: "Virtual YouTuber Soraku" },
+      { label: "VTuber", href: "/vtubers", desc: "Virtual YouTuber Soraku" },
       { label: "Talent", href: "/agensi",        desc: "Profil kreator & talent" },
     ],
   },
@@ -258,7 +258,7 @@ function UserDropdown({ user }: { user: SessionUser }) {
               <Settings className="h-4 w-4" />Pengaturan
             </Link>
             {isAdmin && (
-              <Link href="/admin" onClick={() => setOpen(false)}
+              <Link href="/dash/admin" onClick={() => setOpen(false)}
                 className="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm text-muted-foreground transition-colors hover:bg-primary/8 hover:text-foreground">
                 <Shield className="h-4 w-4" />Admin Panel
               </Link>
