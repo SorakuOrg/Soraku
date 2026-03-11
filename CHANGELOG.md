@@ -246,3 +246,12 @@ dengan arsitektur yang sepenuhnya berbeda dari versi sebelumnya.
 ### Pending → Catatan ke Kaizo
 - Mulai sekarang setiap API route baru wajib `export const dynamic = 'force-dynamic'`
   Detail: lihat `docs/revisi/KAIZO.md` section Revisi Dari Sora
+
+## [0.1.1] — 2026-03-11
+
+### Fixed (Sora)
+- `fix(middleware): hapus middleware.ts — konflik dengan proxy.ts di Next.js 16`
+  **Root cause:** Next.js 16 pakai `proxy.ts` sebagai middleware, BUKAN `middleware.ts`.
+  Commit sebelumnya (0.1.0) Sora buat `middleware.ts` berdasarkan asumsi Next.js versi lama.
+  Hasilnya: build Vercel error "Both middleware file and proxy file are detected".
+  **Fix:** Hapus `src/middleware.ts`. `proxy.ts` sudah benar dan cukup untuk Next.js 16.
