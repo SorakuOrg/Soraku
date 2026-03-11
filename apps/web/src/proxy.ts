@@ -24,37 +24,25 @@ export async function proxy(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser()
   const { pathname } = request.nextUrl
 
-  // ── Permanent redirects — deprecated routes ────────────────────────────────
+  // ── Permanent redirects — deprecated routes ──────────────────────────────
 
-  // /social → hapus, bukan halaman (sesuai NAMESPACE.md)
   if (pathname === '/social' || pathname.startsWith('/social/')) {
     return NextResponse.redirect(new URL('/', request.url), 301)
   }
-
-  // /agensi/vtuber → /vtubers
   if (pathname === '/agensi/vtuber' || pathname.startsWith('/agensi/vtuber/')) {
-    const newPath = pathname.replace('/agensi/vtuber', '/vtubers')
-    return NextResponse.redirect(new URL(newPath, request.url), 301)
+    return NextResponse.redirect(new URL(pathname.replace('/agensi/vtuber', '/vtubers'), request.url), 301)
   }
-
-  // /premium/donatur → /donate/leaderboard
   if (pathname === '/premium/donatur' || pathname.startsWith('/premium/donatur/')) {
     return NextResponse.redirect(new URL('/donate/leaderboard', request.url), 301)
   }
-
-  // /admin/* → /dash/admin/* (old admin routes)
   if (pathname.startsWith('/admin')) {
-    const newPath = pathname.replace('/admin', '/dash/admin')
-    return NextResponse.redirect(new URL(newPath, request.url), 301)
+    return NextResponse.redirect(new URL(pathname.replace('/admin', '/dash/admin'), request.url), 301)
   }
-
-  // /dashboard/* → /dash/* (old dashboard)
   if (pathname.startsWith('/dashboard')) {
-    const newPath = pathname.replace('/dashboard', '/dash')
-    return NextResponse.redirect(new URL(newPath, request.url), 301)
+    return NextResponse.redirect(new URL(pathname.replace('/dashboard', '/dash'), request.url), 301)
   }
 
-  // ── Auth guards ────────────────────────────────────────────────────────────
+  // ── Auth guards ──────────────────────────────────────────────────────────
 
   // /dash/* — harus login
   if (pathname.startsWith('/dash') && !user) {
@@ -62,20 +50,28 @@ export async function proxy(request: NextRequest) {
   }
 
   // /dash/admin/* — harus OWNER / MANAGER / ADMIN
+  // Pakai maybeSingle() agar tidak crash jika row belum ada
   if (pathname.startsWith('/dash/admin')) {
     if (!user) return NextResponse.redirect(new URL('/login', request.url))
-    const { data } = await supabase
-      .schema('soraku')
-      .from('users')
-      .select('role')
-      .eq('id', user.id)
-      .single()
-    if (!['OWNER', 'MANAGER', 'ADMIN'].includes(data?.role ?? '')) {
-      return NextResponse.redirect(new URL('/', request.url))
+
+    try {
+      const { data } = await supabase
+        .schema('soraku')
+        .from('users')
+        .select('role')
+        .eq('id', user.id)
+        .maybeSingle()
+
+      // Kalau row belum ada → fallback ke USER → forbidden
+      if (!['OWNER', 'MANAGER', 'ADMIN'].includes(data?.role ?? '')) {
+        return NextResponse.redirect(new URL('/dash/profile/me', request.url))
+      }
+    } catch {
+      return NextResponse.redirect(new URL('/dash/profile/me', request.url))
     }
   }
 
-  // /login /register — sudah login → redirect ke /dash/profile/me
+  // /login /register — sudah login → redirect ke dashboard
   if ((pathname === '/login' || pathname === '/register') && user) {
     return NextResponse.redirect(new URL('/dash/profile/me', request.url))
   }
