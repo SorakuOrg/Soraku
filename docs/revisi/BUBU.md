@@ -1,56 +1,71 @@
-# BUBU — Revisi & Task List
-> Front-end Soraku Community
+# BUBU — Brief & Task List
+> From: Sora (Full Stack Lead)
 > Last updated: 2026-03-11
 
 ---
 
-## ✅ Sudah Selesai
+## ✅ Sudah Selesai (rekap)
 
-| Fitur | Keterangan |
-|-------|-----------|
-| Design system, globals.css | Tokens, animations, glass-card, semua class custom |
-| Navbar + Footer | Responsive, dropdown, SORAKU_SOCIALS, mobile accordion |
-| Semua halaman publik | Homepage, Blog, Events, Gallery, About, Social, Premium, Donate, Donatur |
-| Login / Register redesign | Split layout mascot, OAuth icons, 2-step form |
-| Dashboard layout | Sidebar, quick links, stats |
-| Admin panel UI (5 halaman) | Dashboard, Blog, Events, Gallery, Users — semua selesai |
-| Notification bell | Polling 30s, badge unread count, panel dropdown |
-| User dropdown Navbar | Avatar, nama, role, menu Profil/Settings/Admin/Keluar |
-| Navbar → real session | IS_LOGGED_IN → fetch /api/auth/me, hapus MOCK_USER |
-| Logo mascot navbar + footer | /public/logo.png + logo-full.png |
-| force-dynamic 13 halaman | login, register, about, donate, premium, social, upload, admin pages |
-| Halaman /social | Grid SORAKU_SOCIALS lengkap |
-| /about redesign | Hero 空, stats real-time, marquee, timeline, partnership |
-| Profile edit form | Design di `/dashboard/profile` (sebelum dipindah Kaizo) |
-| Profile public page | `/profile/[username]` — public view lengkap |
-
-### ✅ Selesai oleh Kaizo (backup tugas Bubu)
-
-| Fitur | Keterangan |
-|-------|-----------|
-| Profile routing restruktur | `/dash/profile/me` ← edit pribadi, `/profile/[username]` ← publik |
-| Hapus `/dashboard/profile` | Dipindah ke `(dashboard)/profile/me/page.tsx` |
-| Update semua link | sidebar, quick links, public profile "Edit" button |
+| Fitur | Status |
+|-------|--------|
+| Design system, globals.css, animasi | ✅ |
+| Navbar + Footer + SORAKU_SOCIALS | ✅ |
+| Semua halaman publik (homepage, blog, events, gallery, about, donate, premium) | ✅ |
+| Login / Register → real API | ✅ |
+| Dashboard layout → real session | ✅ |
+| Profile /dash/profile/me → CRUD | ✅ |
+| Admin panel UI — 5 halaman | ✅ |
+| Notification bell polling | ✅ |
+| User dropdown Navbar → real session | ✅ |
+| force-dynamic semua pages | ✅ |
 
 ---
 
-## 🔜 Task Selanjutnya untuk Bubu
+## 🔴 Revisi Route — WAJIB (dari Riu + Sora, sudah ditetapkan di docs/routes)
 
-### 1. Form Edit Blog — `/admin/blog/[id]/edit`
-Sora sudah buat `/admin/blog/new`. Tinggal bikin versi edit yang **prefill data existing**.
+Sora sudah kerjakan semua redirect dan pages baru. **Tugas Bubu hanya cleanup + form edit.**
+
+### 1. Hapus file lama yang sudah di-redirect
+
+File ini masih ada tapi routenya sudah di-redirect oleh `proxy.ts`. Tidak akan muncul ke user, tapi perlu dihapus agar codebase bersih.
+
+```
+apps/web/src/app/(public)/social/page.tsx          → HAPUS
+apps/web/src/app/(public)/premium/donatur/page.tsx → HAPUS (sudah pindah ke /donate/leaderboard)
+apps/web/src/app/(public)/agensi/vtuber/page.tsx   → HAPUS (sudah pindah ke /vtubers)
+apps/web/src/app/(admin)/                           → HAPUS seluruh folder (sudah pindah ke /dash/admin)
+apps/web/src/app/(dashboard)/dashboard/            → HAPUS (legacy, redirect ke /dash)
+```
+
+### 2. Audit semua link internal di halaman publik
+
+Cek setiap halaman — kalau masih ada link ke route lama, ganti:
+
+| Link Lama | Ganti Jadi |
+|-----------|-----------|
+| `href="/social"` | hapus atau `href="/about"` |
+| `href="/agensi/vtuber"` | `href="/vtubers"` |
+| `href="/premium/donatur"` | `href="/donate/leaderboard"` |
+| `href="/admin"` atau `href="/admin/*"` | `href="/dash/admin"` |
+| `href="/dashboard"` | `href="/dash/profile/me"` |
+
+Jalankan ini di terminal untuk temukan semua:
+```bash
+grep -rn 'href="/social\|href="/agensi/vtuber\|href="/premium/donatur\|href="/admin\|href="/dashboard' apps/web/src/app --include="*.tsx"
+```
+
+### 3. Form Edit Blog — `/dash/admin/blog/[id]/edit`
+
+Sora sudah buat form **create** di `/dash/admin/blog/new`. Bubu buat versi **edit** yang prefill data existing.
 
 ```tsx
-// Fetch data dulu, lalu tampilkan form dengan nilai terisi
-useEffect(() => {
-  fetch(`/api/blog/${id}`)
-    .then(r => r.json())
-    .then(d => {
-      setTitle(d.data.title)
-      setSlug(d.data.slug)
-      setExcerpt(d.data.excerpt ?? "")
-      setContent(d.data.content ?? "")
-    })
-}, [id])
+// Struktur folder
+apps/web/src/app/(dashboard)/dash/admin/blog/[id]/edit/page.tsx
+
+// Fetch data existing dulu
+const res = await fetch(`/api/blog/${id}`)
+const { data } = await res.json()
+// prefill: title, slug, excerpt, content, coverurl, tags, ispublished
 
 // Submit ke PATCH /api/admin/blog/[id]
 await fetch(`/api/admin/blog/${id}`, {
@@ -59,55 +74,50 @@ await fetch(`/api/admin/blog/${id}`, {
 })
 ```
 
-### 2. Form Edit Event — `/admin/events/[id]/edit`
-Sama seperti form new event, tapi prefill dari `/api/events/{slug}` atau `/api/admin/events`.
-Submit ke `PATCH /api/admin/events/[id]`.
+### 4. Form Edit Event — `/dash/admin/events/[id]/edit`
 
-### 3. Tombol Edit di tabel Blog & Events
-Di `/admin/blog/page.tsx` dan `/admin/events/page.tsx` sudah ada tombol edit dengan ikon `<Edit />`.
-Saat ini link ke `/admin/blog/${post.id}/edit` — halaman tersebut belum dibuat.
-**Bubu buat halaman edit-nya.**
+Sama seperti form create event tapi prefill data.
 
-### 4. About page — /api/stats update response shape
-`/api/stats` sekarang return field tambahan dari Kaizo:
-```ts
-{
-  discord_members:  number,  // dari Discord API
-  discord_online:   number,  // dari Discord API
-  event_count:      number,  // real DB ✅
-  post_count:       number,  // real DB (baru) ✅
-  member_count:     number,  // real DB (baru) ✅
-  founded_year:     number,
-}
+```tsx
+// Struktur folder
+apps/web/src/app/(dashboard)/dash/admin/events/[id]/edit/page.tsx
+
+// Submit ke PATCH /api/admin/events/[id]
+await fetch(`/api/admin/events/${id}`, {
+  method: "PATCH",
+  body: JSON.stringify({ title, slug, description, startdate, enddate, isonline, location, coverurl, tags, ispublished })
+})
 ```
-Kalau Bubu mau tampilin `post_count` atau `member_count` di /about, tinggal tambah ke UI.
-
-### 5. Partnership marquee — `/api/partnerships`
-Tabel `soraku.partnerships` sudah dibuat Kaizo. API `/api/partnerships` sudah ready.
-Response: `[{ id, name, logourl, website, category }]`
-Kalau mau tampilin logo partnership di /about marquee, query sudah jalan.
 
 ---
 
-## ⚠️ Yang Dibutuhkan Bubu dari Kaizo
+## 📌 Namespace Rules (WAJIB — dari docs/routes/NAMESPACE.md)
 
-| Kebutuhan | Status |
-|-----------|--------|
-| `GET /api/admin/blog` — list semua post | ✅ Ada |
-| `GET /api/blog/[slug]` — detail post by slug | ✅ Ada |
-| `PATCH /api/admin/blog/[id]` — update post | ✅ Ada |
-| `GET /api/admin/events` — list semua event | ✅ Ada |
-| `PATCH /api/admin/events/[id]` — update event | ✅ Ada |
+> Ini sudah ditetapkan Riu. Jangan buat route di luar ini.
 
-Semua API yang Bubu butuhkan untuk form edit sudah tersedia. Tinggal UI-nya.
+| Jenis | Namespace |
+|-------|-----------|
+| Halaman publik | `/blog`, `/events`, `/gallery`, `/vtubers`, `/donate`, dll |
+| Auth | `/login`, `/register` saja — tidak boleh ada sub-route |
+| Dashboard user | `/dash/*` |
+| Admin panel | `/dash/admin/*` |
+| API | `/api/*` |
+
+**JANGAN buat:**
+- `/admin/*` → sudah diganti `/dash/admin/*`
+- `/dashboard/*` → sudah diganti `/dash/*`
+- `/social` → bukan halaman
+- `/premium/donatur` → sudah diganti `/donate/leaderboard`
+- `/agensi/vtuber` → sudah diganti `/vtubers`
 
 ---
 
-## 📌 Rules Wajib
+## 📌 Rules Coding (tetap sama)
 
-- `export const dynamic = 'force-dynamic'` di baris pertama setiap page
-- **JANGAN** buat inline SVG — selalu import dari `@/components/icons/custom-icons` atau Lucide
-- Icons sosmed: `DiscordIcon`, `InstagramIcon`, `TiktokIcon`, dll dari `custom-icons.tsx`
-- Mutations selalu lewat `fetch("/api/...")` — bukan Server Actions
-- **JANGAN update versi** — keputusan versi ada di tangan Riu & Sora
-- Profile edit sekarang ada di `/dash/profile/me` (bukan `/dashboard/profile`)
+```ts
+export const dynamic = 'force-dynamic'  // baris pertama setiap page.tsx
+```
+
+- Import icons dari `@/components/icons/custom-icons` atau Lucide — jangan inline SVG
+- Mutations lewat `fetch("/api/...")` — bukan Server Actions
+

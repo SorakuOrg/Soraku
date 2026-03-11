@@ -1,125 +1,67 @@
-# KAIZO — Revisi & Task List
-> Back-end Soraku Community
+# KAIZO — Brief & Task List
+> From: Sora (Full Stack Lead)
 > Last updated: 2026-03-11
 
 ---
 
-## ✅ Sudah Selesai (dicatat Sora)
+## ✅ Sudah Selesai (rekap)
 
-| Fitur | Keterangan |
-|-------|-----------|
-| Supabase schema + RLS | 15 tabel di schema soraku, RLS aktif |
-| Auth middleware | src/proxy.ts — role-based (Next.js 16) |
-| /api/auth/login + register | Zod validate, signInWithPassword, upsert profile |
-| /api/auth/me + signout + callback | Session management lengkap |
-| Semua GET API routes | blog, events, gallery, agensi, donatur, music, discord/stats |
-| Semua admin API routes | /api/admin/users + blog + events + gallery (CRUD) |
-| /api/gallery/upload | Upload file ke Supabase Storage |
-| /api/premium/trakteer | Webhook → update DB + insert notif + trigger bot DM + update Discord role |
-| /api/premium/xendit | Create invoice + webhook handler |
-| /api/notifications | GET list + PATCH mark-as-read |
-| /api/discord/role-sync | guildMemberUpdate dari bot → update DB |
-| /api/admin/stats | Single endpoint dashboard — Promise.all 6 queries |
-| packages/utils | slugify, formatDate, formatRupiah, truncate, readingTime, dll |
-| Sitemap dynamic | Query real DB posts + events |
+| Fitur | Status |
+|-------|--------|
+| Supabase schema 15 tabel + RLS | ✅ |
+| Auth middleware proxy.ts | ✅ |
+| /api/auth/* (login, register, me, signout, callback) | ✅ |
+| Semua GET API routes (blog, events, gallery, agensi, donatur, music) | ✅ |
+| Admin CRUD API routes | ✅ |
+| /api/premium/trakteer webhook | ✅ |
+| /api/notifications | ✅ |
+| Profile routing /dash/profile/me + /profile/[username] | ✅ |
+| packages/utils | ✅ |
 
 ---
 
-## 🔴 URGENT #1 — Discord ID Riu → Role OWNER
+## 🔴 URGENT 1 — Bot Deploy Railway (belum jalan)
 
-**Permintaan dari Riu:** User dengan Discord ID `1020644780075659356` harus otomatis dapat role `OWNER` saat login via Discord OAuth.
+Bot sudah siap dari Sora. Tinggal Kaizo set ENV dan deploy.
 
-### Cara implementasinya:
-
-**Option A — Di `POST /api/auth/register` dan `/api/auth/callback`:**
-
-Cek apakah Discord ID user cocok dengan daftar OWNER, lalu set role di DB.
-
-```ts
-// Di src/app/api/auth/callback/route.ts atau register flow
-const OWNER_DISCORD_IDS = [
-  '1020644780075659356', // Riu
-]
-
-// Setelah user berhasil auth via Discord:
-const discordId = user.user_metadata?.provider_id ?? user.user_metadata?.sub
-const role = OWNER_DISCORD_IDS.includes(discordId) ? 'OWNER' : 'USER'
-
-await adminDb()
-  .from('users')
-  .upsert({
-    id:          user.id,
-    username:    ...,
-    displayname: ...,
-    role,           // ← OWNER jika Discord ID cocok
-  }, { onConflict: 'id' })
-```
-
-**Option B — Langsung update di Supabase Dashboard:**
-
-Buka Supabase → Table Editor → `soraku.users` → cari user Riu → ubah kolom `role` ke `OWNER`.
-
-> **Catatan Bubu:** Opsi B bisa dilakukan Riu sendiri setelah akun Discord-nya terdaftar. Tapi Kaizo perlu ensure Option A berjalan untuk akun baru di masa depan.
-
-### ✅ UPDATE — Sudah di-handle Bubu di callback route
-
-`apps/web/src/app/api/auth/callback/route.ts` sudah diupdate:
-- Discord ID `1020644780075659356` → role `OWNER` otomatis saat pertama login
-- User baru via Discord OAuth otomatis di-upsert ke `soraku.users`
-- Support ENV `OWNER_DISCORD_IDS` untuk tambah owner lain
-
-**Satu-satunya yang Kaizo perlu lakukan:**
-1. Tambahkan ENV var di Vercel: `OWNER_DISCORD_IDS=1020644780075659356`
-2. Atau: setelah Riu login Discord pertama kali, langsung update kolom `role` ke `OWNER` di Supabase Table Editor
-
-### Yang harus Kaizo kerjakan (opsional/backup):
-
-1. Update `apps/web/src/app/api/auth/callback/route.ts` — tambah OWNER check berdasarkan Discord ID
-2. Update `apps/web/src/app/api/auth/register/route.ts` — tambah logic yang sama untuk OAuth register
-3. Simpan `OWNER_DISCORD_IDS` di env var `OWNER_DISCORD_IDS=1020644780075659356` (bisa multiple, comma-separated) agar tidak hardcoded
-
-```ts
-// Pattern yang benar:
-const OWNER_IDS = (process.env.OWNER_DISCORD_IDS ?? '').split(',').map(s => s.trim())
-const isOwner   = OWNER_IDS.includes(discordId)
-```
-
----
-
-## 🔴 URGENT #2 — Bot Deploy Railway
-
-Bot sudah selesai di-scaffold Sora dan siap deploy. **Kaizo yang set ENV dan deploy.**
-
-### Langkah:
-1. Buka Railway project → pilih service `soraku-bot`
-2. Set semua ENV vars di Railway:
+**Langkah:**
+1. Railway dashboard → service `soraku-bot` → Variables:
 ```env
 DISCORD_TOKEN=           # dari Discord Developer Portal
-DISCORD_GUILD_ID=        # ID server Soraku Discord
+DISCORD_GUILD_ID=        # ID server Soraku
 DISCORD_EVENT_CHANNEL_ID=# ID channel #event-soraku
 SORAKU_API_URL=https://soraku.vercel.app
-SORAKU_API_SECRET=       # generate random string, sama dengan di Vercel
-WEBHOOK_SECRET=          # generate random string, sama dengan BOT_WEBHOOK_SECRET Vercel
+SORAKU_API_SECRET=       # random string — SAMA dengan di Vercel
+WEBHOOK_SECRET=          # random string — SAMA dengan BOT_WEBHOOK_SECRET di Vercel
 PORT=3001
 ```
 
-3. Set ENV vars di **Vercel** juga:
+2. Vercel dashboard → Environment Variables:
 ```env
-BOT_WEBHOOK_URL=https://[project].up.railway.app
-BOT_WEBHOOK_SECRET=      # sama dengan WEBHOOK_SECRET di Railway
+BOT_WEBHOOK_URL=https://[nama-project].up.railway.app
+BOT_WEBHOOK_SECRET=      # sama dengan WEBHOOK_SECRET Railway
 SORAKU_API_SECRET=       # sama dengan di Railway
-OWNER_DISCORD_IDS=1020644780075659356   # ← TAMBAHKAN INI
 ```
 
-4. Deploy dari `services/bot/` — Railway sudah baca `railway.toml` otomatis
-5. Verifikasi: hit `GET https://[project].up.railway.app/health` → harus return `{ status: "ok" }`
+3. Deploy → cek: `GET https://[project].up.railway.app/health` → `{ status: "ok" }`
 
 ---
 
-## 🔜 Task Selanjutnya untuk Kaizo
+## 🔴 URGENT 2 — Discord ID Riu → role OWNER
 
-### 3. Tabel `partnerships` di Supabase
-`/api/partnerships` sudah ada tapi tabel belum dibuat. Bubu pakai ini di halaman `/about`.
+```
+Discord ID Riu: 1020644780075659356
+```
+
+Di `/api/auth/callback` saat user pertama kali OAuth Discord, cek apakah `discord_id === '1020644780075659356'` → set `role = 'OWNER'` di tabel users.
+
+---
+
+## 🔜 Task Selanjutnya
+
+### 1. Tabel `partnerships` di Supabase
+
+`/api/partnerships` sudah ada tapi tabel belum dibuat. Dipakai halaman `/about`.
 
 ```sql
 CREATE TABLE soraku.partnerships (
@@ -132,30 +74,46 @@ CREATE TABLE soraku.partnerships (
   sortorder  INT DEFAULT 0,
   createdat  TIMESTAMPTZ DEFAULT now()
 );
--- RLS: OWNER/MANAGER bisa CRUD, semua bisa READ
-ALTER TABLE soraku.partnerships ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "partnerships_select" ON soraku.partnerships FOR SELECT USING (isactive = true);
 ```
 
-### 4. API `/api/profile` sudah dibuat Bubu — pastikan kompatibel
-Bubu sudah buat `apps/web/src/app/api/profile/route.ts` (GET + PATCH).
-Pastikan kolom yang di-update cocok dengan schema tabel `soraku.users`.
-Field yang di-update: `displayname`, `bio`, `avatarurl`, `coverurl`, `sociallinks`, `isprivate`, `updatedat`.
+Isi data lewat Supabase dashboard langsung.
+
+### 2. Awareness Route Baru (tidak perlu koding, hanya info)
+
+Sora + Riu sudah migrasikan route architecture. Kaizo perlu tahu kalau ada API baru:
+
+| API Baru | Keterangan |
+|----------|-----------|
+| `GET /api/vtubers` | List VTuber — filter tag, pagination |
+| `GET /api/vtubers/[slug]` | Detail VTuber by slug |
+| `GET /api/donate` | Donatur publik — filter `period=all\|month` |
+
+Kalau ada query ke endpoint lama `/api/premium/donatur` atau `/api/agensi/vtuber` dari bot atau external service — update ke endpoint baru di atas.
 
 ---
 
-## 📌 Rules Wajib
+## 📌 Route Namespace (WAJIB — dari docs/routes/NAMESPACE.md)
+
+> Ditetapkan Riu. API baru wajib ikut struktur ini.
+
+| Jenis | Namespace |
+|-------|-----------|
+| API public | `/api/blog`, `/api/events`, `/api/vtubers`, `/api/donate`, dll |
+| API auth | `/api/auth/*` |
+| API admin | `/api/admin/*` |
+| API bot | `/api/bot/*` |
+
+**JANGAN buat endpoint di luar `/api/`.**
+
+---
+
+## 📌 Rules Coding (tetap sama)
 
 ```ts
-// WAJIB di baris pertama setiap route.ts baru
-export const dynamic = 'force-dynamic'
-
-import { adminDb } from '@/lib/supabase/admin'
-// ...
+export const dynamic = 'force-dynamic'  // baris pertama setiap route.ts baru
 ```
 
-- Semua response pakai `ok()` / `err()` dari `@/lib/api`
-- Zod validasi semua input POST/PATCH
-- `adminDb()` untuk queries, `createAdminClient()` untuk auth.admin ops
-- Semua queries pakai `.schema('soraku')` (sudah include di `adminDb()`)
 - Response shape: `{ data, error, meta?: { total, page, limit } }`
+- Gunakan `ok()` / `err()` dari `@/lib/api`
+- `adminDb()` untuk queries — sudah include `.schema('soraku')`
+

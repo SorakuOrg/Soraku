@@ -392,3 +392,37 @@
 ---
 
 *空 · Soraku Community · Est. 2023*
+
+## [1.0.0-routes] — 2026-03-11 · Route Architecture Migration
+
+> Ditetapkan oleh: **Riu** (Owner) via `docs/routes/ROUTES.md` + `NAMESPACE.md`
+> Dieksekusi oleh: **Sora** — commit `56fcf36`
+
+### Redirect Permanen (proxy.ts)
+- `301` `/social` → `/` — bukan halaman per NAMESPACE.md
+- `301` `/agensi/vtuber` → `/vtubers`
+- `301` `/premium/donatur` → `/donate/leaderboard`
+- `301` `/admin/*` → `/dash/admin/*`
+- `301` `/dashboard/*` → `/dash/*`
+
+### Pages Baru
+- `/vtubers` — dipindah + diupdate dari `/agensi/vtuber`
+- `/vtubers/[slug]` — halaman detail VTuber (baru)
+- `/donate/leaderboard` — dipindah dari `/premium/donatur`
+- `/dash/admin/*` — semua admin pages di namespace baru (layout + 5 halaman)
+
+### API Baru
+- `GET /api/vtubers` — list + filter tag + pagination
+- `GET /api/vtubers/[slug]` — detail by slug
+- `GET /api/donate` — donatur publik, filter `period=all|month`
+
+### Navbar + Sitemap
+- VTuber link → `/vtubers`
+- Sosial Media link → `/about` (tidak ada halaman /social)
+- Admin link → `/dash/admin`
+- Sitemap: hapus deprecated routes, tambah `/vtubers`, `/donate/leaderboard`, dynamic vtuber pages
+
+### Auth Guard Update (proxy.ts)
+- `/dash/*` → redirect `/login` jika belum login
+- `/dash/admin/*` → cek role OWNER/MANAGER/ADMIN
+- `/login` atau `/register` + sudah login → redirect `/dash/profile/me`

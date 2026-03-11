@@ -153,7 +153,11 @@
 | /api/stats real DB            | Kaizo | ✅     | eventCount + memberCount + postCount dari DB          |
 | Tabel partnerships + API      | Kaizo | ✅     | Migration soraku.partnerships, RLS, /api/partnerships |                                     |
 
-## v1.0.0 — Admin Panel Complete + Launch Ready ✅ / 🔜
+## v1.0.0 — Admin Panel + Route Architecture ✅ / 🔜
+> Route architecture ditetapkan oleh **Riu** (Owner) via `docs/routes/ROUTES.md` + `NAMESPACE.md`
+> Dieksekusi oleh **Sora** — commit `56fcf36`
+
+### Admin Panel (Sora)
 
 | Feature                         | Owner | Status | Catatan                                               |
 |---------------------------------|-------|--------|-------------------------------------------------------|
@@ -166,24 +170,52 @@
 | Admin users — ban/unban         | Sora  | ✅     | Toggle isbanned via PATCH /api/admin/users            |
 | Admin layout active state       | Sora  | ✅     | Sidebar highlight + dot indicator per halaman         |
 | Admin mobile bottom nav         | Sora  | ✅     | Fixed bottom nav 5 item untuk mobile                  |
-| Fix d.total → d.meta.total      | Sora  | ✅     | Struktur response API { data, meta: { total } }       |
-| Fix partnerships mock → real DB | Sora  | ✅     | Graceful fallback [] jika tabel belum ada             |
-| Performance audit               | Sora  | 🔜     | Lighthouse 90+, Core Web Vitals                       |
-| Security audit                  | Sora  | 🔜     | Rate limiting, CORS, CSP headers                      |
-| E2E tests (Playwright)          | Sora  | 🔜     | Auth flow, blog, gallery upload                       |
-| Error monitoring                | Sora  | 🔜     | Sentry / Vercel monitoring                            |
-| Custom domain                   | Riu   | 🔜     | soraku.id atau soraku.moe                             |
-| Bot deploy Railway              | Kaizo | 🔴     | Set ENV vars di Railway + Vercel, lalu deploy         |
-| Admin form edit blog            | Bubu  | 🔜     | /admin/blog/[id]/edit — form prefill data existing    |
-| Profile routing restruktur      | Kaizo | ✅     | /dash/profile/me (pribadi edit) + /profile/[username] (publik) — fix build conflict |
-| Admin form edit event           | Bubu  | 🔜     | /admin/events/[id]/edit — form prefill data existing  |
-| Login page → real API           | Bubu  | ✅     | POST /api/auth/login, error state, redirect dashboard |
-| Register page → real API        | Bubu  | ✅     | POST /api/auth/register, auto-login, 2-step form      |
-| Dashboard layout → real session | Bubu  | ✅     | fetch /api/auth/me, nama real, link admin jika staff  |
-| Profile page `/dashboard/profile`| Bubu | ✅     | CRUD: displayname, bio, avatar, cover, social links   |
-| API `/api/profile` GET + PATCH  | Bubu  | ✅     | Update profile user yang login, cek duplikat username |
-| Discord ID OWNER (Riu)          | Kaizo | 🔴     | ID 1020644780075659356 → role OWNER di auth callback  |
-| Admin form edit event           | Bubu  | 🔜     | /admin/events/[id]/edit — form prefill data existing  |
+
+### Route Architecture (Riu + Sora)
+
+| Feature                                     | Owner      | Status | Catatan                                                        |
+|---------------------------------------------|------------|--------|----------------------------------------------------------------|
+| Redirect /social → /                        | Sora       | ✅     | 301 di proxy.ts — /social bukan halaman per NAMESPACE.md      |
+| Redirect /agensi/vtuber → /vtubers          | Sora       | ✅     | 301 permanent — semua link lama tetap jalan                    |
+| Redirect /premium/donatur → /donate/leaderboard | Sora   | ✅     | 301 permanent                                                  |
+| Redirect /admin/* → /dash/admin/*           | Sora       | ✅     | 301 permanent — sesuai NAMESPACE.md                            |
+| Redirect /dashboard/* → /dash/*             | Sora       | ✅     | 301 permanent                                                  |
+| Halaman /vtubers                            | Sora       | ✅     | Dipindah dari /agensi/vtuber, real DB                          |
+| Halaman /vtubers/[slug]                     | Sora       | ✅     | Detail VTuber baru — belum ada sebelumnya                      |
+| Halaman /donate/leaderboard                 | Sora       | ✅     | Dipindah dari /premium/donatur, konten sama                    |
+| /dash/admin/* — semua pages                 | Sora       | ✅     | Layout + 5 halaman admin di namespace baru                     |
+| API /api/vtubers                            | Sora       | ✅     | GET list + filter tag + pagination                             |
+| API /api/vtubers/[slug]                     | Sora       | ✅     | GET detail by slug                                             |
+| API /api/donate                             | Sora       | ✅     | GET donatur publik, filter period=all|month                    |
+| Sitemap update                              | Sora       | ✅     | Hapus deprecated, tambah /vtubers + /donate/leaderboard        |
+| Navbar update                               | Sora       | ✅     | Link VTuber→/vtubers, Admin→/dash/admin, hapus /social         |
+| Halaman /social dihapus (page masih ada)    | Bubu       | 🔜     | File lama masih ada — Bubu hapus page.tsx /social              |
+| Update semua link internal → route baru     | Bubu       | 🔜     | Cek seluruh halaman publik — link /premium/donatur, /agensi/vtuber |
+| Admin form edit blog /dash/admin/blog/[id]/edit  | Bubu  | 🔜     | Form prefill dari /api/blog/[slug]                             |
+| Admin form edit event /dash/admin/events/[id]/edit | Bubu | 🔜   | Form prefill dari /api/events/[slug]                           |
+
+### Auth & Profile (Kaizo + Bubu)
+
+| Feature                          | Owner | Status | Catatan                                               |
+|----------------------------------|-------|--------|-------------------------------------------------------|
+| Login page → real API            | Bubu  | ✅     | POST /api/auth/login, error state, redirect           |
+| Register page → real API         | Bubu  | ✅     | POST /api/auth/register, auto-login, 2-step           |
+| Dashboard layout → real session  | Bubu  | ✅     | fetch /api/auth/me, nama real, link admin jika staff  |
+| Profile page /dash/profile/me    | Bubu  | ✅     | CRUD: displayname, bio, avatar, cover, social links   |
+| API /api/profile GET + PATCH     | Bubu  | ✅     | Update profile user login                             |
+| Profile routing restruktur       | Kaizo | ✅     | /dash/profile/me + /profile/[username] fix conflict   |
+| Discord ID OWNER (Riu)           | Kaizo | 🔴     | ID 1020644780075659356 → role OWNER di auth callback  |
+| Bot deploy Railway               | Kaizo | 🔴     | Set ENV vars di Railway + Vercel, lalu deploy         |
+
+### Launch Checklist
+
+| Feature                 | Owner | Status | Catatan                              |
+|-------------------------|-------|--------|--------------------------------------|
+| Performance audit       | Sora  | 🔜     | Lighthouse 90+, Core Web Vitals      |
+| Security audit          | Sora  | 🔜     | Rate limiting, CORS, CSP headers     |
+| E2E tests (Playwright)  | Sora  | 🔜     | Auth flow, blog, gallery upload      |
+| Error monitoring        | Sora  | 🔜     | Sentry / Vercel monitoring           |
+| Custom domain           | Riu   | 🔜     | soraku.id atau soraku.moe            |
 
 ---
 
