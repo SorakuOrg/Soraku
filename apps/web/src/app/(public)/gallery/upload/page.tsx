@@ -1,4 +1,6 @@
 "use client";
+
+export const dynamic = "force-dynamic";
 import Link from "next/link";
 import { useState, useRef } from "react";
 import { Upload, ImageIcon, X, ArrowLeft, CheckCircle, AlertCircle } from "lucide-react";

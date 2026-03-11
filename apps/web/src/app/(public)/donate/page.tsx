@@ -1,3 +1,5 @@
+
+export const dynamic = "force-dynamic";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Heart, ExternalLink, Trophy, Star } from "lucide-react";

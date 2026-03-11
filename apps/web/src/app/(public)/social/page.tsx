@@ -1,3 +1,5 @@
+
+export const dynamic = "force-dynamic";
 import type { Metadata } from "next";
 import { SORAKU_SOCIALS } from "@/components/icons/custom-icons";
 import { ExternalLink } from "lucide-react";

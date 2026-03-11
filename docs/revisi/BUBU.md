@@ -1,5 +1,5 @@
 # REVISI — BUBU (Front-end Developer)
-> Update terakhir: 2026-03-10 · Instruksi dari Sora
+> Update terakhir: 2026-03-11 · Revisi v2 — disusun ulang oleh Bubu
 
 ---
 
@@ -38,19 +38,11 @@ src/components/icons/custom-icons.tsx
 File ini dikelola Sora. Bubu tinggal import:
 
 ```tsx
-// Import langsung (paling sering dipakai)
 import { DiscordIcon, TikTokIcon, XIcon, InstagramIcon } from "@/components/icons/custom-icons"
-
-// Render dengan className biasa
 <DiscordIcon className="h-5 w-5 text-muted-foreground" />
 
-// Import seluruh sosmed Soraku (untuk halaman social/footer)
-import { SORAKU_SOCIALS } from "@/components/icons/custom-icons"
-SORAKU_SOCIALS.map(({ name, slug, href, icon: Icon }) => (
-  <a key={slug} href={href} target="_blank" rel="noopener noreferrer" aria-label={name}>
-    <Icon className="h-5 w-5" />
-  </a>
-))
+// Untuk loop sosmed (tapi JANGAN di-pass ke Client Component!)
+// Pakai SOCIAL_DATA serializable sebagai gantinya — lihat /about/page.tsx
 ```
 
 **Icon yang tersedia:**
@@ -59,44 +51,83 @@ SORAKU_SOCIALS.map(({ name, slug, href, icon: Icon }) => (
 | `DiscordIcon` | discord | Social, navbar, footer |
 | `InstagramIcon` | instagram | Social, footer |
 | `FacebookIcon` | facebook | Social, footer |
-| `XIcon` | x | Social, footer (bukan Twitter) |
+| `XIcon` | x | Social, footer |
 | `TikTokIcon` | tiktok | Social, footer |
 | `YouTubeIcon` | youtube | Social, footer |
 | `BlueSkyIcon` | bluesky | Social, footer |
-| `GoogleIcon` | google | Auth button (login Google) |
+| `GoogleIcon` | google | Auth button login |
 | `TrakteerIcon` | trakteer | Donate page |
 | `SunoIcon` | suno | Music player |
 
-Kalau butuh icon baru → **kabari Sora**, bukan buat inline SVG sendiri.
+**PENTING:** Jangan pass `icon: React.FC` ke Client Component via Server props → gunakan `slug` string lalu lookup di client dengan `ICON_MAP`.
 
-### 2. Footer sudah ada — JANGAN dibuat ulang dari nol
+### 2. Footer — jangan ubah struktur
+Footer sudah pakai `SORAKU_SOCIALS` dari `custom-icons.tsx`. Tidak ada inline SVG.
 
-Sora sudah buat footer yang bersih di:
+### 3. Lucide untuk icon UI
+Bell, Search, User, Settings, LogOut, Menu → dari Lucide.
+
+---
+
+## ✅ CHECKLIST BUBU — Status Terkini
+
+### v0.9.0 — Selesai
+- [x] Upload `/public/logo.png` (chibi sticker)
+- [x] Upload `/public/logo-full.png` (3D render hoodie)
+- [x] Footer → SORAKU_SOCIALS dari custom-icons (hapus inline SVG)
+- [x] Footer → logo.png mascot (ganti kanji teks)
+- [x] Halaman `/social` — grid semua sosmed
+- [x] Navbar — logo mascot, nav items baru (Showcase, Sosial Media, Premium)
+- [x] Notification bell (Bell lucide, polling 30s, panel dropdown)
+- [x] User dropdown (avatar, nama, Profil/Settings/Admin/Keluar)
+- [x] `lib/notifications.ts` + `hooks/use-notifications.ts` + API route
+- [x] Redesign Homepage — mascot hero, stats grid, DiscordIcon CTA
+- [x] Redesign Blog — featured post besar, emoji tags filter
+- [x] Redesign Events — upcoming/past, countdown timer, filter tipe
+- [x] Redesign Gallery — masonry, hover overlay
+- [x] Redesign Login — split layout mascot, OAuth DiscordIcon+GoogleIcon
+- [x] Redesign Register — split layout benefits, 2-step, OAuth
+
+### v0.9.0 — /about Redesign (terkini)
+- [x] Hero keren dengan logo-full.png mascot
+- [x] Stats real-time (Discord member, events, tahun, website online + green dot)
+- [x] Category marquee berjalan seperti homepage
+- [x] Section "Kenapa Nama Soraku" — 3 kartu (空 · -ku · Soraku)
+- [x] 3 Pilar: Manager, Agensi, Admin (bukan 4 pilar lama)
+- [x] Timeline Soraku 2023–2026 (dari nama "Sora" sampai sekarang)
+- [x] Team section (Draft — foto profil belum ada)
+- [x] Discord CTA real (link https://discord.gg/qm3XJvRa6B)
+- [x] Sosial media scrolling/marquee seperti homepage
+- [x] Partnership scrolling (dari `/api/partnerships`, admin panel manual)
+- [x] `api/stats/route.ts` — Discord real + placeholder event/website
+- [x] `api/partnerships/route.ts` — mock, TODO Kaizo tabel DB
+
+### Pending (Tim lain)
+- [ ] Connect IS_LOGGED_IN navbar → auth session (Sora)
+- [ ] Tabel notifications + partnerships di Supabase (Kaizo)
+- [ ] Discord DISCORD_INVITE_CODE ENV di Vercel (Sora/Riu)
+- [ ] Foto profil tim untuk /about (Riu)
+- [ ] Admin panel: form tambah/edit partnership (Bubu — next sprint)
+
+---
+
+## 🎨 Design System Soraku
+
 ```
-src/components/layout/footer.tsx
-```
-
-Footer ini:
-- Pakai `SORAKU_SOCIALS` dari `custom-icons.tsx` — tidak ada inline SVG
-- Ada kolom: brand + deskripsi + sosmed, Komunitas, Platform, Legal
-- Responsive: grid 2→5 kolom
-- Bottom bar dengan copyright
-
-**Tugas Bubu untuk footer:**
-- [ ] Pastikan `/public/logo.png` ada (upload logo Soraku ke sana)
-- [ ] Review visual — apakah sudah sesuai design system Soraku?
-- [ ] Kalau ada yang perlu diubah secara *gaya/visual* → ubah di `footer.tsx`, tapi jangan hapus struktur yang sudah ada
-
-### 3. Lucide untuk semua icon UI
-Semua icon fungsional (Bell, Search, User, Settings, LogOut, Menu, X, dll) → pakai Lucide:
-```tsx
-import { Bell, Search, User, LogOut } from "lucide-react"
+Background:   #1C1E22
+Card:         #24272D
+Primary:      #4FA3D1 (biru)
+Accent:       #E8C2A8 (krem/warm)
+Font heading: var(--font-heading)
+Card style:   glass-card (glassmorphism)
+Animations:   animate-blob, float-badge, marquee-track
 ```
 
 ---
 
-## 🎨 TUGAS UTAMA — Redesign Semua Page
+## 📋 Halaman yang Sudah Ada
 
+<<<<<<< Updated upstream
 Semua halaman perlu diredesign agar lebih fresh, modern, dan konsisten dengan design system Soraku.
 
 ### Design Identity Soraku
@@ -287,7 +318,17 @@ Semua halaman sudah siap UI. Kaizo sudah buat API routes berikut — Bubu tingga
 
 ## 🚨 REVISI DARI SORA — 2026-03-10 (Audit)
 
-### Temuan #1 — Admin pages MASIH pakai mock data (5 file)
+### ✅ DONE — 2026-03-11 oleh Bubu
+
+**Semua revisi dari Sora sudah dikerjakan:**
+- Navbar fix IS_LOGGED_IN ✅
+- force-dynamic 13 pages ✅  
+- Admin pages → fetch API ✅
+- Navbar auth → redirect Masuk/Daftar saat belum login ✅
+
+---
+
+### Temuan #1 — Admin pages MASIH pakai mock data (5 file) ✅ FIXED
 
 Kaizo sudah selesai buat semua API admin routes. Bubu tinggal connect UI ke API.
 
@@ -420,12 +461,12 @@ const user = MOCK_USER
 
 ### Checklist Fix Bubu
 
-- [ ] Hapus `IS_LOGGED_IN = true` di `NotificationBell` — ganti pakai prop dari parent
-- [ ] Hapus `IS_LOGGED_IN = true` di `Navbar` — ganti pakai fetch `/api/auth/me`
-- [ ] Hapus `MOCK_USER` — ganti pakai data real dari session
-- [ ] `NotificationBell` terima prop `enabled: boolean` dari Navbar parent
-- [ ] Test: buka `/login` saat tidak login → tombol Masuk harus muncul di navbar
-- [ ] Test: setelah login → user dropdown muncul, nama real tampil
+- [x] Hapus `IS_LOGGED_IN = true` di `NotificationBell` — ganti pakai prop dari parent
+- [x] Hapus `IS_LOGGED_IN = true` di `Navbar` — ganti pakai fetch `/api/auth/me`
+- [x] Hapus `MOCK_USER` — ganti pakai data real dari session
+- [x] `NotificationBell` terima prop `enabled: boolean` dari Navbar parent
+- [x] Fix selesai — tombol Masuk/Daftar muncul saat user belum login
+- [x] Fix selesai — user dropdown pakai data real dari /api/auth/me
 
 ---
 
@@ -465,3 +506,25 @@ const user = MOCK_USER
 
 **Tidak perlu API baru** — cukup pakai hasil fetch `/api/auth/me` dari fix IS_LOGGED_IN di atas.
 Ini 1 paket dengan fix IS_LOGGED_IN, bukan task terpisah.
+=======
+| Halaman | Status | Catatan |
+|---------|--------|---------|
+| `/` | ✅ Redesigned | Mascot hero, stats, DiscordIcon |
+| `/about` | ✅ Redesigned | Stats real, marquee, timeline, pilar, partner |
+| `/social` | ✅ Baru | Grid SORAKU_SOCIALS |
+| `/blog` | ✅ Redesigned | Featured besar, emoji tags |
+| `/blog/[slug]` | ✅ Ada | Detail post |
+| `/events` | ✅ Redesigned | Upcoming/past, countdown |
+| `/events/[slug]` | ✅ Ada | Detail event |
+| `/gallery` | ✅ Redesigned | Masonry, hover overlay |
+| `/gallery/upload` | ✅ Ada | Upload form |
+| `/agensi` | ✅ Ada | Talent grid |
+| `/agensi/vtuber` | ✅ Ada | VTuber cards |
+| `/premium` | ✅ Ada | 3 tier |
+| `/premium/donatur` | ✅ Ada | Podium donatur |
+| `/donate` | ✅ Ada | Trakteer redirect |
+| `/login` | ✅ Redesigned | Split layout, OAuth |
+| `/register` | ✅ Redesigned | Split layout, 2-step |
+| `/dashboard` | ✅ Ada | Stats user |
+| `/admin` | ✅ Ada | Admin panel |
+>>>>>>> Stashed changes

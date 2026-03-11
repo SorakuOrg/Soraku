@@ -193,9 +193,21 @@ PORT=3001
 | Redesign gallery              | Bubu  | ✅     | Masonry grid, hover overlay, category filter                  |
 | Redesign login                | Bubu  | ✅     | Split layout mascot, DiscordIcon+GoogleIcon dari custom-icons |
 | Redesign register             | Bubu  | ✅     | Split layout benefits, 2-step form, OAuth dari custom-icons   |
+<<<<<<< Updated upstream
 | Redesign /about               | Bubu  | ✅     | Kanji hero 空, mascot card, pilar gradient, tim, hierarki     |
 | Notif API (Supabase)          | Kaizo | ✅     | GET /api/notifications + PATCH mark-as-read, tabel DB aktif   |
 | Push via Discord DM           | Kaizo | ✅     | Via bot /webhook/notify — Trakteer + premium flow             |
+=======
+| Redesign /about v1            | Bubu  | ✅     | Hero+mascot, stats real-time, marquee, kenapa Soraku          |
+| /about — 3 Pilar              | Bubu  | ✅     | Manager/Agensi/Admin (bukan 4 pilar lama)                     |
+| /about — Timeline             | Bubu  | ✅     | 2023 Sora → 2026 Soraku v1 (7 milestone)                     |
+| /about — Sosmed marquee       | Bubu  | ✅     | Scrolling berjalan seperti homepage                           |
+| /about — Partnership marquee  | Bubu  | ✅     | Scrolling, data dari /api/partnerships (admin manual)         |
+| /api/stats                    | Bubu  | ✅     | Discord real + event count + website online placeholder       |
+| /api/partnerships             | Bubu  | ✅     | Mock data, TODO Kaizo: tabel DB + admin form                  |
+| Notif API (Supabase)          | Kaizo | ❌     | GET /api/notifications + PATCH mark-as-read, schema di route  |
+| Push via Discord DM           | Kaizo | ❌     | Via services/bot webhook                                      |
+>>>>>>> Stashed changes
 | Supabase Realtime             | Sora  | ❌     | Gallery approval live update, notif count                     |
 | Connect IS_LOGGED_IN → auth   | Sora  | ❌     | Ganti konstanta mock dengan useAuth() / session               |
 
