@@ -156,7 +156,7 @@ export default function PublicProfilePage() {
 
             <div className="flex items-center gap-2 pb-1">
               {isSelf && (
-                <Link href="/dashboard/profile"
+                <Link href="/profile/me"
                   className="flex items-center gap-1.5 rounded-xl border border-border/50 px-3 py-1.5 text-xs font-medium text-muted-foreground hover:border-primary/30 hover:text-foreground transition-all">
                   <Pencil className="h-3 w-3" />Edit Profil
                 </Link>
@@ -225,7 +225,7 @@ export default function PublicProfilePage() {
       {isSelf && (
         <p className="mt-4 text-center text-xs text-muted-foreground/35">
           Ini profil kamu —{" "}
-          <Link href="/dashboard/profile" className="text-primary/60 hover:text-primary transition-colors">
+          <Link href="/profile/me" className="text-primary/60 hover:text-primary transition-colors">
             edit profil
           </Link>
         </p>

@@ -149,7 +149,9 @@
 | force-dynamic semua API routes| Sora  | ✅     | 29 routes diinjeksi sekaligus                         |
 | Notif API                     | Kaizo | ✅     | GET /api/notifications + PATCH mark-as-read           |
 | Push notif via Trakteer flow  | Kaizo | ✅     | Insert ke notifications table saat donasi berhasil    |
-| Supabase Realtime             | Sora  | ❌     | Ditunda ke v1.0.0                                     |
+| Supabase Realtime             | Sora  | ❌     | Ditunda ke v1.0.0
+| /api/stats real DB            | Kaizo | ✅     | eventCount + memberCount + postCount dari DB          |
+| Tabel partnerships + API      | Kaizo | ✅     | Migration soraku.partnerships, RLS, /api/partnerships |                                     |
 
 ## v1.0.0 — Admin Panel Complete + Launch Ready ✅ / 🔜
 
@@ -173,6 +175,7 @@
 | Custom domain                   | Riu   | 🔜     | soraku.id atau soraku.moe                             |
 | Bot deploy Railway              | Kaizo | 🔴     | Set ENV vars di Railway + Vercel, lalu deploy         |
 | Admin form edit blog            | Bubu  | 🔜     | /admin/blog/[id]/edit — form prefill data existing    |
+| Profile routing restruktur      | Kaizo | ✅     | /dashboard/profile → /profile/me (dashboard group), /profile/[username] public |
 | Admin form edit event           | Bubu  | 🔜     | /admin/events/[id]/edit — form prefill data existing  |
 | Login page → real API           | Bubu  | ✅     | POST /api/auth/login, error state, redirect dashboard |
 | Register page → real API        | Bubu  | ✅     | POST /api/auth/register, auto-login, 2-step form      |

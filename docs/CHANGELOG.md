@@ -4,6 +4,40 @@
 
 ---
 
+## [v1.0.1] — 2026-03-11 · Kaizo (backup Bubu + lanjutan)
+
+### Profile Routing — Restruktur (Backup Tugas Bubu)
+- **Sebelumnya**: edit profile ada di `/dashboard/profile` — tidak konsisten dengan konsep Soraku
+- **Sesudah**: struktur baru sesuai instruksi Riu:
+  - `/profile/me` ← Profile Pribadi (edit — pakai dashboard layout + sidebar)
+  - `/profile/[username]` ← Profile Publik (tetap seperti sebelumnya)
+- Pindah `(dashboard)/profile/page.tsx` → `(dashboard)/profile/me/page.tsx`
+- Hapus `(public)/profile/me/page.tsx` (redirect lama — tidak diperlukan lagi)
+- Update semua referensi `/dashboard/profile` → `/profile/me`:
+  - `(dashboard)/layout.tsx` SIDEBAR_LINKS
+  - `(dashboard)/dashboard/page.tsx` quick links
+  - `(public)/profile/[username]/page.tsx` edit profile button
+  - Navbar sudah benar (`/profile/me`)
+- **Versi tidak berubah** — keputusan versi di tangan Riu & Sora
+
+### /api/stats — Real DB (Fix TODO dari Bubu)
+- Ganti hard-coded mock count dengan query real ke Supabase:
+  - `event_count` → `SELECT COUNT(*) FROM events WHERE ispublished = true`
+  - `member_count` → `SELECT COUNT(*) FROM users`
+  - `post_count` → `SELECT COUNT(*) FROM posts WHERE ispublished = true`
+- Discord member + online count tetap dari Discord Invite API (revalidate 60s)
+- Fallback ke 0 jika DB error — tidak crash
+
+### Migration: soraku.partnerships
+- Buat tabel `soraku.partnerships` baru di Supabase:
+  - Kolom: `id, name, logourl, website, category, isactive, sortorder, createdat, updatedat`
+  - RLS: public bisa read (isactive=true), service_role full access
+  - Index: `(isactive, sortorder)` untuk query cepat
+- `/api/partnerships` sudah siap konsumsi tabel ini (tidak perlu ubah kode)
+- Admin bisa tambah partnership via Supabase Dashboard atau admin panel
+
+---
+
 ## [v1.0.1] — 2026-03-11 · Bubu
 
 ### Profile Page — Total Redesign

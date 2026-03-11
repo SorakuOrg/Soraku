@@ -15,7 +15,7 @@ interface SessionUser {
 
 const SIDEBAR_LINKS = [
   { href: "/dashboard",          label: "Beranda",    icon: LayoutDashboard },
-  { href: "/dashboard/profile",  label: "Profil",     icon: User },
+  { href: "/profile/me",          label: "Profil",     icon: User },
   { href: "/dashboard/posts",    label: "Postingan",  icon: BookOpen },
   { href: "/dashboard/gallery",  label: "Galeri",     icon: ImageIcon },
   { href: "/dashboard/settings", label: "Pengaturan", icon: Settings },

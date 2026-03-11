@@ -1,3 +1,24 @@
+
+## Update Terbaru dari Kaizo — 2026-03-11
+
+### Yang baru diselesaikan Kaizo:
+
+| Task | Keterangan |
+|------|-----------|
+| ✅ Profile routing | `/profile/me` (edit pribadi, dashboard layout) + `/profile/[username]` (public) |
+| ✅ `/api/stats` fix | Real DB counts: event, member, post — hapus semua TODO mock |
+| ✅ `soraku.partnerships` | Tabel baru di Supabase, RLS, `/api/partnerships` ready |
+
+### Yang Sora perlu kerjakan:
+
+| Task | Keterangan |
+|------|-----------|
+| ❌ Supabase Realtime | Gallery approval live update + notif count realtime |
+| ❌ `website_online` di stats | Perlu Realtime presence channel di Supabase |
+| ❌ Admin panel real data | Bubu sudah buat UI, Sora connect ke API |
+
+---
+
 # REVISI — SORA (Core / Full Stack Lead)
 > Update terakhir: 2026-03-11 — diupdate Bubu (v1.0 checklist)
 
