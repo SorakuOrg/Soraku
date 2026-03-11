@@ -7,12 +7,14 @@ import Link from "next/link";
 import {
   Save, Loader2, CheckCircle2, AlertCircle, X, LogOut,
   User, AtSign, FileText, Globe, Lock, Camera, Link as LinkIcon,
-  Shield, Sparkles, Eye, ExternalLink, RefreshCw, Plus,
+  Shield, Sparkles, Eye, RefreshCw, Pencil, Calendar,
 } from "lucide-react";
 import { Instagram, Twitter, Youtube } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { DiscordIcon } from "@/components/icons/custom-icons";
 import { cn } from "@/lib/utils";
+
+// ─── Types ────────────────────────────────────────────────────────────────────
 
 interface Profile {
   id: string;
@@ -28,30 +30,39 @@ interface Profile {
   createdat: string;
 }
 
+// ─── Color-coded meta (Instruksi Riu)
+// Kuning (Yellow) = Role badge
+// Hijau Muda (Light Green) = Supporter badge (Donatur/VIP/VVIP)
+// Hijau Tua (Dark Green) = Join date text
+// Merah (Red) = Sosial media icons
+// Putih (White) = Edit Profile button
+
 const ROLE_META: Record<string, { label: string; cls: string; glow: string }> = {
-  OWNER:   { label: "Owner",   cls: "text-yellow-300 bg-yellow-400/10 border-yellow-400/30", glow: "shadow-yellow-500/10" },
-  MANAGER: { label: "Manager", cls: "text-violet-300 bg-violet-500/10 border-violet-500/30", glow: "shadow-violet-500/10" },
-  ADMIN:   { label: "Admin",   cls: "text-primary   bg-primary/10     border-primary/30",    glow: "shadow-primary/10"   },
-  AGENSI:  { label: "Agensi",  cls: "text-green-300 bg-green-500/10   border-green-500/30",  glow: ""                   },
-  KREATOR: { label: "Kreator", cls: "text-accent    bg-accent/10      border-accent/30",     glow: ""                   },
-  USER:    { label: "Member",  cls: "text-muted-foreground bg-muted/50 border-border/40",    glow: ""                   },
+  OWNER:   { label: "Owner",   cls: "text-yellow-300  bg-yellow-400/15  border-yellow-400/40",  glow: "shadow-yellow-500/10" },
+  MANAGER: { label: "Manager", cls: "text-yellow-200  bg-yellow-300/10  border-yellow-300/30",  glow: "shadow-yellow-400/8"  },
+  ADMIN:   { label: "Admin",   cls: "text-yellow-100  bg-yellow-200/10  border-yellow-200/25",  glow: "shadow-yellow-300/5"  },
+  AGENSI:  { label: "Agensi",  cls: "text-yellow-400  bg-yellow-500/10  border-yellow-500/25",  glow: ""                    },
+  KREATOR: { label: "Kreator", cls: "text-yellow-300  bg-yellow-400/10  border-yellow-400/20",  glow: ""                    },
+  USER:    { label: "Member",  cls: "text-yellow-200/70 bg-yellow-400/8 border-yellow-400/15",  glow: ""                    },
 };
 
+// Hijau Muda untuk Supporter
 const SUPPORT_META: Record<string, { label: string; cls: string }> = {
-  VVIP:    { label: "✨ VVIP",    cls: "text-yellow-300 bg-yellow-400/10 border-yellow-400/30" },
-  VIP:     { label: "💜 VIP",     cls: "text-violet-300 bg-violet-500/10 border-violet-500/30" },
-  DONATUR: { label: "💙 Donatur", cls: "text-blue-300   bg-blue-500/10   border-blue-500/30"   },
+  VVIP:    { label: "✨ VVIP",    cls: "text-green-300 bg-green-400/15 border-green-400/40" },
+  VIP:     { label: "💚 VIP",     cls: "text-green-300 bg-green-400/12 border-green-400/30" },
+  DONATUR: { label: "💚 Donatur", cls: "text-green-400 bg-green-500/10 border-green-500/25" },
 };
 
 const SOCIAL_FIELDS = [
-  { key: "discord",   label: "Discord",     placeholder: "username",            Icon: DiscordIcon },
-  { key: "instagram", label: "Instagram",   placeholder: "@username",            Icon: Instagram   },
-  { key: "x",         label: "X / Twitter", placeholder: "@username",            Icon: Twitter     },
-  { key: "youtube",   label: "YouTube",     placeholder: "channel URL",          Icon: Youtube     },
-  { key: "website",   label: "Website",     placeholder: "https://yoursite.id",  Icon: Globe       },
+  { key: "discord",   label: "Discord",     placeholder: "username",           Icon: DiscordIcon },
+  { key: "instagram", label: "Instagram",   placeholder: "@username",           Icon: Instagram   },
+  { key: "x",         label: "X / Twitter", placeholder: "@username",           Icon: Twitter     },
+  { key: "youtube",   label: "YouTube",     placeholder: "channel URL",         Icon: Youtube     },
+  { key: "website",   label: "Website",     placeholder: "https://yoursite.id", Icon: Globe       },
 ] as const;
 
-// ── Toast ──────────────────────────────────────────────────────────────────────
+// ─── Toast ────────────────────────────────────────────────────────────────────
+
 function Toast({ msg, type, onClose }: { msg: string; type: "ok" | "err"; onClose: () => void }) {
   return (
     <div className={cn(
@@ -69,7 +80,8 @@ function Toast({ msg, type, onClose }: { msg: string; type: "ok" | "err"; onClos
   );
 }
 
-// ── Section Card ───────────────────────────────────────────────────────────────
+// ─── Section Card ─────────────────────────────────────────────────────────────
+
 function SectionCard({ title, icon: Icon, children, className }: {
   title: string; icon: React.ElementType; children: React.ReactNode; className?: string;
 }) {
@@ -86,7 +98,8 @@ function SectionCard({ title, icon: Icon, children, className }: {
   );
 }
 
-// ── Field + Input ──────────────────────────────────────────────────────────────
+// ─── Field ────────────────────────────────────────────────────────────────────
+
 function Field({ label, icon: Icon, hint, children }: {
   label: string; icon: React.ElementType; hint?: string; children: React.ReactNode;
 }) {
@@ -108,50 +121,18 @@ function Input({ className, ...props }: React.InputHTMLAttributes<HTMLInputEleme
       "outline-none placeholder:text-muted-foreground/25",
       "focus:border-primary/40 focus:bg-card/60 focus:ring-2 focus:ring-primary/10",
       "disabled:opacity-40 disabled:cursor-not-allowed disabled:bg-muted/20",
-      "transition-all duration-150", className,
+      "transition-all duration-150",
+      className
     )} {...props} />
   );
 }
 
-// ── Loading Skeleton ───────────────────────────────────────────────────────────
-function Skeleton() {
-  return (
-    <div className="space-y-5 animate-pulse pb-8">
-      <div className="flex items-start justify-between">
-        <div className="space-y-2">
-          <div className="h-6 w-32 rounded-lg bg-muted/30" />
-          <div className="h-3 w-48 rounded bg-muted/20" />
-        </div>
-        <div className="flex gap-2">
-          <div className="h-8 w-28 rounded-xl bg-muted/20" />
-          <div className="h-8 w-20 rounded-xl bg-muted/30" />
-        </div>
-      </div>
-      <div className="glass-card rounded-2xl overflow-hidden">
-        <div className="h-32 bg-gradient-to-r from-muted/20 to-muted/10" />
-        <div className="p-5 space-y-3">
-          <div className="-mt-8 flex gap-4 items-end">
-            <div className="h-16 w-16 rounded-2xl bg-muted/30 border-[3px] border-background flex-shrink-0" />
-            <div className="space-y-1.5 pb-1">
-              <div className="h-4 w-36 rounded bg-muted/30" />
-              <div className="h-3 w-24 rounded bg-muted/20" />
-            </div>
-          </div>
-        </div>
-      </div>
-      <div className="grid gap-5 lg:grid-cols-2">
-        <div className="h-80 glass-card rounded-2xl" />
-        <div className="h-80 glass-card rounded-2xl" />
-      </div>
-    </div>
-  );
-}
+// ─── Profile Error ────────────────────────────────────────────────────────────
 
-// ── Error State ────────────────────────────────────────────────────────────────
 function ProfileError({ onRetry }: { onRetry: () => void }) {
   return (
-    <div className="flex flex-col items-center gap-5 py-32 text-center">
-      <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-destructive/10 border border-destructive/20">
+    <div className="flex flex-col items-center gap-4 py-20 text-center">
+      <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-destructive/10 border border-destructive/20">
         <AlertCircle className="h-7 w-7 text-destructive/50" />
       </div>
       <div>
@@ -172,7 +153,22 @@ function ProfileError({ onRetry }: { onRetry: () => void }) {
   );
 }
 
-// ── Main Page ──────────────────────────────────────────────────────────────────
+// ─── Skeleton ─────────────────────────────────────────────────────────────────
+
+function Skeleton() {
+  return (
+    <div className="space-y-5 pb-10 animate-pulse">
+      <div className="glass-card h-64 rounded-2xl bg-muted/10" />
+      <div className="grid gap-5 lg:grid-cols-2">
+        <div className="glass-card h-80 rounded-2xl bg-muted/10" />
+        <div className="glass-card h-80 rounded-2xl bg-muted/10" />
+      </div>
+    </div>
+  );
+}
+
+// ─── Main Page ────────────────────────────────────────────────────────────────
+
 export default function ProfilePage() {
   const router   = useRouter();
   const toastRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -227,7 +223,6 @@ export default function ProfilePage() {
 
   useEffect(() => { load(); }, [load]);
 
-  // Mark dirty setelah initial load selesai
   useEffect(() => {
     if (!mountRef.current) { mountRef.current = false; return; }
     if (!loading) setDirty(true);
@@ -273,98 +268,147 @@ export default function ProfilePage() {
   const initial     = displayName.charAt(0).toUpperCase();
   const joinDate    = new Date(profile.createdat).toLocaleDateString("id-ID", { month: "long", year: "numeric" });
 
+  // Sosial media yang sudah diisi
+  const filledSocials = SOCIAL_FIELDS.filter(f => socials[f.key]);
+
   return (
     <>
       {toast && <Toast msg={toast.msg} type={toast.type} onClose={() => setToast(null)} />}
 
       <div className="space-y-5 pb-10">
 
-        {/* ── Header ── */}
+        {/* ── Page header ── */}
         <div className="flex items-center justify-between gap-4 flex-wrap">
           <div>
             <h1 className="text-xl font-bold tracking-tight">Profil Saya</h1>
             <p className="mt-0.5 text-xs text-muted-foreground/50">Kelola tampilan dan informasi akun</p>
           </div>
-          <div className="flex items-center gap-2 flex-wrap">
-            {profile.username && (
-              <Link href={`/profile/${profile.username}`}
-                className="flex items-center gap-1.5 rounded-xl border border-border/60 px-3.5 py-2 text-xs font-medium text-muted-foreground hover:border-primary/30 hover:text-foreground transition-all">
-                <ExternalLink className="h-3.5 w-3.5" /> Lihat Publik
-              </Link>
-            )}
-            {isStaff && (
-              <Link href="/dash/admin"
-                className="flex items-center gap-1.5 rounded-xl border border-primary/30 bg-primary/8 px-3.5 py-2 text-xs font-semibold text-primary hover:bg-primary/15 transition-all">
-                <Shield className="h-3.5 w-3.5" /> Admin Panel
-              </Link>
-            )}
-            <button onClick={handleSave} disabled={saving || !dirty}
-              className={cn(
-                "flex items-center gap-1.5 rounded-xl px-4 py-2 text-xs font-bold transition-all",
-                dirty && !saving
-                  ? "bg-primary text-white shadow-lg shadow-primary/20 hover:-translate-y-0.5"
-                  : "bg-muted/30 text-muted-foreground/30 cursor-not-allowed"
-              )}>
-              {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
-              {saving ? "Menyimpan…" : "Simpan"}
-            </button>
-          </div>
+          <button onClick={handleSave} disabled={saving || !dirty}
+            className={cn(
+              "flex items-center gap-1.5 rounded-xl px-4 py-2 text-xs font-bold transition-all",
+              dirty && !saving
+                ? "bg-primary text-white shadow-lg shadow-primary/20 hover:-translate-y-0.5"
+                : "bg-muted/30 text-muted-foreground/30 cursor-not-allowed"
+            )}>
+            {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
+            {saving ? "Menyimpan…" : "Simpan"}
+          </button>
         </div>
 
-        {/* ── Identity Card ── */}
-        <div className={cn("glass-card rounded-2xl overflow-hidden shadow-xl", roleMeta.glow)}>
-          {/* Cover */}
-          <div className="relative h-28 sm:h-36 overflow-hidden bg-gradient-to-br from-primary/15 via-primary/5 to-accent/10">
-            {coverurl && (
+        {/* ═══════════════════════════════════════════════════════
+            IDENTITY CARD — Redesign sesuai instruksi Riu
+            ═══════════════════════════════════════════════════════ */}
+        <div className={cn("glass-card rounded-3xl overflow-hidden shadow-2xl relative", roleMeta.glow)}>
+
+          {/* Cover / Background */}
+          <div className="relative h-32 sm:h-40 overflow-hidden bg-gradient-to-br from-primary/20 via-primary/8 to-accent/15">
+            {coverurl ? (
               <Image src={coverurl} alt="" fill className="object-cover" onError={() => setCoverurl("")} />
-            )}
-            <div className="absolute inset-0 bg-gradient-to-b from-transparent to-background/30" />
-            {profile.role === "OWNER" && (
-              <div className="absolute top-3 right-3 flex items-center gap-1.5 rounded-xl bg-yellow-400/15 border border-yellow-400/30 px-2.5 py-1 text-[10px] font-black text-yellow-300 backdrop-blur-sm">
-                👑 OWNER
-              </div>
+            ) : null}
+            <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-background/60" />
+
+            {/* PUTIH: Edit Profile button — top right */}
+            {profile.username && (
+              <Link href={`/profile/${profile.username}`}
+                className="absolute right-3 top-3 flex items-center gap-1.5 rounded-full border border-white/25 bg-white/10 px-3 py-1.5 text-[11px] font-semibold text-white/80 backdrop-blur-sm transition-all hover:bg-white/20 hover:text-white">
+                <Eye className="h-3 w-3" /> Lihat Profil
+              </Link>
             )}
           </div>
 
-          <div className="px-5 pb-5">
-            <div className="-mt-8 flex items-end justify-between mb-4">
+          {/* Body */}
+          <div className="px-5 pb-5 sm:px-6">
+            {/* Avatar row + badges */}
+            <div className="-mt-10 flex items-end justify-between mb-5">
               {/* Avatar */}
-              <div className="relative h-16 w-16 rounded-2xl border-[3px] border-background overflow-hidden bg-card/80 shadow-lg flex items-center justify-center">
+              <div className="relative h-20 w-20 rounded-2xl border-[3px] border-background overflow-hidden bg-card/80 shadow-xl flex items-center justify-center">
                 {avatarurl ? (
                   <Image src={avatarurl} alt={displayName} fill className="object-cover" onError={() => setAvatarurl("")} />
                 ) : (
-                  <span className="text-xl font-black text-primary/60">{initial}</span>
+                  <span className="text-2xl font-black text-primary/60">{initial}</span>
                 )}
               </div>
-              {/* Badges */}
-              <div className="flex items-center gap-1.5 flex-wrap justify-end pb-1">
-                <span className={cn("rounded-lg border px-2 py-0.5 text-[10px] font-black uppercase tracking-wider", roleMeta.cls)}>
+
+              {/* Badges — kanan atas */}
+              <div className="flex flex-col items-end gap-1.5 pb-1">
+                {/* KUNING: Role badge */}
+                <span className={cn(
+                  "inline-flex items-center rounded-full border px-3 py-1 text-[10px] font-black uppercase tracking-widest",
+                  roleMeta.cls
+                )}>
+                  {profile.role === "OWNER" && <span className="mr-1">👑</span>}
                   {roleMeta.label}
                 </span>
+                {/* HIJAU MUDA: Supporter badge */}
                 {supportMeta && (
-                  <span className={cn("rounded-lg border px-2 py-0.5 text-[10px] font-black", supportMeta.cls)}>
+                  <span className={cn("inline-flex items-center rounded-full border px-3 py-1 text-[10px] font-black", supportMeta.cls)}>
                     {supportMeta.label}
                   </span>
                 )}
                 {isprivate && (
-                  <span className="flex items-center gap-1 rounded-lg border border-border/40 bg-muted/20 px-2 py-0.5 text-[10px] font-medium text-muted-foreground/60">
+                  <span className="flex items-center gap-1 rounded-full border border-border/40 bg-muted/20 px-2.5 py-1 text-[10px] font-medium text-muted-foreground/60">
                     <Lock className="h-2.5 w-2.5" /> Privat
                   </span>
                 )}
               </div>
             </div>
-            <div className="flex items-start justify-between gap-4">
-              <div className="min-w-0">
-                <p className="text-base font-bold truncate">{displayName}</p>
-                <p className="text-xs text-muted-foreground/50 mt-0.5">@{profile.username ?? "—"}</p>
-                {bio && <p className="mt-2 text-xs text-muted-foreground/60 leading-relaxed line-clamp-2 max-w-sm">{bio}</p>}
+
+            {/* Display name + username */}
+            <div className="mb-3">
+              <p className="text-xl font-black tracking-tight leading-none">{displayName}</p>
+              <p className="mt-1 text-xs text-muted-foreground/50">@{profile.username ?? "—"}</p>
+            </div>
+
+            {/* Bio block — menyatu dengan profil */}
+            <div className="rounded-2xl border border-border/40 bg-card/30 px-4 py-3.5 space-y-2">
+              {bio ? (
+                <p className="text-sm text-foreground/80 leading-relaxed">{bio}</p>
+              ) : (
+                <p className="text-sm italic text-muted-foreground/35">Belum ada bio. Tulis sesuatu tentang dirimu!</p>
+              )}
+              {/* HIJAU TUA: Join date — di bawah bio, sedikit redup */}
+              <p className="flex items-center gap-1.5 text-[11px] text-green-600/50 dark:text-green-400/40 font-medium">
+                <Calendar className="h-3 w-3 flex-shrink-0" />
+                <span>Bergabung sejak {joinDate}</span>
+              </p>
+            </div>
+
+            {/* MERAH: Sosial media icons — di bawah bio block */}
+            {filledSocials.length > 0 && (
+              <div className="mt-3.5 flex flex-wrap gap-2">
+                {filledSocials.map(({ key, Icon }) => (
+                  <a key={key}
+                    href={
+                      key === "website" ? socials[key]
+                      : key === "youtube" ? socials[key]
+                      : key === "discord" ? `https://discord.com/users/${socials[key]}`
+                      : `https://${key === "x" ? "x.com" : `${key}.com`}/${socials[key].replace("@","")}`
+                    }
+                    target="_blank" rel="noopener noreferrer"
+                    className="flex h-8 w-8 items-center justify-center rounded-full border border-red-500/25 bg-red-500/10 text-red-400 transition-all hover:bg-red-500/20 hover:text-red-300 hover:-translate-y-0.5">
+                    <Icon className="h-3.5 w-3.5" />
+                  </a>
+                ))}
               </div>
-              <p className="flex-shrink-0 text-[10px] text-muted-foreground/35 mt-0.5">Sejak {joinDate}</p>
+            )}
+
+            {/* PUTIH: Edit Profile button — di bawah, aksi langsung */}
+            <div className="mt-4 flex items-center gap-2 flex-wrap">
+              <Link href={profile.username ? `/profile/${profile.username}` : "#"}
+                className="flex items-center gap-1.5 rounded-xl border border-white/15 bg-white/8 px-4 py-2 text-xs font-semibold text-white/70 backdrop-blur-sm transition-all hover:bg-white/15 hover:text-white">
+                <Pencil className="h-3.5 w-3.5" /> Edit Profil
+              </Link>
+              {isStaff && (
+                <Link href="/dash/admin"
+                  className="flex items-center gap-1.5 rounded-xl border border-primary/30 bg-primary/8 px-4 py-2 text-xs font-semibold text-primary hover:bg-primary/15 transition-all">
+                  <Shield className="h-3.5 w-3.5" /> Admin Panel
+                </Link>
+              )}
             </div>
           </div>
         </div>
 
-        {/* ── Grid ── */}
+        {/* ── Edit Form Grid ── */}
         <div className="grid gap-5 lg:grid-cols-2">
 
           {/* Kiri — Info Dasar */}
@@ -373,10 +417,10 @@ export default function ProfilePage() {
               <Input value={displayname} onChange={e => { setDisplayname(e.target.value); setDirty(true); }} placeholder="Nama yang tampil ke orang lain" maxLength={50} />
             </Field>
 
-            <Field label="Username" icon={AtSign} hint="Username tidak bisa diubah sendiri. Hubungi admin.">
+            <Field label="Username" icon={AtSign} hint="3–30 karakter. Huruf kecil, angka, underscore.">
               <div className="relative">
                 <span className="absolute left-4 top-1/2 -translate-y-1/2 text-xs text-muted-foreground/30 select-none">@</span>
-                <Input value={username} onChange={e => { setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, '')); setDirty(true); }} placeholder="username_kamu" maxLength={30} className="pl-7" />
+                <Input value={username} onChange={e => { setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, "")); setDirty(true); }} placeholder="username_kamu" maxLength={30} className="pl-7" />
               </div>
             </Field>
 
@@ -458,9 +502,9 @@ export default function ProfilePage() {
             {/* Account info tiles */}
             <div className="rounded-xl border border-border/30 bg-card/20 divide-y divide-border/20 overflow-hidden">
               {[
-                { label: "Role",      value: roleMeta.label,     color: roleMeta.cls.split(" ")[0] },
-                { label: "Supporter", value: supportMeta?.label, color: supportMeta?.cls.split(" ")[0] },
-                { label: "Bergabung", value: joinDate,           color: "text-muted-foreground/60" },
+                { label: "Role",      value: roleMeta.label,     color: "text-yellow-300/80" },
+                { label: "Supporter", value: supportMeta?.label, color: "text-green-400/80"  },
+                { label: "Bergabung", value: joinDate,           color: "text-green-500/50"  },
               ].filter(r => r.value).map(row => (
                 <div key={row.label} className="flex items-center justify-between px-4 py-2.5">
                   <span className="text-xs text-muted-foreground/40">{row.label}</span>
@@ -496,7 +540,7 @@ export default function ProfilePage() {
           </div>
         </SectionCard>
 
-        {/* ── Admin Panel Shortcut (staff only) ── */}
+        {/* ── Admin shortcut (staff only) ── */}
         {isStaff && (
           <div className="glass-card rounded-2xl p-5 border-primary/15 bg-primary/3">
             <div className="flex items-center justify-between gap-4 flex-wrap">
@@ -517,7 +561,7 @@ export default function ProfilePage() {
           </div>
         )}
 
-        {/* ── Actions Bar ── */}
+        {/* ── Bottom Actions ── */}
         <div className="flex items-center justify-between gap-3 flex-wrap pt-1">
           <button onClick={handleSignout}
             className="flex items-center gap-1.5 rounded-xl border border-border/40 px-4 py-2.5 text-xs font-medium text-muted-foreground/60 hover:border-destructive/30 hover:text-destructive transition-all">

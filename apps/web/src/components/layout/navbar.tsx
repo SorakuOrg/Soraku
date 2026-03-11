@@ -517,17 +517,6 @@ export function Navbar() {
               </Link>
             </div>
           )}
-          {/* Mobile Donate & Premium */}
-          <div className="mt-2 flex gap-2">
-            <Link href="/donate" onClick={() => setMobileOpen(false)}
-              className="flex-1 rounded-xl border border-accent/40 bg-accent/8 py-2.5 text-center text-sm font-semibold text-accent/80">
-              Donate
-            </Link>
-            <Link href="/premium" onClick={() => setMobileOpen(false)}
-              className="flex-1 rounded-xl bg-gradient-to-r from-yellow-500/80 to-amber-500/80 py-2.5 text-center text-sm font-bold text-white">
-              ⭐ Premium
-            </Link>
-          </div>
         </div>
       )}
     </header>
