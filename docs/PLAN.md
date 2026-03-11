@@ -31,7 +31,7 @@
 | Schema DB                  | Kaizo | ✅     | 15 tabel di schema soraku, RLS aktif         |
 | Login page UI              | Bubu  | ✅     | 2 step + Discord OAuth button                |
 | Register page UI           | Bubu  | ✅     | 2 step form + benefits panel                 |
-| Auth middleware             | Kaizo | ✅     | src/middleware.ts — role-based protection    |
+| Auth middleware             | Kaizo | ✅     | src/proxy.ts — role-based protection (Next.js 16) |
 | Dashboard layout + page    | Bubu  | ✅     | Sidebar, stats, quick links                  |
 
 ## v0.3.0 — Konten ✅ (UI + mock data)
@@ -88,29 +88,32 @@
 
 ---
 
-## v0.7.0 — Real Data Integration 🔄 IN PROGRESS
-> **Owner: Sora**
-> Connect semua halaman dari mock data ke real Supabase DB.
-> Server Components query langsung via `db()` dari `@/lib/supabase/server` — lebih efisien dari fetch ke /api/*.
-> API routes tetap untuk: mutations dari client, panggilan dari bot, webhooks.
+## v0.7.0 — Real Data Integration ✅ DONE
+> **Owner: Sora → dikerjakan Kaizo (backup + implement)**
+> Server Components query langsung via `db()` dari `@/lib/supabase/server`.
+> Backup mock pages: `docs/revisi/backup-v0.7.0/pages/`
 
 | Feature                    | Owner | Status | Catatan                                              |
 |----------------------------|-------|--------|------------------------------------------------------|
-| Blog listing → real DB     | Sora  | 🔄     | `db().from('blog_posts')` replace MOCK_POSTS         |
-| Blog detail → real DB      | Sora  | 🔄     | Query by slug, notFound() jika tidak ada             |
-| Events → real DB           | Sora  | 🔄     | Sort by starts_at, filter upcoming/past              |
-| Gallery → real DB          | Sora  | 🔄     | approved=true only, dengan pagination                |
-| Agensi → real DB           | Sora  | 🔄     | Query talents table, filter by type                  |
-| Top Donatur → real DB      | Sora  | 🔄     | Query donatur, sorted by amount DESC                 |
-| Music playlist → real DB   | Sora  | 🔄     | Query music_tracks via /api/music/playlist           |
-| Dashboard → real user data | Sora  | 🔄     | Auth user dari session + stats dari DB               |
-| Admin panel → real data    | Sora  | 🔄     | Connect admin pages ke API routes Kaizo              |
-| packages/utils             | Sora  | 🔄     | slugify, formatDate, formatRupiah, truncate          |
+| Blog listing → real DB     | Kaizo | ✅     | `posts` table, filter tags, order publishedat        |
+| Blog detail → real DB      | Kaizo | ✅     | Query by slug + author join, notFound()              |
+| Events → real DB           | Kaizo | ✅     | `events` table, filter isonline bool, split upcoming/past |
+| Gallery → real DB          | Kaizo | ✅     | status='approved', filter by tags, Next.js Image    |
+| Agensi → real DB           | Kaizo | ✅     | `vtubers` table (/agensi + /agensi/vtuber)           |
+| Top Donatur → real DB      | Kaizo | ✅     | `donatur` table, order amount DESC, podium top 3     |
+| Music playlist → real DB   | Kaizo | ✅     | /api/music/playlist → musictracks isactive + ordernum|
+| Dashboard → real user data | Kaizo | ✅     | getSession() + count posts & gallery per user        |
+| Admin panel → real data    | Sora  | ❌     | Pending — API routes sudah ada, UI belum connect     |
+| packages/utils             | Kaizo | ✅     | slugify, formatDate, formatRupiah, formatEventDate, truncate, generateAvatar, readingTime |
 | Trakteer webhook handler   | Kaizo | ✅     | /api/premium/trakteer → update DB + bot DM + role Discord    |
+| /api/auth/register         | Kaizo | ✅     | POST — Zod validate, cek duplikat username, signUp   |
+| /api/auth/login            | Kaizo | ✅     | POST — signInWithPassword, return full profile       |
+| /gallery/upload → real API | Kaizo | ✅     | Connect form ke POST /api/gallery/upload, success UI |
+| Sitemap dynamic            | Kaizo | ✅     | Query real DB — posts (200) + events (100)           |
 
 ---
 
-## v0.8.0 — Discord Bot (services/bot) 🔜 PLANNED
+## v0.8.0 — Discord Bot (services/bot) ✅ DONE
 > **Owner: Sora (scaffold + arsitektur) · Kaizo (fitur + maintenance)**
 > Bot Discord terintegrasi penuh dengan web via internal webhooks.
 
@@ -147,16 +150,16 @@
 | HTTP server internal (Hono)      | Sora  | 🔜     | Terima webhooks dari web, port 3001                  |
 | Bot login & ready handler        | Sora  | 🔜     | Bot online, set activity status                      |
 | Slash command: /ping             | Sora  | 🔜     | Health check command                                 |
-| Slash command: /member           | Kaizo | 🔜     | Info member count + online                           |
-| Slash command: /event            | Kaizo | 🔜     | List upcoming events dari web API                    |
-| guildMemberUpdate → role-sync    | Kaizo | 🔜     | Role Discord berubah → POST /api/discord/role-sync   |
-| POST /webhook/notify             | Kaizo | 🔜     | Terima dari web → DM user Discord                    |
-| POST /webhook/role-update        | Kaizo | 🔜     | Terima dari web → update role Discord user           |
-| POST /webhook/discord-event      | Kaizo | 🔜     | Terima dari web → announce ke channel                |
+| Slash command: /member           | Kaizo | ✅     | Scaffold di services/bot/src/commands/register.ts    |
+| Slash command: /event            | Kaizo | ✅     | Scaffold di services/bot/src/commands/register.ts    |
+| guildMemberUpdate → role-sync    | Kaizo | ✅     | services/bot/src/events/guildMemberUpdate.ts         |
+| POST /webhook/notify             | Kaizo | ✅     | services/bot/src/webhooks/server.ts                  |
+| POST /webhook/role-update        | Kaizo | ✅     | services/bot/src/webhooks/server.ts — role Discord   |
+| POST /webhook/discord-event      | Kaizo | ✅     | services/bot/src/webhooks/server.ts — announce event |
 | GET  /health                     | Sora  | 🔜     | Railway healthcheck                                  |
 | API web: POST /api/bot/notify    | Sora  | 🔜     | Web endpoint untuk kirim request ke bot              |
 | API web: POST /api/bot/announce  | Sora  | 🔜     | Web endpoint untuk trigger bot announcement          |
-| Dockerfile + Railway config      | Kaizo | 🔜     | Deploy Railway dari services/bot/                    |
+| Dockerfile + Railway config      | Kaizo | ✅     | Dockerfile + railway.toml di services/bot/           |
 
 ### ENV yang dibutuhkan (services/bot)
 ```env
@@ -171,7 +174,7 @@ PORT=3001
 
 ---
 
-## v0.9.0 — Notifikasi & Real-time 🔄 IN PROGRESS
+## v0.9.0 — Notifikasi & Real-time 🔄 IN PROGRESS (partial)
 
 | Feature                       | Owner | Status | Catatan                                                        |
 |-------------------------------|-------|--------|----------------------------------------------------------------|
