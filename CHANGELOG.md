@@ -281,3 +281,16 @@ dengan arsitektur yang sepenuhnya berbeda dari versi sebelumnya.
   Single endpoint untuk admin dashboard overview:
   blog_count, event_count, gallery_pending, member_count, recent_posts, pending_gallery
   Semua query dijalankan parallel via Promise.all
+
+## [0.2.0] — 2026-03-11 · Admin Panel Complete
+
+### Added
+- `src/app/(admin)/admin/blog/new/page.tsx` — Form buat artikel baru (judul, slug auto, excerpt, konten markdown, cover preview, tags, draft/publish)
+- `src/app/(admin)/admin/events/new/page.tsx` — Form buat event baru (judul, slug auto, deskripsi, tanggal mulai/selesai, online/offline toggle, lokasi, cover, tags, draft/publish)
+
+### Fixed
+- `fix(admin/layout): active state sidebar` — Sidebar sekarang highlight halaman aktif dengan dot indicator + warna primary. Sebelumnya semua nav item tampak sama.
+- `fix(admin/layout): mobile bottom nav` — Tambah fixed bottom nav untuk mobile (sebelumnya tidak ada navigasi admin di mobile)
+- `fix(admin/layout): hapus useClient yang hilang` — Layout diubah ke "use client" karena butuh usePathname untuk active state
+- `fix(admin/layout): hapus import ChevronRight yang tidak dipakai`
+- `fix(api/partnerships): hapus mock data` — Return data dari tabel partnerships Supabase. Jika tabel belum ada, return array kosong (tidak crash)
