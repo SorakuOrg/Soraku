@@ -182,3 +182,5 @@ apps/web/src/
 | 6 | 2026-03-11 | v0.9.0 — Redesign + Navbar auth | Bubu |
 | 7 | 2026-03-11 | v1.0 — Login/Register/Profile/Dashboard real | Bubu |
 | 8 | 2026-03-11 | Instruksi Discord ID OWNER ke Kaizo | Bubu |
+| 9 | 2026-03-11 | Discord + Google OAuth routes baru  | Bubu |
+| 10 | 2026-03-11 | Profile page redesign minimalis     | Bubu |

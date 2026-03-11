@@ -61,7 +61,18 @@ Buka Supabase → Table Editor → `soraku.users` → cari user Riu → ubah kol
 
 > **Catatan Bubu:** Opsi B bisa dilakukan Riu sendiri setelah akun Discord-nya terdaftar. Tapi Kaizo perlu ensure Option A berjalan untuk akun baru di masa depan.
 
-### Yang harus Kaizo kerjakan:
+### ✅ UPDATE — Sudah di-handle Bubu di callback route
+
+`apps/web/src/app/api/auth/callback/route.ts` sudah diupdate:
+- Discord ID `1020644780075659356` → role `OWNER` otomatis saat pertama login
+- User baru via Discord OAuth otomatis di-upsert ke `soraku.users`
+- Support ENV `OWNER_DISCORD_IDS` untuk tambah owner lain
+
+**Satu-satunya yang Kaizo perlu lakukan:**
+1. Tambahkan ENV var di Vercel: `OWNER_DISCORD_IDS=1020644780075659356`
+2. Atau: setelah Riu login Discord pertama kali, langsung update kolom `role` ke `OWNER` di Supabase Table Editor
+
+### Yang harus Kaizo kerjakan (opsional/backup):
 
 1. Update `apps/web/src/app/api/auth/callback/route.ts` — tambah OWNER check berdasarkan Discord ID
 2. Update `apps/web/src/app/api/auth/register/route.ts` — tambah logic yang sama untuk OAuth register

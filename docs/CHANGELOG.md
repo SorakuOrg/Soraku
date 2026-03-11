@@ -4,6 +4,43 @@
 
 ---
 
+## [v1.0.1] — 2026-03-11 · Bubu
+
+### Profile Page — Total Redesign
+- Redesign minimalis modern: layout 2-kolom grid, section cards dengan icon headers
+- **Identity Card** di bagian atas: cover banner + avatar float, role badge + supporter badge, nama + username + bio preview, tanggal bergabung
+- **Dirty state tracking**: tombol Simpan hanya aktif (biru) jika ada perubahan yang belum disimpan
+- **Info Dasar** section: Nama Tampilan, Username (read-only), Bio (max 300 dengan counter), Privacy toggle (publik/privat) dengan animasi pill
+- **Foto & Media** section: Avatar URL dengan preview + clear button, Cover URL dengan preview inline + clear button, Account info card (Role, Supporter, Bergabung)
+- **Sosial Media** section: 5 fields (Discord, Instagram, X, YouTube, Website) dengan individual clear button per field, grid 3 kolom
+- **Actions bar** bawah: Keluar dari akun (kiri) + Lihat Profil + Simpan Perubahan (kanan)
+- Semua menggunakan **Lucide icon** — zero emoji
+- Toast notification dengan close button, animasi slide-in
+- Loading skeleton, error state dengan icon
+
+### Auth — Discord & Google OAuth Routes (sebelumnya belum ada)
+- `apps/web/src/app/api/auth/discord/route.ts` — GET redirect ke Supabase Discord OAuth
+- `apps/web/src/app/api/auth/google/route.ts` — GET redirect ke Supabase Google OAuth
+- Scope Discord: `identify email guilds`
+
+### Auth Callback — Auto OWNER role
+- `apps/web/src/app/api/auth/callback/route.ts` diupdate:
+  - Upsert user ke `soraku.users` setelah OAuth berhasil (ambil username/displayname/avatarurl dari metadata)
+  - Discord ID `1020644780075659356` (Riu) otomatis dapat role `OWNER`
+  - Support ENV `OWNER_DISCORD_IDS` untuk tambah owner lain tanpa deploy ulang
+  - Graceful: DB error tidak block user dari login
+
+### Login & Register — Real API
+- Login: `POST /api/auth/login`, error message dari server, redirect `/dashboard`
+- Register: `POST /api/auth/register`, auto-login setelah daftar berhasil, 2-step form
+- Dashboard layout: real session dari `GET /api/auth/me`, nama + avatar real, link Admin hanya jika staff
+
+### API `/api/profile` (baru)
+- `GET /api/profile` — ambil profile user yang sedang login
+- `PATCH /api/profile` — update displayname, bio, avatarurl, coverurl, sociallinks, isprivate
+
+---
+
 ## [v0.9.0] — 2026-03-11 · Bubu
 
 ### /about — Total Rebuild (Sesuai Spesifikasi Riu)
