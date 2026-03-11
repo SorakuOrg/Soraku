@@ -4,6 +4,40 @@
 
 ---
 
+---
+
+## [v0.1.0] — 2026-03-11 · Bubu
+
+### ✨ Homepage Redesign + Navbar Restructure
+
+**Homepage**
+- Hero: 5 kategori centered mobile-friendly (Anime/Manga, Fanart, Cosplay, VTuber, Culture Jepang)
+- Stats real-time 3 item Discord only — Member Discord live dari Discord Widget API
+- Hapus section Platform/Features lama
+- Events real-time: grid-3, cover, status badge Online/Pending/Selesai, by username
+- Blogs real-time: grid-3, cover, excerpt, by username
+- Discord Card real-time: total member, user aktif, join button, deskripsi
+- Partnership section dari DB soraku.partnerships (conditional render)
+- Sosial Media section 7 platform card mode
+- Data dari GET /api/home (single request)
+
+**Navbar**
+- Struktur: Beranda · About · Feature▼ (Events/Blogs/Gallery) · Agensi▼ (VTuber/Cosplay) · Utility▼ (Privacy/TOS/Feedback/License/Requirements)
+- Button Donate & Premium (desktop + mobile)
+- Hapus button Profil dari mobile menu
+
+**Profile self-service**
+- Username updatable oleh user sendiri (tidak perlu admin)
+
+**Route baru**
+- /requirements: halaman Open Recruitment Batch 01
+
+**Database**
+- soraku.events: kolom status (online/pending/selesai)
+- soraku.partnerships: kolom description + createdby
+
+---
+
 ## [v1.0.1] — 2026-03-11 · Sora
 
 > Versi ini menggabungkan semua perbaikan post-v1.0 (termasuk yang sebelumnya dicatat sebagai 1.0.2+) menjadi satu rilis stabil.

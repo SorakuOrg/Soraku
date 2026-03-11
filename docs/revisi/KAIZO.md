@@ -149,3 +149,26 @@ SORAKU_API_SECRET=          ← sama dengan SORAKU_API_SECRET di Railway
 |---|---------|--------|------|
 | 1–10 | 2026-03-10/11 | (lihat CHANGELOG) | Kaizo |
 | 11 | 2026-03-11 | Update task v1.1.x: migration notifs, Realtime, gallery API fix, admin vtubers | Sora |
+
+
+---
+
+## 📋 LAPORAN — 2026-03-11 (dari Bubu) — Homepage Redesign
+
+### ✅ URGENT: Set ENV di Vercel (sudah diingatkan sebelumnya)
+
+Ini WAJIB agar profile loading tidak error:
+
+**Vercel Dashboard → soraku → Settings → Environment Variables:**
+
+```
+SUPABASE_SERVICE_ROLE_KEY = eyJ...   ← dari Supabase Dashboard → Project Settings → API → service_role
+OWNER_DISCORD_IDS = 1020644780075659356  ← agar Riu otomatis jadi OWNER saat login
+```
+
+Setelah tambah → klik **Redeploy** di Vercel.
+
+### Discord Widget API
+Homepage sekarang fetch Discord Widget untuk stats real-time.
+Guild ID yang dipakai: `1033369620989124628`
+Pastikan Discord Widget **enabled** di: Server Settings → Widget → Enable Server Widget ✅

@@ -171,3 +171,59 @@ apps/web/src/
 |---|---------|--------|------|
 | 1–10 | 2026-03-10/11 | (lihat CHANGELOG) | Sora/Kaizo |
 | 11 | 2026-03-11 | v1.0.1 — semua task Sora selesai | Sora |
+
+
+---
+
+## 📋 LAPORAN — 2026-03-11 (dari Bubu) — Homepage Redesign
+
+### ✅ Sudah Selesai (Bubu — commit a9a1b0c)
+
+1. **Homepage redesign** — full sesuai brief Riu
+2. **Navbar restructure** — 5 group dengan Utility dropdown baru
+3. **Profile username** — user bisa update sendiri, tidak perlu admin
+4. **Route /requirements** — halaman Open Recruitment Batch 01
+5. **DB migration** — events.status + partnerships.description/createdby
+6. **API /api/home** — satu endpoint untuk semua homepage data
+
+---
+
+### ❌ YANG PERLU SORA HANDLE
+
+#### DB validation — Supabase
+**Masalah:** Profile edit/hapus selalu error (notif merah) kemungkinan karena:
+- `SUPABASE_SERVICE_ROLE_KEY` belum di-set di Vercel ENV
+
+**Action:** Pastikan Vercel ENV ada:
+```
+SUPABASE_SERVICE_ROLE_KEY = <service_role key dari Supabase Dashboard → Project Settings → API>
+```
+Setelah set → **Redeploy Vercel** agar berlaku.
+
+#### Supabase Auth URL Configuration
+**Masalah:** `bad_oauth_state` saat login Discord/Google
+**Action:** Supabase Dashboard → Authentication → URL Configuration:
+- Site URL: `https://soraku.vercel.app`
+- Redirect URLs tambahkan: `https://soraku.vercel.app/**`
+
+#### Admin Panel — Riu Discord ID
+**Action:** Setelah Riu login via Discord pertama kali, update role di Supabase:
+```sql
+UPDATE soraku.users SET role = 'OWNER' WHERE id = '<user_id_Riu>';
+```
+Atau set ENV `OWNER_DISCORD_IDS=1020644780075659356` di Vercel → auto-assign saat login.
+
+#### Partnership Admin UI
+Bubu butuh endpoint dari Sora:
+- `POST /api/admin/partnerships` — tambah partner
+- `PATCH /api/admin/partnerships/[id]` — update partner
+- `DELETE /api/admin/partnerships/[id]` — hapus partner
+
+Setelah endpoint ada, Bubu buat halaman admin `/dash/admin/partnerships`.
+
+#### Route Utility yang Belum Ada
+Halaman ini perlu dibuat (bisa Sora atau Bubu):
+- `/privacy-policy`
+- `/tos`
+- `/feedback`
+- `/license`
