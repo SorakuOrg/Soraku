@@ -279,3 +279,54 @@ Lihat `/profile/[username]` — perlu color-code yang sama:
 - Join date = green muted
 - Sosial media = red icons
 Bubu bisa kerjakan ini setelah Sora konfirmasi DB fix.
+
+
+---
+
+## 📋 LAPORAN — 2026-03-12 #2 (dari Bubu) — Role Fix + Public Profile
+
+### ✅ Selesai (Bubu — commit 46f120f)
+
+**DB fix — Riu role OWNER:**
+- Ditemukan: role Riu di DB adalah `MANAGER` (bukan OWNER)
+- Root cause: callback route cek Discord ID tapi race condition saat pertama login
+- Fix: UPDATE langsung via Supabase → role = OWNER ✅
+- Riu cukup refresh halaman, tidak perlu logout-login
+
+**Public Profile `/profile/[username]` — Redesign:**
+- Color coding sesuai instruksi (sama dengan /dash/profile/me):
+  - Kuning = Role badge
+  - Hijau Muda = Supporter badge
+  - Hijau Tua = Join date (dalam bio box, redup)
+  - Merah = Sosial media icon pills
+  - Putih = Edit Profil & Share button (di cover)
+- Owner badge + crown di cover untuk role OWNER
+- Share button dengan Web Share API + clipboard fallback
+- Online dot dekoratif di avatar
+- Glow ambient sesuai warna role
+- Skeleton loading + 404 state
+
+---
+
+### ❌ SORA — Yang Masih Perlu Dikerjakan
+
+**1. Supabase Auth Redirect URLs (URGENT)**
+Supabase Dashboard → Authentication → URL Configuration:
+- Site URL: `https://soraku.vercel.app`
+- Add Redirect URL: `https://soraku.vercel.app/**`
+
+**2. Partnership Admin API endpoints:**
+```
+POST   /api/admin/partnerships
+PATCH  /api/admin/partnerships/[id]
+DELETE /api/admin/partnerships/[id]
+```
+
+**3. Halaman utility:**
+`/privacy-policy` · `/tos` · `/feedback` · `/license`
+
+**4. Fix callback race condition:**
+Saat user baru daftar, kadang DB trigger `on_auth_user_created`
+insert row dengan role USER sebelum callback route selesai cek Discord ID.
+Saran: di callback route, selalu force-update role jika Discord ID match OWNER_DISCORD_IDS,
+bukan hanya cek `if (!existing)`.
