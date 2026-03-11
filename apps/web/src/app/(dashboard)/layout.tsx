@@ -14,11 +14,11 @@ interface SessionUser {
 }
 
 const SIDEBAR_LINKS = [
-  { href: "/dashboard",          label: "Beranda",    icon: LayoutDashboard },
-  { href: "/dash/profile/me",          label: "Profil",     icon: User },
-  { href: "/dashboard/posts",    label: "Postingan",  icon: BookOpen },
-  { href: "/dashboard/gallery",  label: "Galeri",     icon: ImageIcon },
-  { href: "/dashboard/settings", label: "Pengaturan", icon: Settings },
+  { href: "/dash",              label: "Beranda",    icon: LayoutDashboard },
+  { href: "/dash/profile/me",   label: "Profil",     icon: User },
+  { href: "/dash/posts",        label: "Postingan",  icon: BookOpen },
+  { href: "/dash/gallery",      label: "Galeri",     icon: ImageIcon },
+  { href: "/dash/settings",     label: "Pengaturan", icon: Settings },
 ];
 
 const IS_ADMIN = (r: string) => ["OWNER","MANAGER","ADMIN"].includes(r.toUpperCase());

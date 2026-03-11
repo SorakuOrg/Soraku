@@ -91,7 +91,7 @@ function VtuberCard({ v }: { v: VtuberRow }) {
               <Twitter className="h-3.5 w-3.5" />
             </a>
           )}
-          <Link href={`/agensi/vtuber`}
+          <Link href={`/vtubers/${v.slug}`}
             className="ml-auto rounded-lg bg-primary/10 px-3 py-1.5 text-xs font-medium text-primary hover:bg-primary/20 transition-colors">
             Profil VTuber
           </Link>
@@ -118,7 +118,7 @@ export default async function AgensiPage() {
         <p className="mt-4 max-w-xl mx-auto text-muted-foreground">
           Talent management Soraku Community — mendukung kreator, VTuber, cosplayer, dan musisi Indonesia.
         </p>
-        <Link href="/agensi/vtuber"
+        <Link href="/vtubers"
           className="mt-5 inline-flex items-center gap-2 rounded-xl border border-violet-500/30 bg-violet-500/8 px-5 py-2.5 text-sm font-medium text-violet-300 hover:bg-violet-500/15 transition-colors">
           ✨ Lihat VTuber →
         </Link>

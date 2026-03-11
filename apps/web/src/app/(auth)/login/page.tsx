@@ -86,7 +86,7 @@ export default function LoginPage() {
       if (!res.ok || data.error) {
         setError(data.error ?? "Email atau password salah.");
       } else {
-        router.push("/dashboard");
+        router.push("/dash");
         router.refresh();
       }
     } catch {

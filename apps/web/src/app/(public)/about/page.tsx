@@ -503,11 +503,6 @@ export default function AboutPage() {
         </div>
         {/* Client component: scrolling sosmed cards */}
         <AboutScrollers type="social" socials={SOCIAL_DATA} />
-        <div className="mt-5 text-center">
-          <Link href="/social" className="inline-flex items-center gap-1.5 text-sm text-muted-foreground/60 hover:text-primary transition-colors">
-            Lihat semua platform <ExternalLink className="h-3.5 w-3.5" />
-          </Link>
-        </div>
       </section>
 
       {/* ══════════════ PARTNERSHIP SCROLLING ══════════════ */}
@@ -541,10 +536,10 @@ export default function AboutPage() {
                 className="group inline-flex items-center gap-2 rounded-2xl bg-primary px-7 py-3.5 text-sm font-bold text-white shadow-lg shadow-primary/20 transition-all hover:-translate-y-0.5">
                 Daftar Gratis <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
               </Link>
-              <Link href="/social"
+              <a href="https://discord.gg/qm3XJvRa6B" target="_blank" rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 rounded-2xl border border-border px-7 py-3.5 text-sm font-medium text-muted-foreground transition-colors hover:border-primary/40 hover:text-foreground">
-                Sosial Media <ExternalLink className="h-3.5 w-3.5" />
-              </Link>
+                <DiscordIcon className="h-4 w-4" />Discord <ExternalLink className="h-3.5 w-3.5" />
+              </a>
             </div>
           </div>
         </div>

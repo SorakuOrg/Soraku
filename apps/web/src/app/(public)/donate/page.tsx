@@ -99,7 +99,7 @@ export default function DonatePage() {
 
       {/* Links */}
       <div className="flex flex-wrap justify-center gap-4 text-sm text-muted-foreground">
-        <Link href="/premium/donatur" className="flex items-center gap-1.5 hover:text-primary transition-colors">
+        <Link href="/donate/leaderboard" className="flex items-center gap-1.5 hover:text-primary transition-colors">
           <Trophy className="h-4 w-4" /> Top Donatur
         </Link>
         <span className="text-border">·</span>

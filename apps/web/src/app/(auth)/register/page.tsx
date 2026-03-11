@@ -67,7 +67,7 @@ export default function RegisterPage() {
           body: JSON.stringify({ email: form.email, password: form.password }),
         });
         if (loginRes.ok) {
-          router.push("/dashboard");
+          router.push("/dash");
           router.refresh();
         } else {
           // Register berhasil tapi login gagal — redirect ke login

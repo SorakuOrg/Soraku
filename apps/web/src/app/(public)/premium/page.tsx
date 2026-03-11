@@ -84,7 +84,7 @@ export default function PremiumPage() {
           Soraku adalah komunitas non-profit. Setiap dukungan kamu membantu kami terus berkarya untuk komunitas.
         </p>
         <div className="mt-6 flex justify-center">
-          <Link href="/premium/donatur"
+          <Link href="/donate/leaderboard"
             className="flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors">
             <Trophy className="h-4 w-4" /> Lihat Top Donatur →
           </Link>
@@ -143,7 +143,7 @@ export default function PremiumPage() {
         <div className="mt-6 flex justify-center gap-4 flex-wrap">
           <Link href="/donate" className="text-sm text-primary hover:underline">Donasi via Trakteer</Link>
           <span className="text-border">·</span>
-          <Link href="/premium/donatur" className="text-sm text-primary hover:underline">Top Donatur</Link>
+          <Link href="/donate/leaderboard" className="text-sm text-primary hover:underline">Top Donatur</Link>
           <span className="text-border">·</span>
           <Link href="/about" className="text-sm text-primary hover:underline">Tentang Kami</Link>
         </div>
