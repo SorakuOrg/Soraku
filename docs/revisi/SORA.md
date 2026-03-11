@@ -123,11 +123,11 @@ docs/revisi/backup-v0.7.0/pages/
 
 ### 🔴 Urgent — Belum dikerjakan Kaizo
 
-- [ ] **`/agensi/vtuber`** — halaman detail VTuber masih mock
+- [x] **`/agensi/vtuber`** — ✅ Kaizo — real DB, live badge, Image component
   - Query: `vtubers` by slug, termasuk `islive`, `liveurl`, `subscribercount`
   - Pattern sama: `await (await db()).from("vtubers").select(...).eq("slug", slug)`
 
-- [ ] **`/gallery/upload`** — form upload masih static
+- [x] **`/gallery/upload`** — ✅ Kaizo — connect ke POST /api/gallery/upload, success state, error handling
   - POST ke `/api/gallery/upload` (sudah ada) dengan `FormData: { file, title, tags }`
   - Perlu `'use client'` + state management
 
@@ -144,7 +144,7 @@ docs/revisi/backup-v0.7.0/pages/
   - `/admin/events` → sama
   - `/admin/gallery` → PATCH approve/reject, DELETE
 
-- [ ] **packages/utils** — isi file yang masih kosong
+- [x] **packages/utils** — ✅ Kaizo — slugify, formatRupiah, formatDate, formatEventDate, truncate, generateAvatar, readingTime
   ```ts
   // packages/utils/src/index.ts — sudah ada tapi kosong
   export function slugify(str: string): string
@@ -153,17 +153,15 @@ docs/revisi/backup-v0.7.0/pages/
   export function generateAvatar(name: string): string
   ```
 
-- [ ] **`/api/auth/register`** — belum ada, Bubu butuh ini
+- [x] **`/api/auth/register`** — ✅ Kaizo — POST, Zod validation, cek duplikat username
   - POST body: `{ email, password, username }`
   - Pakai: `supabase.auth.signUp()` + insert ke `soraku.users`
 
-- [ ] **`/api/auth/login`** — belum ada
-  - POST body: `{ email, password }`
-  - Pakai: `supabase.auth.signInWithPassword()`
+- [x] **`/api/auth/login`** — ✅ Kaizo — POST signInWithPassword, return profile
 
 ### 🟡 Low
 
-- [ ] **Sitemap dynamic** — tambah `/blog/[slug]` dan `/events/[slug]`
+- [x] **Sitemap dynamic** — ✅ Kaizo — query real DB (posts + events), limit 200/100
   - File sudah ada di `apps/web/src/app/sitemap.ts`
   - Query `posts` dan `events` yang published, return array URL
 
