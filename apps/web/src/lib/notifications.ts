@@ -1,7 +1,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 // Soraku — Notification System
-// Sumber: /api/notifications (DB internal Supabase — BUKAN GitHub Discussion)
-// TODO Kaizo: buat tabel notifications + RLS → lihat schema di route.ts
+// DB: soraku.notifications — lihat migration 20260311_notifications.sql
+// Field names mengikuti konvensi soraku: lowercase tanpa underscore
 // ─────────────────────────────────────────────────────────────────────────────
 
 export type NotifType =
@@ -11,16 +11,17 @@ export type NotifType =
   | "badge"    // Dapat badge / role baru
   | "mention"  // Disebut di komentar
   | "system"   // Pengumuman platform
+  | "info"     // Info umum
   | "premium"; // Status premium berubah
 
 export interface Notification {
-  id: string;
-  type: NotifType;
-  title: string;
-  body: string;
-  href?: string;
-  read: boolean;
-  created_at: string; // ISO
+  id:        string;
+  type:      NotifType;
+  title:     string;
+  body:      string | null;
+  href:      string | null;
+  isread:    boolean;         // ← sesuai kolom DB: isread (bukan read)
+  createdat: string;          // ← sesuai kolom DB: createdat (bukan created_at)
 }
 
 export const NOTIF_CONFIG: Record<
@@ -33,37 +34,6 @@ export const NOTIF_CONFIG: Record<
   badge:   { emoji: "🏅", bg: "bg-yellow-500/10", color: "text-yellow-400" },
   mention: { emoji: "💬", bg: "bg-green-500/10",  color: "text-green-400"  },
   system:  { emoji: "📢", bg: "bg-accent/10",     color: "text-accent"     },
+  info:    { emoji: "ℹ️",  bg: "bg-muted/20",      color: "text-muted-foreground" },
   premium: { emoji: "⭐", bg: "bg-yellow-400/10", color: "text-yellow-300" },
 };
-
-// Mock — diganti real API saat Kaizo selesai tabel notifications
-export const MOCK_NOTIFICATIONS: Notification[] = [
-  {
-    id: "n1", type: "event",
-    title: "Event Baru!",
-    body: "Nonton Bareng Jujutsu Kaisen S3 dijadwalkan Minggu ini.",
-    href: "/events", read: false,
-    created_at: new Date(Date.now() - 1000 * 60 * 10).toISOString(),
-  },
-  {
-    id: "n2", type: "blog",
-    title: "Artikel Baru",
-    body: "Review One Piece Chapter 1113 sudah terbit di Blog.",
-    href: "/blog", read: false,
-    created_at: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(),
-  },
-  {
-    id: "n3", type: "gallery",
-    title: "Galeri Disetujui",
-    body: "Upload fan-art Attack on Titan kamu sudah disetujui.",
-    href: "/gallery", read: true,
-    created_at: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(),
-  },
-  {
-    id: "n4", type: "badge",
-    title: "Badge Baru 🎉",
-    body: "Kamu mendapatkan badge Kreator Aktif!",
-    href: "/dashboard", read: true,
-    created_at: new Date(Date.now() - 1000 * 60 * 60 * 48).toISOString(),
-  },
-];

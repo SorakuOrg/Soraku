@@ -1,118 +1,115 @@
 # BUBU — Brief & Task List
-> From: Kaizo (Back-end) & Sora (Full Stack Lead)
-> Last updated: 2026-03-11
+> From: Sora (Full Stack Lead)
+> Last updated: 2026-03-11 (v1.0.1)
 
 ---
 
-## ✅ Sudah Selesai (rekap)
+## ✅ Sudah Selesai (rekap lengkap)
 
 | Fitur | Status |
 |-------|--------|
 | Design system, globals.css, animasi | ✅ |
 | Navbar + Footer + SORAKU_SOCIALS | ✅ |
-| Semua halaman publik (homepage, blog, events, gallery, about, donate, premium) | ✅ |
+| Semua halaman publik | ✅ |
 | Login / Register → real API | ✅ |
-| Dashboard layout → real session | ✅ |
-| Profile /dash/profile/me → CRUD | ✅ |
+| Dashboard layout + profile me | ✅ |
 | Admin panel UI — 5 halaman | ✅ |
-| Notification bell polling | ✅ |
-| User dropdown Navbar → real session | ✅ |
-| force-dynamic semua pages | ✅ |
-| Hapus link /social dari Navbar | ✅ |
-| Update link VTuber → /vtubers | ✅ |
-| Update link Top Donatur → /donate/leaderboard | ✅ |
-| Update link Admin → /dash/admin | ✅ |
-| Login page: screen "sudah login" | ✅ |
+| Notification bell polling → Realtime | ✅ Sora upgrade |
+| Route architecture cleanup | ✅ |
+| Login sudah-login screen | ✅ |
 
 ---
 
-## 🔴 Masih Pending — WAJIB Dikerjakan Bubu
+## 🔴 Pending Bubu — Segera (v1.1.x)
 
-### 1. Form Edit Blog — `/dash/admin/blog/[id]/edit`
+### 1. Halaman Profil Publik `/profile/[username]`
 
-Tombol "Edit" di tabel admin sudah ada. Tinggal buat halaman formnya.
+File sudah ada: `app/(public)/profile/[username]/page.tsx`
+
+Perlu UI polish:
+- Avatar, displayname, role badge, supporter badge
+- Bio, sosial links (Discord, IG, X, YouTube, Website)
+- Galeri upload user (query dari `soraku.gallery` filter `userid` + `status='approved'`)
+- Handle `isprivate=true` → tampilkan pesan "Profil ini private"
+- Handle user tidak ditemukan → `notFound()`
+
+**API yang tersedia:**
+```ts
+// Sudah ada:
+GET /api/users/[username] → data profil publik user
+```
+
+### 2. UI Polish VTuber Detail `/vtubers/[slug]`
+
+File sudah ada tapi UI masih plain. Perlu:
+- Cover image yang lebih dramatis (gradient overlay)
+- Stats: subscriber count, debut date
+- Stream status badge (🔴 Live / Offline)
+- Social links yang lebih visual (YouTube, Twitter/X)
+- "Talent lainnya" section di bawah
+
+### 3. Halaman Admin VTubers — CRUD
+
+Tambah halaman baru:
 
 ```
-apps/web/src/app/(dashboard)/dash/admin/blog/[id]/edit/page.tsx
+app/(dashboard)/dash/admin/vtubers/page.tsx       ← list + delete
+app/(dashboard)/dash/admin/vtubers/new/page.tsx   ← form tambah
+app/(dashboard)/dash/admin/vtubers/[id]/edit/page.tsx ← form edit
 ```
 
-Prefill dari API, submit ke PATCH:
-
+Tambahkan juga di sidebar admin `layout.tsx`:
 ```tsx
-// Ambil data existing untuk prefill
-const res = await fetch(`/api/blog/${id}`)
-const { data } = await res.json()
-// prefill: title, slug, excerpt, content, coverurl, tags, ispublished
-
-// Submit edit
-await fetch(`/api/admin/blog/${id}`, {
-  method: "PATCH",
-  headers: { "Content-Type": "application/json" },
-  body: JSON.stringify({ title, slug, excerpt, content, coverurl, tags, ispublished })
-})
+{ href: "/dash/admin/vtubers", label: "VTubers", icon: Star }
 ```
 
-### 2. Form Edit Event — `/dash/admin/events/[id]/edit`
+**API yang perlu Kaizo buat:**
+```
+GET    /api/admin/vtubers        ← list semua
+POST   /api/admin/vtubers        ← tambah baru
+GET    /api/admin/vtubers/[id]   ← prefill edit
+PATCH  /api/admin/vtubers/[id]   ← update
+DELETE /api/admin/vtubers/[id]   ← hapus
+```
 
-Sama seperti form create event tapi prefill data existing.
+### 4. Halaman Notifikasi `/notifications`
+
+Navbar sudah ada link ke `/notifications`. Halaman-nya belum ada.
 
 ```
-apps/web/src/app/(dashboard)/dash/admin/events/[id]/edit/page.tsx
+app/(public)/notifications/page.tsx
 ```
 
-```tsx
-// Ambil data existing untuk prefill
-const res = await fetch(`/api/events/${slug}`)
-const { data } = await res.json()
-
-// Submit edit
-await fetch(`/api/admin/events/${id}`, {
-  method: "PATCH",
-  headers: { "Content-Type": "application/json" },
-  body: JSON.stringify({ title, slug, description, startdate, enddate, isonline, location, coverurl, tags, ispublished })
-})
-```
+Tampilkan semua notifikasi user (bukan hanya 6 terbaru):
+- List semua notif dengan tanda isread
+- Mark all read button
+- Empty state yang bagus
 
 ---
 
-## 📌 Route Architecture — Status Final
+## 📌 API yang Tersedia untuk Bubu
 
-Semua redirect sudah jalan di `proxy.ts`. Bubu tidak perlu buat file lama lagi.
-
-| Route Lama | Status | Pengganti |
-|------------|--------|-----------|
-| `/social` | ❌ Dihapus | Gunakan icon di Navbar/Footer |
-| `/agensi/vtuber` | 🔄 Redirect 301 | `/vtubers` |
-| `/premium/donatur` | 🔄 Redirect 301 | `/donate/leaderboard` |
-| `/admin/*` | 🔄 Redirect 301 | `/dash/admin/*` |
-| `/dashboard` | 🔄 Redirect 301 | `/dash` |
-
-Halaman baru yang sudah ada (Kaizo buat):
-- `/vtubers` — listing VTuber
-- `/vtubers/[slug]` — detail VTuber (butuh UI polish dari Bubu)
-- `/donate/leaderboard` — top donatur
-- `/dash/admin/*` — semua admin panel sudah di namespace baru
-
----
-
-## 📌 Namespace Rules (WAJIB — dari docs/routes/NAMESPACE.md)
-
-> Ditetapkan oleh Riu. Jangan buat route di luar namespace ini.
-
-| Jenis | Namespace |
-|-------|-----------|
-| Halaman publik | `(public)/` — `/blog`, `/events`, `/gallery`, `/vtubers`, `/donate`, dll |
-| Auth | `(auth)/` — `/login`, `/register` saja, tidak boleh ada sub-route |
-| Dashboard user | `(dashboard)/dash/*` |
-| Admin panel | `(dashboard)/dash/admin/*` |
-| API | `api/*` |
-
-**JANGAN buat:**
-- `/admin/*` → sudah deprecated, ada redirect otomatis
-- `/dashboard/*` → sudah deprecated, ada redirect otomatis
-- `/social` → bukan halaman, cukup icon komponen
-- `/premium/donatur` → sudah diganti `/donate/leaderboard`
-- `/agensi/vtuber` → sudah diganti `/vtubers`
+| Endpoint | Keterangan |
+|----------|-----------|
+| `GET /api/blog` | List artikel published |
+| `GET /api/admin/blog` | List SEMUA artikel incl draft (staff) |
+| `GET /api/admin/blog/[id]` | Detail by ID untuk prefill edit ✨ baru |
+| `PATCH /api/admin/blog/[id]` | Edit artikel |
+| `GET /api/events` | List event |
+| `GET /api/admin/events` | List SEMUA event incl draft (staff) ✨ baru |
+| `GET /api/admin/events/[id]` | Detail by ID untuk prefill edit ✨ baru |
+| `PATCH /api/admin/events/[id]` | Edit event |
+| `GET /api/gallery` | List gallery approved |
+| `GET /api/gallery?status=pending` | List pending (admin) |
+| `POST /api/gallery/upload` | Upload karya |
+| `GET /api/vtubers` | List VTubers |
+| `GET /api/vtubers/[slug]` | Detail VTuber |
+| `GET /api/profile` | Profil sendiri |
+| `PATCH /api/profile` | Update profil |
+| `GET /api/users/[username]` | Profil publik user |
+| `GET /api/notifications` | List notifikasi user |
+| `PATCH /api/notifications` | Mark read |
+| `GET /api/stats` | Statistik platform |
 
 ---
 
@@ -124,31 +121,8 @@ export const dynamic = 'force-dynamic'  // baris pertama setiap page.tsx
 
 - Import icons dari `@/components/icons/custom-icons` atau Lucide — jangan inline SVG
 - Mutations lewat `fetch("/api/...")` — bukan Server Actions
-- **Jangan** fetch ke API dari Server Component (double round-trip) — query DB langsung pakai `adminDb()`
-
----
-
-## API yang Tersedia untuk Bubu
-
-Semua sudah ready, tinggal consume dari client side:
-
-| Endpoint | Keterangan |
-|----------|-----------|
-| `GET /api/blog` | List artikel published |
-| `GET /api/blog/[slug]` | Detail artikel (untuk prefill form edit) |
-| `PATCH /api/admin/blog/[id]` | Edit artikel |
-| `GET /api/events` | List event |
-| `GET /api/events/[slug]` | Detail event (untuk prefill form edit) |
-| `PATCH /api/admin/events/[id]` | Edit event |
-| `GET /api/gallery` | List gallery approved |
-| `POST /api/gallery/upload` | Upload karya (butuh login) |
-| `GET /api/vtubers` | List semua VTuber |
-| `GET /api/vtubers/[slug]` | Detail VTuber per slug |
-| `GET /api/profile` | Profil sendiri (butuh login) |
-| `PATCH /api/profile` | Update profil (butuh login) |
-| `GET /api/stats` | Statistik platform real DB |
-| `GET /api/partnerships` | Daftar partner |
-| `GET /api/donate` | Data donasi |
+- **Jangan** fetch ke API dari Server Component — query DB langsung pakai `adminDb()`
+- Field DB: `isread` (bukan `read`), `createdat` (bukan `created_at`), `displayname`, `avatarurl`, dll
 
 ---
 
@@ -156,13 +130,5 @@ Semua sudah ready, tinggal consume dari client side:
 
 | # | Tanggal | Revisi | Oleh |
 |---|---------|--------|------|
-| 1 | 2026-03-10 | Project reset → v0.0.1 | Riu |
-| 2 | 2026-03-11 | v0.9.0 — Redesign + Navbar auth | Bubu |
-| 3 | 2026-03-11 | v1.0 — Login/Register/Profile/Dashboard real | Bubu |
-| 4 | 2026-03-11 | Discord + Google OAuth routes | Bubu |
-| 5 | 2026-03-11 | Profile page redesign minimalis | Bubu |
-| 6 | 2026-03-11 | Route cleanup — semua link lama diupdate | Bubu |
-| 7 | 2026-03-11 | Login sudah-login screen | Bubu |
-| 8 | 2026-03-11 | Fix OAuth PKCE cookie (bad_oauth_state) | Kaizo |
-| 9 | 2026-03-11 | Fix logout (signout tidak hapus cookie) | Kaizo |
-| 10 | 2026-03-11 | Re-insert Riu ke soraku.users | Kaizo |
+| 1–9 | 2026-03-10/11 | (lihat CHANGELOG) | Bubu |
+| 10 | 2026-03-11 | Update task v1.1.x: profil publik, vtuber detail, admin vtubers, /notifications | Sora |

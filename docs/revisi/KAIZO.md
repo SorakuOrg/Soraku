@@ -1,162 +1,151 @@
-## ⚡ Info dari Bubu — 2026-03-11 (App Router Cleanup)
-
-**Perubahan route yang berdampak ke API/DB:**
-
-| Route lama | Route baru | Dampak API |
-|------------|-----------|------------|
-| `/premium/donatur` | `/donate/leaderboard` | Pastikan `/api/donate` dan `/api/premium/donatur` tidak konflik |
-| `/agensi/vtuber` | `/vtubers` + `/vtubers/[slug]` | `/api/vtubers` sudah ada ✅ |
-| `/social` | Tidak ada | Tidak ada API-nya |
-| `/admin/*` | `/dash/admin/*` | `/api/admin/*` tidak berubah ✅ |
-| `/dashboard` | `/dash` | Tidak ada API-nya |
-
-**Tidak ada perubahan API routes** — semua `/api/*` tetap seperti semula.
-
----
-
 # KAIZO — Brief & Task List
 > From: Sora (Full Stack Lead)
-> Last updated: 2026-03-11
+> Last updated: 2026-03-11 (v1.0.1)
 
 ---
 
-## ✅ Sudah Selesai (rekap)
+## ✅ Sudah Selesai
 
-| Fitur | Status |
-|-------|--------|
-| Supabase schema 15 tabel + RLS | ✅ |
-| Auth middleware proxy.ts | ✅ |
-| /api/auth/* (login, register, me, signout, callback) | ✅ |
-| Semua GET API routes (blog, events, gallery, agensi, donatur, music) | ✅ |
-| Admin CRUD API routes | ✅ |
-| /api/premium/trakteer webhook | ✅ |
-| /api/notifications | ✅ |
-| Profile routing /dash/profile/me + /profile/[username] | ✅ |
-| packages/utils | ✅ |
+| Area | Status |
+|------|--------|
+| Schema DB soraku (15 tabel) + RLS | ✅ |
+| Auth callback, OAuth PKCE fix | ✅ |
+| Auto-trigger create soraku.users | ✅ |
+| API: blog, events, gallery, vtubers, donate | ✅ |
+| API: admin CRUD + moderasi | ✅ |
+| Fix semua bug auth (logout, bad_oauth_state) | ✅ |
+| Migration runner otomatis | ✅ |
 
 ---
 
-## 🔴 URGENT 1 — Bot Deploy Railway (belum jalan)
+## 🔴 Pending Kaizo — Segera
 
-Bot sudah siap dari Sora. Tinggal Kaizo set ENV dan deploy.
+### 1. Jalankan Migration `notifications`
 
-**Langkah:**
-1. Railway dashboard → service `soraku-bot` → Variables:
+File: `supabase/migrations/20260311_notifications.sql`
+
+Buka [Supabase SQL Editor](https://supabase.com/dashboard/project/jrgknsxqwuygcoocnnnb/sql) dan jalankan isinya.
+
+Tabel yang dibuat:
+```sql
+soraku.notifications (
+  id UUID PK,
+  userid UUID FK → soraku.users,
+  type TEXT,       -- 'info' | 'success' | 'warning' | 'system'
+  title TEXT,
+  body TEXT,
+  href TEXT,
+  isread BOOLEAN DEFAULT false,
+  createdat TIMESTAMPTZ DEFAULT now()
+)
+```
+RLS: user hanya bisa lihat/update notif sendiri. Insert/delete via service role.
+
+### 2. Enable Realtime di Supabase
+
+Buka: **Supabase → Database → Replication → Tables → Realtime**
+
+Enable untuk:
+- `soraku.notifications` — agar useNotifications hook bisa live update
+- `soraku.gallery` — agar admin gallery muncul kiriman baru tanpa refresh
+
+### 3. Fix `GET /api/gallery` — support filter `?status=`
+
+Saat ini admin gallery fetch `/api/gallery?status=pending` tapi API mungkin tidak handle parameter `status`.
+
+Cek dan fix di `app/api/gallery/route.ts`:
+```ts
+const status = searchParams.get('status') ?? 'approved'
+// jika status !== 'approved', cek session & isStaff dulu
+let query = adminDb().from('gallery').select('...')
+if (status !== 'all') query = query.eq('status', status)
+```
+
+### 4. API Admin VTubers — (untuk Bubu buat UI-nya)
+
+Buat route baru:
+```
+app/api/admin/vtubers/route.ts          ← GET list + POST create
+app/api/admin/vtubers/[id]/route.ts     ← GET by id + PATCH + DELETE
+```
+
+Field vtubers: `slug, name, charactername, avatarurl, coverurl, description, debutdate, tags, sociallinks, isactive, islive, liveurl, subscribercount, ispublished`
+
+### 5. Supabase Storage — Pastikan bucket `gallery` ada
+
+Buka: **Supabase → Storage**
+
+Jika bucket `gallery` belum ada:
+1. New Bucket → nama: `gallery`
+2. Public bucket: ✅ (agar imageurl bisa diakses publik)
+3. File size limit: 5MB (sesuai validasi di API)
+
+---
+
+## 📌 Konvensi Schema DB (wajib diingat)
+
+| ✅ Benar | ❌ Salah |
+|---------|---------|
+| `displayname` | `display_name` |
+| `avatarurl` | `avatar_url` |
+| `coverurl` | `cover_url` |
+| `ispublished` | `is_published` |
+| `isread` | `is_read` / `read` |
+| `createdat` | `created_at` |
+| `updatedat` | `updated_at` |
+| `startdate` | `start_date` / `starts_at` |
+
+---
+
+## Pattern API Wajib
+
+```ts
+export const dynamic = 'force-dynamic'
+
+// ✅ Selalu maybeSingle() bukan single()
+const { data } = await adminDb().from('table').select('*').eq('id', id).maybeSingle()
+
+// ✅ Error response yang konsisten
+import { ok, err, UNAUTHORIZED, FORBIDDEN, NOT_FOUND, SERVER_ERROR } from '@/lib/api'
+
+// ✅ Auth check
+const session = await getSession()
+if (!session) return UNAUTHORIZED
+if (!isStaff(session.role)) return FORBIDDEN
+
+// ✅ Zod validasi
+const parsed = Schema.safeParse(body)
+if (!parsed.success) return err(parsed.error.issues[0]?.message ?? 'Input tidak valid')
+```
+
+---
+
+## Bot — Railway Deploy
+
+ENV yang wajib ada di Railway:
+
 ```env
-DISCORD_TOKEN=           # dari Discord Developer Portal
-DISCORD_GUILD_ID=        # ID server Soraku
-DISCORD_EVENT_CHANNEL_ID=# ID channel #event-soraku
+DISCORD_TOKEN=
+DISCORD_GUILD_ID=
+DISCORD_EVENT_CHANNEL_ID=
 SORAKU_API_URL=https://soraku.vercel.app
-SORAKU_API_SECRET=       # random string — SAMA dengan di Vercel
-WEBHOOK_SECRET=          # random string — SAMA dengan BOT_WEBHOOK_SECRET di Vercel
+SORAKU_API_SECRET=          ← sama dengan SORAKU_API_SECRET di Vercel
+WEBHOOK_SECRET=             ← sama dengan BOT_WEBHOOK_SECRET di Vercel
 PORT=3001
 ```
 
-2. Vercel dashboard → Environment Variables:
+ENV yang wajib ada di Vercel (untuk komunikasi web → bot):
 ```env
-BOT_WEBHOOK_URL=https://[nama-project].up.railway.app
-BOT_WEBHOOK_SECRET=      # sama dengan WEBHOOK_SECRET Railway
-SORAKU_API_SECRET=       # sama dengan di Railway
+BOT_WEBHOOK_URL=https://<project>.up.railway.app
+BOT_WEBHOOK_SECRET=         ← sama dengan WEBHOOK_SECRET di Railway
+SORAKU_API_SECRET=          ← sama dengan SORAKU_API_SECRET di Railway
 ```
-
-3. Deploy → cek: `GET https://[project].up.railway.app/health` → `{ status: "ok" }`
 
 ---
 
-## 🔴 URGENT 2 — Discord ID Riu → role OWNER
+## Log Revisi
 
-```
-Discord ID Riu: 1020644780075659356
-```
-
-Di `/api/auth/callback` saat user pertama kali OAuth Discord, cek apakah `discord_id === '1020644780075659356'` → set `role = 'OWNER'` di tabel users.
-
----
-
-## 🔜 Task Selanjutnya
-
-### 1. Tabel `partnerships` di Supabase
-
-`/api/partnerships` sudah ada tapi tabel belum dibuat. Dipakai halaman `/about`.
-
-```sql
-CREATE TABLE soraku.partnerships (
-  id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  name       TEXT NOT NULL,
-  logourl    TEXT NOT NULL,
-  website    TEXT,
-  category   TEXT DEFAULT 'partner',
-  isactive   BOOLEAN DEFAULT true,
-  sortorder  INT DEFAULT 0,
-  createdat  TIMESTAMPTZ DEFAULT now()
-);
-```
-
-Isi data lewat Supabase dashboard langsung.
-
-### 2. Awareness Route Baru (tidak perlu koding, hanya info)
-
-Sora + Riu sudah migrasikan route architecture. Kaizo perlu tahu kalau ada API baru:
-
-| API Baru | Keterangan |
-|----------|-----------|
-| `GET /api/vtubers` | List VTuber — filter tag, pagination |
-| `GET /api/vtubers/[slug]` | Detail VTuber by slug |
-| `GET /api/donate` | Donatur publik — filter `period=all\|month` |
-
-Kalau ada query ke endpoint lama `/api/premium/donatur` atau `/api/agensi/vtuber` dari bot atau external service — update ke endpoint baru di atas.
-
----
-
-## 📌 Route Namespace (WAJIB — dari docs/routes/NAMESPACE.md)
-
-> Ditetapkan Riu. API baru wajib ikut struktur ini.
-
-| Jenis | Namespace |
-|-------|-----------|
-| API public | `/api/blog`, `/api/events`, `/api/vtubers`, `/api/donate`, dll |
-| API auth | `/api/auth/*` |
-| API admin | `/api/admin/*` |
-| API bot | `/api/bot/*` |
-
-**JANGAN buat endpoint di luar `/api/`.**
-
----
-
-## 📌 Rules Coding (tetap sama)
-
-```ts
-export const dynamic = 'force-dynamic'  // baris pertama setiap route.ts baru
-```
-
-- Response shape: `{ data, error, meta?: { total, page, limit } }`
-- Gunakan `ok()` / `err()` dari `@/lib/api`
-- `adminDb()` untuk queries — sudah include `.schema('soraku')`
-
-
-
----
-
-## ⚠ LAPORAN BUG — 2026-03-11 (dari Bubu)
-
-### ACTION REQUIRED: Cek ENV di Vercel Dashboard
-
-Kemungkinan besar profile gagal load karena `SUPABASE_SERVICE_ROLE_KEY` tidak ada di Vercel.
-
-**Vercel Dashboard → soraku → Settings → Environment Variables:**
-
-Pastikan semua ini ada:
-```
-NEXT_PUBLIC_SUPABASE_URL         = https://jrgknsxqwuygcoocnnnb.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY    = eyJ... (anon key dari Supabase)
-SUPABASE_SERVICE_ROLE_KEY        = eyJ... (service_role key dari Supabase)   ← CEK INI
-NEXT_PUBLIC_SITE_URL             = https://soraku.vercel.app
-```
-
-`SUPABASE_SERVICE_ROLE_KEY` dipakai oleh semua endpoint server-side.
-Jika ini tidak ada, semua API yang pakai adminDb() akan gagal dengan silent error.
-
-**Cara dapat service_role key:**
-Supabase Dashboard → Project Settings → API → "service_role" (jangan share ke publik!)
-
-Setelah tambah ENV → Redeploy di Vercel agar perubahan berlaku.
+| # | Tanggal | Revisi | Oleh |
+|---|---------|--------|------|
+| 1–10 | 2026-03-10/11 | (lihat CHANGELOG) | Kaizo |
+| 11 | 2026-03-11 | Update task v1.1.x: migration notifs, Realtime, gallery API fix, admin vtubers | Sora |

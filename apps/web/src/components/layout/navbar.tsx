@@ -100,7 +100,7 @@ function NotificationBell({ enabled }: { enabled: boolean }) {
   useClickOutside(ref, () => setOpen(false));
 
   const handleClick = (n: Notification) => {
-    if (!n.read) markRead([n.id]);
+    if (!n.isread) markRead([n.id]);
     setOpen(false);
   };
 
@@ -156,15 +156,15 @@ function NotificationBell({ enabled }: { enabled: boolean }) {
                   <button key={n.id} onClick={() => handleClick(n)}
                     className={cn(
                       "w-full flex gap-3 px-4 py-3 text-left transition-colors hover:bg-primary/5",
-                      !n.read && "bg-primary/3"
+                      !n.isread && "bg-primary/3"
                     )}>
                     <span className="flex-shrink-0 text-lg leading-none mt-0.5">{cfg?.emoji ?? "🔔"}</span>
                     <div className="min-w-0 flex-1">
-                      <p className={cn("truncate text-sm", !n.read ? "font-semibold text-foreground" : "text-foreground/80")}>{n.title}</p>
+                      <p className={cn("truncate text-sm", !n.isread ? "font-semibold text-foreground" : "text-foreground/80")}>{n.title}</p>
                       <p className="mt-0.5 truncate text-xs text-muted-foreground/60">{n.body}</p>
-                      <p className="mt-1 text-[10px] text-muted-foreground/40">{timeAgo(n.created_at)}</p>
+                      <p className="mt-1 text-[10px] text-muted-foreground/40">{timeAgo(n.createdat)}</p>
                     </div>
-                    {!n.read && <span className="flex-shrink-0 mt-1.5 h-1.5 w-1.5 rounded-full bg-primary" />}
+                    {!n.isread && <span className="flex-shrink-0 mt-1.5 h-1.5 w-1.5 rounded-full bg-primary" />}
                   </button>
                 );
               })

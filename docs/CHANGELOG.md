@@ -4,6 +4,55 @@
 
 ---
 
+## [v1.0.1] — 2026-03-11 · Sora
+
+> Versi ini menggabungkan semua perbaikan post-v1.0 (termasuk yang sebelumnya dicatat sebagai 1.0.2+) menjadi satu rilis stabil.
+
+### API — Admin Blog & Event
+
+- **`GET /api/admin/blog`** — list semua post termasuk draft (sebelumnya hanya `POST`)
+- **`GET /api/admin/blog/[id]`** — ambil satu post by ID untuk prefill form edit
+- **`GET /api/admin/events`** — list semua event termasuk draft
+- **`GET /api/admin/events/[id]`** — ambil satu event by ID untuk prefill form edit
+- Fix `PATCH /api/admin/blog/[id]` — gunakan `.maybeSingle()`, handle `coverurl: ''` → null, update `updatedat`
+- Fix `PATCH /api/admin/events/[id]` — idem + update `updatedat`
+
+### Halaman Admin — Form Edit
+
+- **`/dash/admin/blog/[id]/edit`** — form edit artikel: prefill dari DB, simpan Draft / Publish, warning slug change, indikator live status
+- **`/dash/admin/events/[id]/edit`** — form edit event: prefill dari DB, idem
+- **`/dash/admin/blog`** — sekarang fetch dari `/api/admin/blog` (tampilkan draft); tombol ✏️ Edit ditambahkan
+- **`/dash/admin/events`** — sekarang fetch dari `/api/admin/events`; tombol ✏️ Edit ditambahkan
+
+### Supabase Realtime
+
+- **`/dash/admin/gallery`** — Realtime live update saat ada upload baru; indikator ⚡ Live / Static
+- **`useNotifications`** — upgrade dari polling 30s ke Supabase Realtime dengan fallback polling 60s; safety timeout 5s jika koneksi gagal
+
+### Notifikasi
+
+- **`soraku.notifications`** — migration tabel baru dengan RLS (user hanya lihat/update notif sendiri)
+- **`GET /api/notifications`** — list notif user
+- **`PATCH /api/notifications`** — mark read (by ids atau all)
+- Fix field names: `read` → `isread`, `created_at` → `createdat` (konsisten dengan konvensi soraku)
+
+### Cleanup & Security
+
+- Hapus **`/api/debug-profile`** — endpoint diagnostik sementara, tidak boleh ada di production
+- Fix `lib/notifications.ts` — type `Notification` sesuai DB schema (`isread`, `createdat`)
+- Fix `navbar.tsx` — field references sesuai type baru
+
+### Docs & ENV
+
+- **`apps/web/.env.local.example`** — lengkap 14 ENV vars, checklist, instruksi Supabase + Discord OAuth
+- **`services/bot/.env.example`** — lengkap dengan instruksi Railway deploy
+- **`docs/revisi/RIU.md`** — brief Riu: ide, saran stabilitas, roadmap berikutnya
+- **`docs/revisi/SORA.md`** — update status semua task selesai
+- **`docs/revisi/BUBU.md`** — task berikutnya: `/profile/[username]`, UI polish VTuber detail, vtubers admin CRUD
+- **`docs/revisi/KAIZO.md`** — task berikutnya: jalankan migration notifications, enable Realtime di Supabase, fix gallery API filter status
+
+---
+
 ## [v1.0.3-cleanup] — 2026-03-11 · Bubu
 
 ### App Router Cleanup — Hapus Route Deprecated
