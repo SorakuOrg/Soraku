@@ -133,3 +133,30 @@ export const dynamic = 'force-dynamic'  // baris pertama setiap route.ts baru
 - Gunakan `ok()` / `err()` dari `@/lib/api`
 - `adminDb()` untuk queries — sudah include `.schema('soraku')`
 
+
+
+---
+
+## ⚠ LAPORAN BUG — 2026-03-11 (dari Bubu)
+
+### ACTION REQUIRED: Cek ENV di Vercel Dashboard
+
+Kemungkinan besar profile gagal load karena `SUPABASE_SERVICE_ROLE_KEY` tidak ada di Vercel.
+
+**Vercel Dashboard → soraku → Settings → Environment Variables:**
+
+Pastikan semua ini ada:
+```
+NEXT_PUBLIC_SUPABASE_URL         = https://jrgknsxqwuygcoocnnnb.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY    = eyJ... (anon key dari Supabase)
+SUPABASE_SERVICE_ROLE_KEY        = eyJ... (service_role key dari Supabase)   ← CEK INI
+NEXT_PUBLIC_SITE_URL             = https://soraku.vercel.app
+```
+
+`SUPABASE_SERVICE_ROLE_KEY` dipakai oleh semua endpoint server-side.
+Jika ini tidak ada, semua API yang pakai adminDb() akan gagal dengan silent error.
+
+**Cara dapat service_role key:**
+Supabase Dashboard → Project Settings → API → "service_role" (jangan share ke publik!)
+
+Setelah tambah ENV → Redeploy di Vercel agar perubahan berlaku.

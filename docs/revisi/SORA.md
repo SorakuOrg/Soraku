@@ -261,3 +261,46 @@ apps/web/src/
 | 8 | 2026-03-11 | Instruksi Discord ID OWNER ke Kaizo | Bubu |
 | 9 | 2026-03-11 | Discord + Google OAuth routes baru  | Bubu |
 | 10 | 2026-03-11 | Profile page redesign minimalis     | Bubu |
+
+
+---
+
+## ⚠ LAPORAN BUG — 2026-03-11 (dari Bubu)
+
+### Bug 1: `bad_oauth_state` saat login Discord/Google ❌ → ✅ FIXED (code)
+
+**Root cause:**
+OAuth routes (`/api/auth/discord`, `/api/auth/google`) menggunakan pola cookie yang salah.
+`signInWithOAuth()` set PKCE `code_verifier` via `cookies()` dari `next/headers`,
+tapi `NextResponse.redirect()` yang dikembalikan adalah object response baru yang
+**tidak mewarisi cookie dari cookieStore**. Browser tidak menerima cookie → callback
+tidak bisa verifikasi state → Supabase throw `bad_oauth_state`.
+
+**Fix (Bubu, commit `fe36207`):**
+Semua 3 route (`discord`, `google`, `callback`) sekarang buat response object dulu,
+lalu `createServerClient` tulis PKCE cookies **langsung ke response.cookies**, bukan via
+`cookies()` next/headers. Sudah di-push dan deploy.
+
+**Yang masih perlu dikonfirmasi Sora (Supabase Dashboard):**
+1. **Site URL** → Supabase Dashboard → Authentication → URL Configuration
+   - Pastikan: `https://soraku.vercel.app` (BUKAN `http://localhost:3000`)
+2. **Redirect URLs** → Tambahkan jika belum ada:
+   ```
+   https://soraku.vercel.app/**
+   https://soraku.vercel.app/api/auth/callback
+   ```
+   Tanpa ini, Supabase menolak semua callback dari production domain.
+
+---
+
+### Bug 2: Profile "Gagal memuat profil" — root cause ENV ❌ → ⚠ PARTIAL FIX
+
+Kemungkinan `SUPABASE_SERVICE_ROLE_KEY` belum di-set di Vercel ENV.
+
+**Cek Vercel ENV:**
+- `NEXT_PUBLIC_SUPABASE_URL` ✓ (pasti ada, anon auth jalan)
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY` ✓
+- `SUPABASE_SERVICE_ROLE_KEY` ← **Cek ini di Vercel Dashboard**
+
+Tanpa `SUPABASE_SERVICE_ROLE_KEY`, semua query server-side yang pakai `adminDb()` gagal diam-diam.
+Ini dipakai oleh: `/api/profile`, `/api/auth/callback`, `/api/auth/me`, semua admin routes.
