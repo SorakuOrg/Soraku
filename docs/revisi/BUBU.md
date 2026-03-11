@@ -426,3 +426,42 @@ const user = MOCK_USER
 - [ ] `NotificationBell` terima prop `enabled: boolean` dari Navbar parent
 - [ ] Test: buka `/login` saat tidak login → tombol Masuk harus muncul di navbar
 - [ ] Test: setelah login → user dropdown muncul, nama real tampil
+
+---
+
+## 🟠 Tambahan — Klik Profile saat Belum Login → Redirect ke /login
+
+> Saat ini navbar selalu tampil "Anon Weebs" dengan user dropdown,
+> karena `IS_LOGGED_IN = true` hardcoded (sudah dicatat di revisi di atas).
+> Setelah Bubu fix IS_LOGGED_IN, pastikan behavior ini juga benar:
+
+**Yang diinginkan Riu:**
+- Jika user **belum login** → di area navbar kanan tampilkan tombol **"Masuk"** dan **"Daftar"**
+- Jika user **belum login** dan klik avatar/tombol profile → redirect ke `/login`
+- Jika user **sudah login** → tampil user dropdown seperti sekarang (nama, role, menu)
+
+**Cara implementasi (sudah dalam satu fix IS_LOGGED_IN):**
+
+```tsx
+// Bagian kanan navbar — kondisikan berdasarkan IS_LOGGED_IN
+{IS_LOGGED_IN && user ? (
+  // User sudah login → tampil NotificationBell + UserDropdown
+  <>
+    <NotificationBell enabled={true} />
+    <UserDropdown user={user} />
+  </>
+) : (
+  // Belum login → tombol Masuk & Daftar
+  <div className="flex items-center gap-2">
+    <Link href="/login">
+      <button className="...">Masuk</button>
+    </Link>
+    <Link href="/register">
+      <button className="...">Daftar</button>
+    </Link>
+  </div>
+)}
+```
+
+**Tidak perlu API baru** — cukup pakai hasil fetch `/api/auth/me` dari fix IS_LOGGED_IN di atas.
+Ini 1 paket dengan fix IS_LOGGED_IN, bukan task terpisah.
