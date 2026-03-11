@@ -415,7 +415,7 @@ Format Trakteer webhook: cek di https://trakteer.id/dashboard/webhook
 | # | Bug | Fix |
 |---|-----|-----|
 | 6 | `Parameters<CookieMethodsServer['setAll']>` error | Method optional — pakai `type CookieOptions` dari `@supabase/ssr` |
-| 7 | `middleware.ts` deprecated Next.js 16 | Rename ke `proxy.ts`, hapus `middleware.ts` |
+| 7 | `middleware.ts` deprecated Next.js 16 | Rename ke `proxy.ts`, hapus `middleware.ts`. Export function WAJIB bernama `proxy` (bukan `middleware`) |
 | 8 | Trakteer webhook: `z.record(z.string())` | Zod v3 perlu 2 arg: `z.record(z.string(), z.string())` |
 
 ## Progress Kaizo (2026-03-11)
