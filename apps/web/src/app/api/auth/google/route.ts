@@ -7,7 +7,7 @@ export async function GET(req: NextRequest) {
   const { origin, searchParams } = new URL(req.url)
   const next = searchParams.get('next') ?? '/dash/profile/me'
 
-  const response = NextResponse.redirect(new URL('/login?error=google_oauth_failed', origin))
+  const pendingCookies: { name: string; value: string; options: CookieOptions }[] = []
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -16,10 +16,7 @@ export async function GET(req: NextRequest) {
       cookies: {
         getAll: () => req.cookies.getAll(),
         setAll: (cookiesToSet: { name: string; value: string; options: CookieOptions }[]) => {
-          cookiesToSet.forEach(({ name, value }) => req.cookies.set(name, value))
-          cookiesToSet.forEach(({ name, value, options }) =>
-            response.cookies.set(name, value, options)
-          )
+          pendingCookies.push(...cookiesToSet)
         },
       },
     }
@@ -29,14 +26,23 @@ export async function GET(req: NextRequest) {
     provider: 'google',
     options: {
       redirectTo: `${origin}/api/auth/callback?next=${encodeURIComponent(next)}`,
+      scopes: 'openid email profile',
     },
   })
 
   if (error || !data.url) {
-    console.error('[auth/google] OAuth error:', error?.message)
-    return response
+    console.error('[auth/google] OAuth init error:', error?.message)
+    return NextResponse.redirect(new URL('/login?error=google_oauth_failed', origin))
   }
 
-  response.headers.set('Location', data.url)
+  const response = NextResponse.redirect(data.url)
+  pendingCookies.forEach(({ name, value, options }) =>
+    response.cookies.set(name, value, {
+      ...options,
+      sameSite: 'lax',
+      secure: true,
+    })
+  )
+
   return response
 }

@@ -30,6 +30,42 @@ Mengikuti `docs/routes/ROUTES.md` dan `docs/routes/NAMESPACE.md` dari Sora.
 ---
 
 
+## [Hotfix] — 2026-03-11 · Kaizo
+
+### Fix #1 — OAuth `bad_oauth_state`
+
+Root cause: PKCE cookie ditulis ke response dengan URL salah (redirect ke
+`/login?error=...`) sebelum Location di-override ke Discord URL.
+Browser menerima redirect yang ambigu → cookie PKCE tidak tersimpan dengan
+benar → state expired saat callback dipanggil kedua kali.
+
+Fix: pattern `pendingCookies[]` — kumpulkan cookies PKCE dulu, baru buat
+`NextResponse.redirect(data.url)` dan attach cookies ke response itu.
+Berlaku untuk: `/api/auth/discord` dan `/api/auth/google`.
+
+Catatan: `bad_oauth_state` juga muncul saat user reload tab callback atau
+double-click tombol login. Itu behavior normal Supabase PKCE (state 10 menit).
+
+### Fix #2 — `/api/profile GET` 500 → fallback ke session data
+
+Root cause: adminDb() query gagal (kemungkinan `SUPABASE_SERVICE_ROLE_KEY`
+tidak dikonfigurasi di Vercel) → return SERVER_ERROR → UI tampilkan error.
+
+Fix: Jika DB query error, kembalikan data dari session (auth.users metadata)
+alih-alih 500. UI tetap bisa render. Flag `_fallback: true` ditambahkan agar
+Sora bisa debug via Vercel logs.
+
+ACTION REQUIRED untuk Sora/Riu:
+→ Pastikan `SUPABASE_SERVICE_ROLE_KEY` ada di Vercel Dashboard → Settings → Env Variables
+
+### Fix #3 — Riu hilang dari soraku.users
+
+Migrasi terbaru Sora (20260311_soraku_schema.sql) di-apply ke DB dan
+sepertinya me-reset data. Re-insert Riu via Supabase SQL:
+- username=riu, displayname=riu.me, avatarurl=Discord CDN, role=OWNER ✅
+
+---
+
 ## [v1.0.3] — 2026-03-11 · Kaizo
 
 ### Fix: /dash/profile/me gagal load (root cause 3 lapis)
@@ -121,6 +157,42 @@ Mengikuti `docs/routes/ROUTES.md` dan `docs/routes/NAMESPACE.md` dari Sora.
   - Index: `(isactive, sortorder)` untuk query cepat
 - `/api/partnerships` sudah siap konsumsi tabel ini (tidak perlu ubah kode)
 - Admin bisa tambah partnership via Supabase Dashboard atau admin panel
+
+---
+
+## [Hotfix] — 2026-03-11 · Kaizo
+
+### Fix #1 — OAuth `bad_oauth_state`
+
+Root cause: PKCE cookie ditulis ke response dengan URL salah (redirect ke
+`/login?error=...`) sebelum Location di-override ke Discord URL.
+Browser menerima redirect yang ambigu → cookie PKCE tidak tersimpan dengan
+benar → state expired saat callback dipanggil kedua kali.
+
+Fix: pattern `pendingCookies[]` — kumpulkan cookies PKCE dulu, baru buat
+`NextResponse.redirect(data.url)` dan attach cookies ke response itu.
+Berlaku untuk: `/api/auth/discord` dan `/api/auth/google`.
+
+Catatan: `bad_oauth_state` juga muncul saat user reload tab callback atau
+double-click tombol login. Itu behavior normal Supabase PKCE (state 10 menit).
+
+### Fix #2 — `/api/profile GET` 500 → fallback ke session data
+
+Root cause: adminDb() query gagal (kemungkinan `SUPABASE_SERVICE_ROLE_KEY`
+tidak dikonfigurasi di Vercel) → return SERVER_ERROR → UI tampilkan error.
+
+Fix: Jika DB query error, kembalikan data dari session (auth.users metadata)
+alih-alih 500. UI tetap bisa render. Flag `_fallback: true` ditambahkan agar
+Sora bisa debug via Vercel logs.
+
+ACTION REQUIRED untuk Sora/Riu:
+→ Pastikan `SUPABASE_SERVICE_ROLE_KEY` ada di Vercel Dashboard → Settings → Env Variables
+
+### Fix #3 — Riu hilang dari soraku.users
+
+Migrasi terbaru Sora (20260311_soraku_schema.sql) di-apply ke DB dan
+sepertinya me-reset data. Re-insert Riu via Supabase SQL:
+- username=riu, displayname=riu.me, avatarurl=Discord CDN, role=OWNER ✅
 
 ---
 

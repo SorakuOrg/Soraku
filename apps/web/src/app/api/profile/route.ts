@@ -41,8 +41,23 @@ export async function GET() {
       .maybeSingle()
 
     if (error) {
-      console.error('[api/profile GET] DB error:', error.message)
-      return SERVER_ERROR
+      console.error('[api/profile GET] DB error:', error.message, '| code:', error.code)
+      // Fallback: kembalikan data dari session agar UI tidak blank
+      // (biasanya terjadi saat SUPABASE_SERVICE_ROLE_KEY tidak terkonfigurasi di Vercel)
+      return ok({
+        id:            session.id,
+        username:      session.username,
+        displayname:   session.displayname,
+        avatarurl:     session.avatarurl,
+        coverurl:      null,
+        bio:           null,
+        role:          session.role,
+        supporterrole: session.supporterrole ?? null,
+        sociallinks:   {},
+        isprivate:     false,
+        createdat:     new Date().toISOString(),
+        _fallback:     true, // flag: data dari session, bukan DB
+      })
     }
 
     // Row belum ada → auto-upsert dengan data dari OAuth session
