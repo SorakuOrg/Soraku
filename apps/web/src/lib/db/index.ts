@@ -1,22 +1,24 @@
 /**
- * lib/db/index.ts — Drizzle ORM client
- * ENV via @/env (T3 Env — type-safe, validated).
+ * lib/db/index.ts — Drizzle ORM client (standby)
+ * Saat ini platform menggunakan Supabase JS client (adminDb/createClient).
+ * Drizzle disiapkan untuk query kompleks di masa mendatang.
  *
- * DATABASE_URL opsional saat build; error jelas saat runtime jika tidak diset.
+ * Untuk aktifkan: tambahkan DATABASE_URL ke env.ts + set di Vercel.
+ * Format: postgresql://postgres.[ref]:[password]@aws-1-ap-southeast-2.pooler.supabase.com:6543/postgres
  */
 import { drizzle } from 'drizzle-orm/postgres-js'
 import postgres from 'postgres'
 import * as schema from './schema'
-import { env } from '@/env'
 
-if (!env.DATABASE_URL) {
-  throw new Error(
-    '[db] DATABASE_URL tidak diset. ' +
-    'Tambahkan di Vercel → Settings → Environment Variables.\n' +
-    'Format: postgresql://postgres.[ref]:[password]@aws-0-[region].pooler.supabase.com:6543/postgres'
-  )
+const url = process.env.DATABASE_URL
+
+if (!url) {
+  // Drizzle belum aktif — tidak crash, hanya warn
+  console.warn('[db] DATABASE_URL tidak diset — Drizzle standby, platform pakai Supabase client')
 }
 
-const client = postgres(env.DATABASE_URL, { prepare: false })
+// Lazy init — hanya connect jika DATABASE_URL ada
+const client = url ? postgres(url, { prepare: false }) : null
 
-export const db = drizzle(client, { schema })
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const db = client ? drizzle(client, { schema }) : null as any

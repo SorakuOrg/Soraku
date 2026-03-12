@@ -4,10 +4,14 @@
  *
  * Import: import { env } from '@/env'
  *
- * ▸ Server vars : DATABASE_URL, SUPABASE_SERVICE_ROLE_KEY, XENDIT_SECRET_KEY,
+ * ▸ Server vars : SUPABASE_SERVICE_ROLE_KEY, XENDIT_SECRET_KEY,
  *                 TRAKTEER_WEBHOOK_SECRET  (+ extras: bot, discord)
  * ▸ Client vars : NEXT_PUBLIC_SITE_URL, NEXT_PUBLIC_SUPABASE_URL,
  *                 NEXT_PUBLIC_SUPABASE_ANON_KEY  (+ extras: app url, discord)
+ *
+ * NOTE: DATABASE_URL tidak dipakai — platform menggunakan Supabase JS client
+ * (adminDb / createClient) bukan Drizzle secara aktif. Tambahkan kembali
+ * DATABASE_URL ke sini jika Drizzle diaktifkan di masa mendatang.
  *
  * @see https://env.t3.gg/docs/nextjs
  */
@@ -18,10 +22,6 @@ import { z } from 'zod'
 export const env = createEnv({
   // ─── SERVER — never exposed to browser ──────────────────────────────────────
   server: {
-    // Drizzle ORM — PostgreSQL connection string (Supabase Transaction Pooler)
-    // Opsional saat build; wajib ada saat runtime jika Drizzle digunakan
-    DATABASE_URL: z.string().url().optional(),
-
     // Supabase service role key — bypass RLS, server-only
     SUPABASE_SERVICE_ROLE_KEY: z.string().min(1),
 
@@ -34,7 +34,6 @@ export const env = createEnv({
 
     // Bot + internal
     SORAKU_API_SECRET:    z.string().min(1).optional(),
-    // BOT_WEBHOOK_URL bisa kosong di Vercel saat bot belum deploy — toleransi string kosong
     BOT_WEBHOOK_URL:      z.string().url().optional(),
     BOT_WEBHOOK_SECRET:   z.string().min(1).optional(),
     OWNER_DISCORD_IDS:    z.string().optional(),
@@ -55,7 +54,6 @@ export const env = createEnv({
 
   // ─── Runtime mapping ─────────────────────────────────────────────────────────
   runtimeEnv: {
-    DATABASE_URL:               process.env.DATABASE_URL,
     SUPABASE_SERVICE_ROLE_KEY:  process.env.SUPABASE_SERVICE_ROLE_KEY,
     XENDIT_SECRET_KEY:          process.env.XENDIT_SECRET_KEY,
     XENDIT_WEBHOOK_TOKEN:       process.env.XENDIT_WEBHOOK_TOKEN,
@@ -74,9 +72,6 @@ export const env = createEnv({
     NEXT_PUBLIC_DISCORD_INVITE:    process.env.NEXT_PUBLIC_DISCORD_INVITE,
   },
 
-  // Skip validasi jika SKIP_ENV_VALIDATION=true (local dev tanpa semua ENV)
-  skipValidation: !!process.env.SKIP_ENV_VALIDATION,
-
-  // String kosong ('') dianggap undefined — penting untuk BOT_WEBHOOK_URL
+  skipValidation:        !!process.env.SKIP_ENV_VALIDATION,
   emptyStringAsUndefined: true,
 })
