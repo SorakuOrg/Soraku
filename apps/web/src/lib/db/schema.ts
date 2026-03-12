@@ -2,7 +2,8 @@
 // Semua kolom lowercase tanpa underscore (sesuai konvensi DB soraku)
 // Tambah tabel di sini sesuai kebutuhan
 
-import { pgSchema, uuid, text, boolean, timestamp, jsonb, integer, sql } from 'drizzle-orm/pg-core'
+import { pgSchema, uuid, text, boolean, timestamp, jsonb, integer } from 'drizzle-orm/pg-core'
+import { sql } from 'drizzle-orm'
 
 export const soraku = pgSchema('soraku')
 
