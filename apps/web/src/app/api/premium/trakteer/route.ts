@@ -1,11 +1,12 @@
 import { adminDb } from '@/lib/supabase/admin'
 import { NextRequest, NextResponse } from 'next/server'
+import { env } from '@/env'
 
 export const dynamic = 'force-dynamic'
 
 // ─── Trakteer Webhook Format ────────────────────────────────────────────────
 // Docs: https://trakteer.id/dashboard/webhook
-// Header: trakteer-signature (HMAC-SHA256 dari body + TRAKTEER_WEBHOOK_TOKEN)
+// Header: trakteer-token (secret dari Trakteer Dashboard → Settings → Webhook)
 // Body: { creator_id, supporter_name, supporter_email, amount, quantity,
 //         unit_name, message, supporter_discord_id?, order_id, order_status }
 
@@ -24,9 +25,9 @@ function resolveTier(amount: number): 'DONATUR' | 'VIP' | 'VVIP' {
 // POST /api/premium/trakteer
 export async function POST(req: NextRequest) {
   try {
-    // Verifikasi header Trakteer
+    // Verifikasi header Trakteer menggunakan TRAKTEER_WEBHOOK_SECRET
     const token = req.headers.get('trakteer-token') ?? req.headers.get('x-trakteer-token')
-    if (token !== process.env.TRAKTEER_WEBHOOK_TOKEN) {
+    if (!env.TRAKTEER_WEBHOOK_SECRET || token !== env.TRAKTEER_WEBHOOK_SECRET) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 

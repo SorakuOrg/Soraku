@@ -1,5 +1,6 @@
 import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { NextRequest, NextResponse } from 'next/server'
+import { env } from '@/env'
 
 export const dynamic = 'force-dynamic'
 
@@ -11,8 +12,8 @@ export async function GET(req: NextRequest) {
   const pendingCookies: { name: string; value: string; options: CookieOptions }[] = []
 
   const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    env.NEXT_PUBLIC_SUPABASE_URL,
+    env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
     {
       cookies: {
         getAll: () => req.cookies.getAll(),

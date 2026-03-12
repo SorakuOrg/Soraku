@@ -223,3 +223,23 @@ Cek hasil `key_is_jwt` dan `db_update`:
 **WAJIB cek:** Di Vercel → Settings → Environment Variables:
 - `SUPABASE_SERVICE_ROLE_KEY` harus JWT yang diawali `eyJ`, ambil dari:
   Supabase Dashboard → Project Settings → API → **service_role** (bukan connection string!)
+
+---
+
+## Update — 2026-03-12 (dari Sora)
+
+### ✅ Selesai — T3 Env System (v1.1.0)
+
+`apps/web/src/env.ts` sudah dibuat sesuai spec:
+- `DATABASE_URL` — wajib, untuk Drizzle ORM
+- `SUPABASE_SERVICE_ROLE_KEY` — wajib
+- `XENDIT_SECRET_KEY` — opsional
+- `TRAKTEER_WEBHOOK_SECRET` — opsional (**renamed dari `TRAKTEER_WEBHOOK_TOKEN`**)
+- Client vars: `NEXT_PUBLIC_SITE_URL`, `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+
+### ⚠️ Action Required oleh Kaizo:
+
+1. **Jalankan `npm install` di `apps/web/`** — zod downgrade ke `^3.23.8` perlu di-apply
+2. **Set `DATABASE_URL` di Vercel** — ambil dari Supabase → Project Settings → Database → Transaction Pooler URI (port 6543)
+3. **Rename `TRAKTEER_WEBHOOK_TOKEN` → `TRAKTEER_WEBHOOK_SECRET`** di Vercel ENV dan di Trakteer Dashboard
+4. **Pastikan `dotenv` terinstall** di `apps/web/` untuk `drizzle-kit` CLI

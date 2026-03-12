@@ -1,3 +1,4 @@
+import { env } from '@/env'
 import { adminDb, createAdminClient } from '@/lib/supabase/admin'
 import { getSession } from '@/lib/auth'
 import { ok, err, UNAUTHORIZED, SERVER_ERROR } from '@/lib/api'
@@ -34,7 +35,7 @@ export async function POST(req: NextRequest) {
 
     if (storageErr) return err(storageErr.message)
 
-    const imageurl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/gallery/${filename}`
+    const imageurl = `${env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/gallery/${filename}`
 
     const { data, error } = await adminDb()
       .from('gallery')

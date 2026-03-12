@@ -607,3 +607,46 @@ sepertinya me-reset data. Re-insert Riu via Supabase SQL:
 - `/dash/*` → redirect `/login` jika belum login
 - `/dash/admin/*` → cek role OWNER/MANAGER/ADMIN
 - `/login` atau `/register` + sudah login → redirect `/dash/profile/me`
+
+## [1.1.0] — 2026-03-12
+
+### ♻️ Refactor — Environment Configuration System
+
+**File baru/diubah:**
+- `apps/web/src/env.ts` — File canonical T3 Env (sesuai spec prompt)
+  - `DATABASE_URL` (server, required — Drizzle ORM)
+  - `SUPABASE_SERVICE_ROLE_KEY` (server, required)
+  - `XENDIT_SECRET_KEY` (server, optional)
+  - `TRAKTEER_WEBHOOK_SECRET` (server, optional — rename dari `TRAKTEER_WEBHOOK_TOKEN`)
+  - `NEXT_PUBLIC_SITE_URL` (client, required)
+  - `NEXT_PUBLIC_SUPABASE_URL` (client, required)
+  - `NEXT_PUBLIC_SUPABASE_ANON_KEY` (client, required)
+- `apps/web/src/env/index.ts` — Backward compat re-export dari `src/env.ts`
+- `apps/web/.env.example` — Update lengkap termasuk `DATABASE_URL`
+
+**Update dependencies:**
+- `zod` downgraded ke `^3.23.8` (dari `^4.3.6`) untuk T3 env v0.13.x compatibility
+
+**Files diupdate pakai `env.*` bukan `process.env.*`:**
+- `src/lib/db/index.ts` — `env.DATABASE_URL`
+- `src/lib/supabase/admin.ts` — `env.NEXT_PUBLIC_SUPABASE_URL`, `env.SUPABASE_SERVICE_ROLE_KEY`
+- `src/lib/supabase/server.ts` — `env.NEXT_PUBLIC_SUPABASE_URL`, `env.NEXT_PUBLIC_SUPABASE_ANON_KEY`
+- `src/app/api/auth/callback/route.ts` — `env.*`
+- `src/app/api/auth/signout/route.ts` — `env.*`
+- `src/app/api/auth/google/route.ts` — `env.*`
+- `src/app/api/auth/discord/route.ts` — `env.*`
+- `src/app/api/premium/trakteer/route.ts` — `env.TRAKTEER_WEBHOOK_SECRET`
+- `src/app/api/admin/events/route.ts` — `env.*`
+- `src/app/api/discord/stats/route.ts` — `env.*`
+- `src/app/api/discord/role-sync/route.ts` — `env.*`
+- `src/app/api/bot/notify/route.ts` — `env.*`
+- `src/app/api/bot/announce/route.ts` — `env.*`
+- `src/app/api/gallery/upload/route.ts` — `env.*`
+
+**next.config.ts:**
+- Tambah MDX support via `@next/mdx`
+- `serverExternalPackages: ['postgres', 'drizzle-orm']`
+- Fix `pageExtensions` untuk `.mdx`
+
+**drizzle.config.ts:**
+- Tambah `dotenv` loading untuk CLI support

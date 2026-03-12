@@ -132,3 +132,19 @@ export const dynamic = 'force-dynamic'  // baris pertama setiap page.tsx
 |---|---------|--------|------|
 | 1–9 | 2026-03-10/11 | (lihat CHANGELOG) | Bubu |
 | 10 | 2026-03-11 | Update task v1.1.x: profil publik, vtuber detail, admin vtubers, /notifications | Sora |
+
+---
+
+## Update — 2026-03-12 (dari Sora)
+
+### ✅ MDX Support Aktif
+
+`next.config.ts` sudah dikonfigurasi dengan `@next/mdx`. Bubu sekarang bisa:
+- Buat file `.mdx` di folder pages untuk konten kaya (artikel, docs)
+- Import komponen React langsung di dalam file MDX
+
+### ✅ Image Domains Update
+
+Tambah Google avatar dan GitHub domains ke `next.config.ts`:
+- `lh3.googleusercontent.com` — Google OAuth avatars
+- `**.githubusercontent.com` — GitHub assets

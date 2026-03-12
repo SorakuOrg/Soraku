@@ -1,12 +1,13 @@
 import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { adminDb } from '@/lib/supabase/admin'
 import { NextRequest, NextResponse } from 'next/server'
+import { env } from '@/env'
 
 export const dynamic = 'force-dynamic'
 
 const OWNER_DISCORD_IDS = new Set([
   '1020644780075659356', // Riu
-  ...(process.env.OWNER_DISCORD_IDS ?? '').split(',').map(s => s.trim()).filter(Boolean),
+  ...(env.OWNER_DISCORD_IDS ?? '').split(',').map((s: string) => s.trim()).filter(Boolean),
 ])
 
 export async function GET(req: NextRequest) {
@@ -32,8 +33,8 @@ export async function GET(req: NextRequest) {
   const response = NextResponse.redirect(new URL(next, origin))
 
   const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    env.NEXT_PUBLIC_SUPABASE_URL,
+    env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
     {
       cookies: {
         getAll: () => req.cookies.getAll(),

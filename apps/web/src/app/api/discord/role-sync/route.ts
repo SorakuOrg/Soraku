@@ -1,3 +1,4 @@
+import { env } from '@/env'
 import { adminDb, createAdminClient } from '@/lib/supabase/admin'
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
@@ -13,7 +14,7 @@ const Schema = z.object({
 export async function POST(req: NextRequest) {
   try {
     const secret = req.headers.get('x-soraku-secret')
-    if (secret !== process.env.SORAKU_API_SECRET)
+    if (secret !== env.SORAKU_API_SECRET)
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
     const body   = await req.json()

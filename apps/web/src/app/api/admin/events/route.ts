@@ -1,3 +1,4 @@
+import { env } from '@/env'
 export const dynamic = 'force-dynamic'
 
 import { adminDb } from '@/lib/supabase/admin'
@@ -50,8 +51,8 @@ export async function POST(req: NextRequest) {
 
     // Notify bot jika event dipublish
     if (parsed.data.ispublished) {
-      const botUrl    = process.env.BOT_WEBHOOK_URL
-      const botSecret = process.env.BOT_WEBHOOK_SECRET
+      const botUrl    = env.BOT_WEBHOOK_URL
+      const botSecret = env.BOT_WEBHOOK_SECRET
       if (botUrl && botSecret) {
         try {
           await fetch(`${botUrl}/announce/event`, {
@@ -59,7 +60,7 @@ export async function POST(req: NextRequest) {
             headers: { 'Content-Type': 'application/json', 'x-webhook-secret': botSecret },
             body: JSON.stringify({
               title:    parsed.data.title,
-              eventUrl: `${process.env.NEXT_PUBLIC_SITE_URL}/events/${parsed.data.slug}`,
+              eventUrl: `${env.NEXT_PUBLIC_SITE_URL}/events/${parsed.data.slug}`,
             }),
           })
         } catch { /* bot offline — lanjut saja */ }

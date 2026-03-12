@@ -1,3 +1,4 @@
+import { env } from '@/env'
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { z } from "zod";
@@ -17,7 +18,7 @@ const Schema = z.object({
 export async function POST(req: NextRequest) {
   // Hanya bisa dipanggil dari dalam (server-side atau dengan secret)
   const secret = req.headers.get("x-soraku-secret");
-  const isInternal = secret === process.env.SORAKU_API_SECRET;
+  const isInternal = secret === env.SORAKU_API_SECRET;
 
   // Atau dari admin yang sudah login
   if (!isInternal) {
@@ -39,7 +40,7 @@ export async function POST(req: NextRequest) {
   const parsed = Schema.safeParse(body);
   if (!parsed.success) return NextResponse.json({ error: parsed.error.message }, { status: 400 });
 
-  const botUrl = process.env.BOT_WEBHOOK_URL;
+  const botUrl = env.BOT_WEBHOOK_URL;
   if (!botUrl) return NextResponse.json({ error: "BOT_WEBHOOK_URL not configured" }, { status: 503 });
 
   try {
@@ -47,7 +48,7 @@ export async function POST(req: NextRequest) {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "x-soraku-secret": process.env.BOT_WEBHOOK_SECRET!,
+        "x-soraku-secret": env.BOT_WEBHOOK_SECRET!,
       },
       body: JSON.stringify(parsed.data),
     });
