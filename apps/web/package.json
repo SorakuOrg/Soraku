@@ -17,7 +17,7 @@
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
     "postbuild": "next-sitemap",
-    "prepare": "husky",
+    "prepare": "husky || true",
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
     "format:check": "prettier --check ."
