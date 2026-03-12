@@ -2,7 +2,7 @@
 // Semua kolom lowercase tanpa underscore (sesuai konvensi DB soraku)
 // Tambah tabel di sini sesuai kebutuhan
 
-import { pgSchema, uuid, text, boolean, timestamp, jsonb } from 'drizzle-orm/pg-core'
+import { pgSchema, uuid, text, boolean, timestamp, jsonb, integer, sql } from 'drizzle-orm/pg-core'
 
 export const soraku = pgSchema('soraku')
 
@@ -23,4 +23,38 @@ export const users = soraku.table('users', {
   isbanned:        boolean('isbanned').default(false),
   createdat:       timestamp('createdat', { withTimezone: true }).defaultNow(),
   updatedat:       timestamp('updatedat', { withTimezone: true }).defaultNow(),
+})
+
+export const posts = soraku.table('posts', {
+  id:          uuid('id').primaryKey().default(sql`gen_random_uuid()`),
+  slug:        text('slug').notNull().unique(),
+  title:       text('title').notNull(),
+  excerpt:     text('excerpt'),
+  content:     text('content'),
+  coverurl:    text('coverurl'),
+  tags:        text('tags').array().default(sql`'{}'`),
+  ispublished: boolean('ispublished').default(false),
+  publishedat: timestamp('publishedat', { withTimezone: true }),
+  authorid:    uuid('authorid').references(() => users.id, { onDelete: 'set null' }),
+  createdat:   timestamp('createdat', { withTimezone: true }).defaultNow(),
+  updatedat:   timestamp('updatedat', { withTimezone: true }).defaultNow(),
+})
+
+export const userlevels = soraku.table('userlevels', {
+  id:             uuid('id').primaryKey().default(sql`gen_random_uuid()`),
+  userid:         uuid('userid').notNull().references(() => users.id, { onDelete: 'cascade' }).unique(),
+  level:          integer('level').notNull().default(1),
+  xpcurrent:      integer('xpcurrent').notNull().default(0),
+  xprequired:     integer('xprequired').notNull().default(100),
+  reputationscore: integer('reputationscore').notNull().default(0),
+  updatedat:      timestamp('updatedat', { withTimezone: true }).defaultNow(),
+})
+
+export const userbadges = soraku.table('userbadges', {
+  id:        uuid('id').primaryKey().default(sql`gen_random_uuid()`),
+  userid:    uuid('userid').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  badgename: text('badgename').notNull(),
+  badgeicon: text('badgeicon').notNull(),
+  badgecls:  text('badgecls'),
+  createdat: timestamp('createdat', { withTimezone: true }).defaultNow(),
 })

@@ -4,76 +4,108 @@ export const dynamic = "force-dynamic";
 import { useEffect, useState, useRef, useCallback } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   Save, Loader2, CheckCircle2, AlertCircle, X, LogOut,
   User, AtSign, FileText, Globe, Lock, Camera, Link as LinkIcon,
-  Shield, Sparkles, Eye, RefreshCw, Settings, UserCircle,
-  Instagram, Twitter, Youtube, Calendar, ExternalLink, Pencil,
+  Shield, Sparkles, Settings, UserCircle, RefreshCw,
+  Instagram, Twitter, Youtube, Calendar, ExternalLink,
+  Pencil, Zap, Trophy, Heart, ImageIcon, TrendingUp, Star,
 } from "lucide-react";
-import { useRouter } from "next/navigation";
 import { DiscordIcon } from "@/components/icons/custom-icons";
 import { Footer } from "@/components/layout/footer";
 import { cn } from "@/lib/utils";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
+interface LevelData { level: number; xpcurrent: number; xprequired: number; reputationscore: number }
+interface BadgeData  { id: string; badgename: string; badgeicon: string; badgecls?: string }
+
 interface Profile {
-  id: string;
-  username: string | null;
-  displayname: string | null;
-  avatarurl: string | null;
-  coverurl: string | null;
-  bio: string | null;
-  role: string;
-  supporterrole: string | null;
-  sociallinks: Record<string, string>;
-  isprivate: boolean;
-  createdat: string;
+  id: string; username: string | null; displayname: string | null;
+  avatarurl: string | null; coverurl: string | null; bio: string | null;
+  role: string; supporterrole: string | null; sociallinks: Record<string, string>;
+  isprivate: boolean; createdat: string;
+  level: LevelData; galleryCount: number; supportTotal: number; badges: BadgeData[];
 }
 
-// ─── Color meta (sesuai instruksi Riu)
-const ROLE_META: Record<string, { label: string; cls: string; glow: string }> = {
-  OWNER:   { label: "Owner",   cls: "text-yellow-300  bg-yellow-400/15  border-yellow-400/40",  glow: "shadow-yellow-500/10" },
-  MANAGER: { label: "Manager", cls: "text-yellow-200  bg-yellow-300/10  border-yellow-300/30",  glow: "shadow-yellow-400/8"  },
-  ADMIN:   { label: "Admin",   cls: "text-yellow-100  bg-yellow-200/10  border-yellow-200/25",  glow: "shadow-yellow-300/5"  },
-  AGENSI:  { label: "Agensi",  cls: "text-yellow-400  bg-yellow-500/10  border-yellow-500/25",  glow: ""                    },
-  KREATOR: { label: "Kreator", cls: "text-yellow-300  bg-yellow-400/10  border-yellow-400/20",  glow: ""                    },
-  USER:    { label: "Member",  cls: "text-yellow-200/70 bg-yellow-400/8 border-yellow-400/15",  glow: ""                    },
+// ─── Role / Support config ────────────────────────────────────────────────────
+
+const ROLE_META: Record<string, { label: string; svg: string; badgeCls: string; glowCls: string; color: string }> = {
+  OWNER:   { label: "Owner",   svg: "owner.svg",   color: "#eab308", badgeCls: "text-yellow-300 bg-yellow-400/15 border-yellow-400/40", glowCls: "from-yellow-500/18 to-transparent" },
+  MANAGER: { label: "Manager", svg: "owner.svg",   color: "#fbbf24", badgeCls: "text-yellow-200 bg-yellow-300/12 border-yellow-300/30", glowCls: "from-yellow-400/12 to-transparent" },
+  ADMIN:   { label: "Admin",   svg: "admin.svg",   color: "#ef4444", badgeCls: "text-red-300    bg-red-400/15    border-red-400/35",    glowCls: "from-red-500/14    to-transparent" },
+  AGENSI:  { label: "Agensi",  svg: "admin.svg",   color: "#f97316", badgeCls: "text-orange-300 bg-orange-400/15 border-orange-400/30", glowCls: "from-orange-500/12 to-transparent" },
+  KREATOR: { label: "Kreator", svg: "premium.svg", color: "#a855f7", badgeCls: "text-purple-300 bg-purple-400/15 border-purple-400/35", glowCls: "from-purple-500/14 to-transparent" },
+  USER:    { label: "Member",  svg: "member.svg",  color: "#6b7280", badgeCls: "text-gray-300   bg-gray-400/10   border-gray-400/25",   glowCls: "from-primary/6     to-transparent" },
 };
 
 const SUPPORT_META: Record<string, { label: string; cls: string }> = {
-  VVIP:    { label: "✨ VVIP",    cls: "text-green-300 bg-green-400/15 border-green-400/40" },
-  VIP:     { label: "💚 VIP",     cls: "text-green-300 bg-green-400/12 border-green-400/30" },
-  DONATUR: { label: "💚 Donatur", cls: "text-green-400 bg-green-500/10 border-green-500/25" },
+  VVIP:    { label: "✨ VVIP",    cls: "text-purple-300 bg-purple-400/15 border-purple-400/40" },
+  VIP:     { label: "⭐ VIP",     cls: "text-green-300  bg-green-400/15  border-green-400/35"  },
+  DONATUR: { label: "💚 Donatur", cls: "text-green-400  bg-green-500/10  border-green-500/25"  },
 };
 
+const LEVEL_TITLES: [number, string][] = [
+  [50, "Soraku Legend"], [40, "Community Hero"], [30, "Elite Member"],
+  [20, "Senpai"], [10, "Otaku"], [1, "Newcomer"],
+];
+const getLevelTitle = (lv: number) => LEVEL_TITLES.find(([m]) => lv >= m)?.[1] ?? "Newcomer";
+
 const SOCIAL_FIELDS = [
-  { key: "discord",   label: "Discord",     placeholder: "username",           Icon: DiscordIcon },
-  { key: "instagram", label: "Instagram",   placeholder: "@username",           Icon: Instagram   },
-  { key: "x",         label: "X / Twitter", placeholder: "@username",           Icon: Twitter     },
-  { key: "youtube",   label: "YouTube",     placeholder: "channel URL",         Icon: Youtube     },
-  { key: "website",   label: "Website",     placeholder: "https://yoursite.id", Icon: Globe       },
+  { key: "discord",   label: "Discord",     placeholder: "username",            Icon: DiscordIcon },
+  { key: "instagram", label: "Instagram",   placeholder: "@username",            Icon: Instagram   },
+  { key: "x",         label: "X / Twitter", placeholder: "@username",            Icon: Twitter     },
+  { key: "youtube",   label: "YouTube",     placeholder: "URL channel",          Icon: Youtube     },
+  { key: "website",   label: "Website",     placeholder: "https://yoursite.id",  Icon: Globe       },
 ] as const;
 
 const SOCIAL_CONFIG = [
-  { key: "discord",   Icon: DiscordIcon, getHref: (v: string) => `https://discord.com/users/${v}` },
-  { key: "instagram", Icon: Instagram,   getHref: (v: string) => `https://instagram.com/${v.replace("@","")}` },
-  { key: "x",         Icon: Twitter,     getHref: (v: string) => `https://x.com/${v.replace("@","")}` },
-  { key: "youtube",   Icon: Youtube,     getHref: (v: string) => v.startsWith("http") ? v : `https://youtube.com/${v}` },
-  { key: "website",   Icon: Globe,       getHref: (v: string) => v.startsWith("http") ? v : `https://${v}` },
+  { key: "discord",   Icon: DiscordIcon, getHref: (v: string) => `https://discord.com/users/${v}`                        },
+  { key: "instagram", Icon: Instagram,   getHref: (v: string) => `https://instagram.com/${v.replace("@","")}`            },
+  { key: "x",         Icon: Twitter,     getHref: (v: string) => `https://x.com/${v.replace("@","")}`                    },
+  { key: "youtube",   Icon: Youtube,     getHref: (v: string) => v.startsWith("http") ? v : `https://youtube.com/${v}`   },
+  { key: "website",   Icon: Globe,       getHref: (v: string) => v.startsWith("http") ? v : `https://${v}`               },
 ] as const;
+
+type Tab = "profile" | "settings";
+
+// ─── XP Ring (circular SVG progress) ─────────────────────────────────────────
+
+function XpRing({ pct, color, size = 96 }: { pct: number; color: string; size?: number }) {
+  const r = (size - 8) / 2; const circ = 2 * Math.PI * r;
+  return (
+    <svg width={size} height={size} className="absolute inset-0 -rotate-90 pointer-events-none">
+      <circle cx={size/2} cy={size/2} r={r} fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth="3.5" />
+      <circle cx={size/2} cy={size/2} r={r} fill="none" stroke={color} strokeWidth="3.5" strokeLinecap="round"
+        strokeDasharray={circ} strokeDashoffset={circ - (pct / 100) * circ}
+        style={{ transition: "stroke-dashoffset 0.9s cubic-bezier(0.4,0,0.2,1)" }} />
+    </svg>
+  );
+}
+
+// ─── Stat Box ─────────────────────────────────────────────────────────────────
+
+function StatBox({ icon: Icon, label, value, iconCls = "" }: {
+  icon: React.ElementType; label: string; value: string | number; iconCls?: string;
+}) {
+  return (
+    <div className="flex flex-col items-center gap-1 rounded-2xl border border-border/50 bg-card/30 px-3 py-3.5 text-center">
+      <Icon className={cn("h-4 w-4 mb-0.5", iconCls || "text-muted-foreground/40")} />
+      <span className="text-base font-black">{value}</span>
+      <span className="text-[10px] text-muted-foreground/45 leading-tight">{label}</span>
+    </div>
+  );
+}
 
 // ─── Toast ────────────────────────────────────────────────────────────────────
 
 function Toast({ msg, type, onClose }: { msg: string; type: "ok" | "err"; onClose: () => void }) {
   return (
     <div className={cn(
-      "fixed bottom-6 right-6 z-50 flex items-center gap-3 rounded-2xl border px-5 py-3.5 max-w-sm",
-      "shadow-2xl text-sm font-medium backdrop-blur-xl",
-      "animate-in slide-in-from-bottom-3 fade-in duration-200",
-      type === "ok"
-        ? "border-green-500/30 bg-card/95 text-green-400"
-        : "border-destructive/30 bg-card/95 text-destructive"
+      "fixed bottom-6 right-6 z-50 flex items-center gap-3 rounded-2xl border px-5 py-3.5 shadow-2xl",
+      "text-sm font-medium backdrop-blur-xl animate-in slide-in-from-bottom-3 fade-in duration-200 max-w-sm",
+      type === "ok" ? "border-green-500/30 bg-card/95 text-green-400" : "border-destructive/30 bg-card/95 text-destructive"
     )}>
       {type === "ok" ? <CheckCircle2 className="h-4 w-4 flex-shrink-0" /> : <AlertCircle className="h-4 w-4 flex-shrink-0" />}
       <span className="flex-1">{msg}</span>
@@ -82,16 +114,14 @@ function Toast({ msg, type, onClose }: { msg: string; type: "ok" | "err"; onClos
   );
 }
 
-// ─── Input + Field ────────────────────────────────────────────────────────────
+// ─── Form primitives ──────────────────────────────────────────────────────────
 
 function Input({ className, ...props }: React.InputHTMLAttributes<HTMLInputElement>) {
   return (
     <input className={cn(
-      "w-full rounded-xl border border-border/60 bg-card/40 px-4 py-2.5 text-sm",
-      "outline-none placeholder:text-muted-foreground/25",
-      "focus:border-primary/40 focus:bg-card/60 focus:ring-2 focus:ring-primary/10",
-      "disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-150",
-      className
+      "w-full rounded-xl border border-border/60 bg-card/40 px-4 py-2.5 text-sm outline-none",
+      "placeholder:text-muted-foreground/25 focus:border-primary/40 focus:bg-card/60 focus:ring-2 focus:ring-primary/10",
+      "disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-150", className
     )} {...props} />
   );
 }
@@ -126,181 +156,222 @@ function SectionCard({ title, icon: Icon, children, className }: {
   );
 }
 
-// ─── Tab types ────────────────────────────────────────────────────────────────
+// ─── Skeleton ─────────────────────────────────────────────────────────────────
 
-type Tab = "profile" | "settings";
+function Skeleton() {
+  return (
+    <div className="space-y-5 pb-10 animate-pulse">
+      <div className="glass-card h-12 rounded-2xl bg-muted/10" />
+      <div className="glass-card h-80 rounded-3xl bg-muted/10" />
+      <div className="grid gap-5 lg:grid-cols-2">
+        <div className="glass-card h-64 rounded-2xl bg-muted/10" />
+        <div className="glass-card h-64 rounded-2xl bg-muted/10" />
+      </div>
+    </div>
+  );
+}
 
-// ─── Profile Tab Content ─────────────────────────────────────────────────────
+// ─── Profile Tab ──────────────────────────────────────────────────────────────
 
 function ProfileTab({
-  profile, displayname, username, bio, avatarurl, coverurl,
-  isprivate, socials, roleMeta, supportMeta, joinDate, onGoSettings
+  profile, rm, sm, joinDate, displayname, username, bio, avatarurl, coverurl, isprivate, socials, onGoSettings,
 }: {
-  profile: Profile;
-  displayname: string; username: string; bio: string;
-  avatarurl: string; coverurl: string; isprivate: boolean;
-  socials: Record<string, string>;
-  roleMeta: { label: string; cls: string; glow: string };
-  supportMeta: { label: string; cls: string } | null;
-  joinDate: string;
+  profile: Profile; rm: typeof ROLE_META[string]; sm: typeof SUPPORT_META[string] | null;
+  joinDate: string; displayname: string; username: string; bio: string;
+  avatarurl: string; coverurl: string; isprivate: boolean; socials: Record<string, string>;
   onGoSettings: () => void;
 }) {
-  const displayName = displayname || profile.username || "Pengguna";
-  const initial     = displayName.charAt(0).toUpperCase();
-  const filledSocials = SOCIAL_CONFIG.filter(s => socials[s.key]);
+  const name  = displayname || profile.username || "Pengguna";
+  const init  = name.charAt(0).toUpperCase();
+  const lvl   = profile.level;
+  const xpPct = Math.min(100, Math.round((lvl.xpcurrent / lvl.xprequired) * 100));
+  const lvlTitle = getLevelTitle(lvl.level);
+  const activeSocials = SOCIAL_CONFIG.filter(s => socials[s.key]);
+  const supportStatus = profile.supportTotal >= 100000 ? "Top Supporter"
+    : profile.supportTotal >= 50000 ? "Patron"
+    : profile.supportTotal > 0 ? "Supporter" : null;
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-4">
       {/* ── Identity Card ── */}
-      <div className={cn("glass-card rounded-3xl overflow-hidden shadow-2xl relative border border-border/60", roleMeta.glow)}>
-        {/* Glow ambient */}
-        <div className="pointer-events-none absolute inset-x-0 top-0 h-40 bg-gradient-to-b from-primary/8 to-transparent" />
+      <div className="glass-card relative overflow-hidden rounded-3xl border border-border/60 shadow-2xl">
+        {/* Ambient glow */}
+        <div className={cn("pointer-events-none absolute inset-x-0 top-0 h-52 bg-gradient-to-b opacity-60", rm.glowCls)} />
 
         {/* Cover */}
-        <div className="relative h-36 sm:h-44 overflow-hidden">
-          {coverurl ? (
-            <Image src={coverurl} alt="" fill className="object-cover" />
-          ) : (
-            <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-primary/8 to-accent/15" />
-          )}
-          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-background/70" />
-
-          {/* Putih: Lihat Profil Publik */}
+        <div className="relative h-36 sm:h-48 overflow-hidden">
+          {coverurl
+            ? <Image src={coverurl} alt="" fill className="object-cover" />
+            : <div className="absolute inset-0 bg-gradient-to-br from-primary/25 via-primary/8 to-accent/15" />
+          }
+          <div className="absolute inset-0 bg-gradient-to-b from-transparent to-background/80" />
+          {/* Tombol lihat profil publik */}
           {username && (
             <Link href={`/profile/${username}`}
               className="absolute right-3 top-3 flex items-center gap-1.5 rounded-full border border-white/25 bg-white/10 px-3 py-1.5 text-[11px] font-semibold text-white/80 backdrop-blur-sm hover:bg-white/20 hover:text-white transition-all">
               <ExternalLink className="h-3 w-3" /> Profil Publik
             </Link>
           )}
-
-          {/* Owner crown */}
-          {profile.role === "OWNER" && (
-            <div className="absolute left-3 top-3 flex items-center gap-1.5 rounded-full border border-yellow-400/30 bg-yellow-400/15 px-3 py-1 text-[10px] font-black text-yellow-300 backdrop-blur-sm">
-              👑 Owner Soraku
-            </div>
-          )}
         </div>
 
-        <div className="relative px-5 sm:px-6 pb-6">
-          {/* Avatar + Badges */}
-          <div className="-mt-12 mb-4 flex items-end justify-between">
-            <div className="relative">
-              <div className="h-24 w-24 rounded-2xl border-[3px] border-background overflow-hidden bg-card/80 shadow-2xl flex items-center justify-center">
-                {avatarurl ? (
-                  <Image src={avatarurl} alt={displayName} fill className="object-cover" />
-                ) : (
-                  <span className="text-3xl font-black text-primary/50">{initial}</span>
-                )}
+        {/* Body */}
+        <div className="relative px-5 sm:px-7 pb-7">
+          {/* Avatar + Badges row */}
+          <div className="-mt-14 mb-5 flex items-end justify-between">
+            {/* Avatar + XP ring */}
+            <div className="relative h-[96px] w-[96px] flex-shrink-0">
+              <XpRing pct={xpPct} color={rm.color} size={96} />
+              <div className="absolute inset-[5px] rounded-2xl overflow-hidden border-[3px] border-background bg-card/80 shadow-2xl flex items-center justify-center">
+                {avatarurl
+                  ? <Image src={avatarurl} alt={name} fill className="object-cover" />
+                  : <span className="text-2xl font-black text-primary/50">{init}</span>
+                }
               </div>
-              <span className="absolute -bottom-0.5 -right-0.5 h-4 w-4 rounded-full border-2 border-background bg-green-400" />
+              {/* Level bubble */}
+              <div className="absolute -bottom-2 -right-2 flex h-6 min-w-[24px] items-center justify-center rounded-full border-2 border-background px-1.5 text-[10px] font-black"
+                style={{ backgroundColor: rm.color + "25", color: rm.color, borderColor: rm.color + "40" }}>
+                {lvl.level}
+              </div>
             </div>
 
-            <div className="flex flex-col items-end gap-1.5 pb-1">
-              {/* Kuning: Role */}
-              <span className={cn("inline-flex items-center gap-1 rounded-full border px-3 py-1 text-[10px] font-black uppercase tracking-widest", roleMeta.cls)}>
-                {profile.role === "OWNER" && <span>👑</span>}
-                {roleMeta.label}
+            {/* Badges */}
+            <div className="flex flex-col items-end gap-1.5 pb-2">
+              <span className={cn("inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-[11px] font-black uppercase tracking-widest", rm.badgeCls)}>
+                <img src={`/roles/${rm.svg}`} alt={rm.label} className="h-3.5 w-3.5"
+                  style={{ filter: `drop-shadow(0 0 3px ${rm.color}60)` }} />
+                {rm.label}
               </span>
-              {/* Hijau muda: Supporter */}
-              {supportMeta && (
-                <span className={cn("inline-flex items-center rounded-full border px-3 py-1 text-[10px] font-black", supportMeta.cls)}>
-                  {supportMeta.label}
-                </span>
+              {sm && (
+                <span className={cn("inline-flex items-center rounded-full border px-3 py-1 text-[11px] font-black", sm.cls)}>{sm.label}</span>
               )}
               {isprivate && (
-                <span className="flex items-center gap-1 rounded-full border border-border/40 bg-muted/20 px-2.5 py-1 text-[10px] text-muted-foreground/50">
+                <span className="flex items-center gap-1 rounded-full border border-border/40 bg-muted/15 px-2.5 py-1 text-[10px] text-muted-foreground/45">
                   <Lock className="h-2.5 w-2.5" /> Privat
                 </span>
               )}
             </div>
           </div>
 
-          {/* Nama + username — klik username → publik */}
-          <div className="mb-4">
-            <p className="text-2xl font-black tracking-tight">{displayName}</p>
-            {username ? (
-              <Link href={`/profile/${username}`}
-                className="mt-0.5 inline-flex items-center gap-1 text-sm text-muted-foreground/50 hover:text-primary/70 transition-colors group">
-                @{username}
-                <ExternalLink className="h-2.5 w-2.5 opacity-0 group-hover:opacity-60 transition-opacity" />
-              </Link>
-            ) : (
-              <p className="mt-0.5 text-sm text-muted-foreground/40">@—</p>
-            )}
+          {/* Name */}
+          <div className="mb-5">
+            <h1 className="text-2xl font-black tracking-tight">{name}</h1>
+            <div className="mt-1 flex flex-wrap items-center gap-2">
+              {username ? (
+                <Link href={`/profile/${username}`}
+                  className="flex items-center gap-1 text-sm text-muted-foreground/50 hover:text-primary/70 transition-colors group">
+                  @{username}
+                  <ExternalLink className="h-2.5 w-2.5 opacity-0 group-hover:opacity-50 transition-opacity" />
+                </Link>
+              ) : <span className="text-sm text-muted-foreground/40">@—</span>}
+              <span className="rounded-full border px-2 py-0.5 text-[10px] font-bold"
+                style={{ color: rm.color + "cc", borderColor: rm.color + "30", backgroundColor: rm.color + "10" }}>
+                {lvlTitle}
+              </span>
+              <span className="flex items-center gap-1 text-[10px] text-green-500/50 dark:text-green-400/40">
+                <Calendar className="h-2.5 w-2.5" /> Sejak {joinDate}
+              </span>
+            </div>
           </div>
 
-          {/* Bio block + hijau tua join date */}
-          <div className="rounded-2xl border border-border/40 bg-card/30 px-4 py-4 mb-4 space-y-2.5">
-            {bio ? (
-              <p className="text-sm text-foreground/80 leading-relaxed">{bio}</p>
-            ) : (
-              <p className="text-sm italic text-muted-foreground/30">Belum ada bio. Isi di tab Settings →</p>
-            )}
-            {/* Hijau tua: join date */}
-            <p className="flex items-center gap-1.5 text-[11px] font-medium text-green-600/50 dark:text-green-400/40">
-              <Calendar className="h-3 w-3 flex-shrink-0" />
-              Bergabung sejak {joinDate}
-            </p>
+          {/* Bio */}
+          {bio ? (
+            <p className="mb-5 border-l-2 border-primary/20 pl-3.5 text-sm text-foreground/75 leading-relaxed">{bio}</p>
+          ) : (
+            <button onClick={onGoSettings}
+              className="mb-5 flex items-center gap-2 text-xs italic text-muted-foreground/30 hover:text-primary/50 transition-colors">
+              <Pencil className="h-3 w-3" /> Tambah bio di Settings
+            </button>
+          )}
+
+          {/* XP Progress bar */}
+          <div className="mb-5 rounded-2xl border border-border/50 bg-card/30 px-4 py-3.5">
+            <div className="mb-2 flex items-center justify-between">
+              <div className="flex items-center gap-1.5">
+                <Zap className="h-3.5 w-3.5" style={{ color: rm.color }} />
+                <span className="text-xs font-bold text-foreground/70">Level {lvl.level} · {lvlTitle}</span>
+              </div>
+              <span className="font-mono text-[11px] text-muted-foreground/40">
+                {lvl.xpcurrent.toLocaleString()} / {lvl.xprequired.toLocaleString()} XP
+              </span>
+            </div>
+            <div className="relative h-2 w-full overflow-hidden rounded-full bg-muted/20">
+              <div className="h-full rounded-full transition-all duration-700"
+                style={{ width: `${xpPct}%`, backgroundColor: rm.color, boxShadow: `0 0 8px ${rm.color}55` }} />
+            </div>
+            <p className="mt-1.5 text-right text-[10px] text-muted-foreground/30">{xpPct}%</p>
           </div>
 
-          {/* Merah: sosial media */}
-          {filledSocials.length > 0 && (
-            <div className="flex flex-wrap gap-2 mb-5">
-              {filledSocials.map(({ key, Icon, getHref }) => (
+          {/* Stats row */}
+          <div className="mb-5 grid grid-cols-3 gap-2.5">
+            <StatBox icon={ImageIcon}  label="Karya Galeri"  value={profile.galleryCount}  iconCls="text-blue-400/60"  />
+            <StatBox icon={TrendingUp} label="Reputasi"      value={lvl.reputationscore}   iconCls="text-primary/60"  />
+            <StatBox icon={Heart}      label="Support Budget"
+              value={profile.supportTotal > 0 ? `Rp ${(profile.supportTotal/1000).toFixed(0)}K` : "—"}
+              iconCls="text-green-400/60" />
+          </div>
+
+          {/* Support status */}
+          {supportStatus && (
+            <div className="mb-5 flex items-center gap-3 rounded-2xl border border-green-500/20 bg-green-500/5 px-4 py-3">
+              <Trophy className="h-4 w-4 text-green-400 flex-shrink-0" />
+              <div>
+                <p className="text-xs font-black text-green-300">{supportStatus}</p>
+                <p className="text-[11px] text-green-400/50">Total Rp {profile.supportTotal.toLocaleString("id-ID")}</p>
+              </div>
+            </div>
+          )}
+
+          {/* Badge collection */}
+          {profile.badges.length > 0 && (
+            <div className="mb-5">
+              <p className="mb-2.5 flex items-center gap-1.5 text-[11px] font-black uppercase tracking-widest text-muted-foreground/40">
+                <Star className="h-3 w-3" /> Badge
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {profile.badges.map(b => (
+                  <span key={b.id} className={cn("inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-[11px] font-bold",
+                    b.badgecls ?? "border-primary/25 bg-primary/10 text-primary/80")}>
+                    <span>{b.badgeicon}</span> {b.badgename}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Social links */}
+          {activeSocials.length > 0 && (
+            <div className="mb-5 flex flex-wrap gap-2">
+              {activeSocials.map(({ key, Icon, getHref }) => (
                 <a key={key} href={getHref(socials[key]!)} target="_blank" rel="noopener noreferrer"
-                  className="flex h-8 w-8 items-center justify-center rounded-full border border-red-500/25 bg-red-500/8 text-red-400/80 hover:bg-red-500/18 hover:text-red-300 hover:-translate-y-0.5 transition-all">
+                  className="flex h-9 w-9 items-center justify-center rounded-full border border-red-500/25 bg-red-500/8 text-red-400/80 hover:bg-red-500/18 hover:text-red-300 hover:-translate-y-0.5 transition-all">
                   <Icon className="h-3.5 w-3.5" />
                 </a>
               ))}
             </div>
           )}
 
-          {/* Putih: Edit Profil → Settings tab */}
+          {/* CTA ke Settings */}
           <button onClick={onGoSettings}
-            className="flex items-center gap-1.5 rounded-xl border border-white/15 bg-white/8 px-4 py-2 text-xs font-semibold text-white/70 backdrop-blur-sm transition-all hover:bg-white/15 hover:text-white">
+            className="flex items-center gap-1.5 rounded-xl border border-white/15 bg-white/8 px-4 py-2 text-xs font-semibold text-white/70 backdrop-blur-sm hover:bg-white/15 hover:text-white transition-all">
             <Pencil className="h-3.5 w-3.5" /> Edit Profil
           </button>
         </div>
-      </div>
-
-      {/* ── Info tiles ── */}
-      <div className="glass-card rounded-2xl overflow-hidden divide-y divide-border/20">
-        {[
-          { label: "Role",      value: roleMeta.label,       color: "text-yellow-300/80" },
-          { label: "Supporter", value: supportMeta?.label,   color: "text-green-400/80"  },
-          { label: "Status",    value: isprivate ? "Privat" : "Publik", color: isprivate ? "text-muted-foreground/60" : "text-green-400/70" },
-          { label: "Bergabung", value: joinDate,              color: "text-green-500/50"  },
-        ].filter(r => r.value).map(row => (
-          <div key={row.label} className="flex items-center justify-between px-5 py-3">
-            <span className="text-xs text-muted-foreground/40">{row.label}</span>
-            <span className={cn("text-xs font-semibold", row.color)}>{row.value}</span>
-          </div>
-        ))}
       </div>
     </div>
   );
 }
 
-// ─── Settings Tab Content ─────────────────────────────────────────────────────
+// ─── Settings Tab ─────────────────────────────────────────────────────────────
 
 function SettingsTab({
-  profile, roleMeta, supportMeta, joinDate,
-  displayname, setDisplayname,
-  username, setUsername,
-  bio, setBio,
-  avatarurl, setAvatarurl,
-  coverurl, setCoverurl,
-  isprivate, setIsprivate,
-  socials, setSocials,
-  setDirty,
-  saving, dirty,
-  onSave, onSignout,
-  isStaff,
+  profile, rm, sm, joinDate,
+  displayname, setDisplayname, username, setUsername,
+  bio, setBio, avatarurl, setAvatarurl, coverurl, setCoverurl,
+  isprivate, setIsprivate, socials, setSocials,
+  setDirty, saving, dirty, onSave, onSignout, isStaff,
 }: {
   profile: Profile;
-  roleMeta: { label: string; cls: string; glow: string };
-  supportMeta: { label: string; cls: string } | null;
-  joinDate: string;
+  rm: typeof ROLE_META[string]; sm: typeof SUPPORT_META[string] | null; joinDate: string;
   displayname: string; setDisplayname: (v: string) => void;
   username: string;    setUsername:    (v: string) => void;
   bio: string;         setBio:         (v: string) => void;
@@ -309,61 +380,53 @@ function SettingsTab({
   isprivate: boolean;  setIsprivate:   (fn: (p: boolean) => boolean) => void;
   socials: Record<string, string>; setSocials: (fn: (p: Record<string,string>) => Record<string,string>) => void;
   setDirty: (v: boolean) => void;
-  saving: boolean; dirty: boolean;
-  onSave: () => void; onSignout: () => void;
-  isStaff: boolean;
+  saving: boolean; dirty: boolean; onSave: () => void; onSignout: () => void; isStaff: boolean;
 }) {
-  const displayName = displayname || profile.username || "Pengguna";
-  const initial     = displayName.charAt(0).toUpperCase();
-
+  const name = displayname || profile.username || "Pengguna";
+  const init = name.charAt(0).toUpperCase();
   return (
     <div className="space-y-5 pb-4">
-      {/* Mini card preview */}
+      {/* Mini preview card */}
       <div className="flex items-center gap-4 glass-card rounded-2xl px-5 py-4">
         <div className="h-14 w-14 flex-shrink-0 rounded-xl overflow-hidden border-2 border-border/40 bg-card/80 flex items-center justify-center shadow-lg">
-          {avatarurl ? (
-            <Image src={avatarurl} alt={displayName} width={56} height={56} className="h-full w-full object-cover" onError={() => setAvatarurl("")} />
-          ) : (
-            <span className="text-xl font-black text-primary/50">{initial}</span>
-          )}
+          {avatarurl
+            ? <Image src={avatarurl} alt={name} width={56} height={56} className="h-full w-full object-cover" onError={() => setAvatarurl("")} />
+            : <span className="text-xl font-black text-primary/50">{init}</span>
+          }
         </div>
         <div className="min-w-0 flex-1">
-          <p className="font-bold truncate">{displayName}</p>
-          <p className="text-xs text-muted-foreground/50">@{profile.username ?? "—"}</p>
+          <p className="font-bold truncate">{name}</p>
+          <p className="text-xs text-muted-foreground/50">@{username || "—"}</p>
         </div>
-        <span className={cn("flex-shrink-0 rounded-full border px-2.5 py-1 text-[10px] font-black uppercase tracking-wider", roleMeta.cls)}>
-          {roleMeta.label}
+        <span className={cn("flex-shrink-0 inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10px] font-black uppercase tracking-widest", rm.badgeCls)}>
+          <img src={`/roles/${rm.svg}`} alt={rm.label} className="h-3 w-3" />
+          {rm.label}
         </span>
       </div>
 
-      {/* Grid form */}
+      {/* Form grid */}
       <div className="grid gap-5 lg:grid-cols-2">
-        {/* Kiri */}
+        {/* Kiri — Info */}
         <SectionCard title="Info Dasar" icon={User}>
           <Field label="Nama Tampilan" icon={Sparkles}>
             <Input value={displayname} onChange={e => { setDisplayname(e.target.value); setDirty(true); }} placeholder="Nama yang tampil ke orang lain" maxLength={50} />
           </Field>
-
-          <Field label="Username" icon={AtSign} hint="3–30 karakter. Huruf kecil, angka, underscore.">
+          <Field label="Username" icon={AtSign} hint="3–30 karakter · huruf kecil, angka, underscore">
             <div className="relative">
               <span className="absolute left-4 top-1/2 -translate-y-1/2 text-xs text-muted-foreground/30 select-none">@</span>
-              <Input value={username} onChange={e => { setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, "")); setDirty(true); }} placeholder="username_kamu" maxLength={30} className="pl-7" />
+              <Input value={username}
+                onChange={e => { setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, "")); setDirty(true); }}
+                placeholder="username_kamu" maxLength={30} className="pl-7" />
             </div>
           </Field>
-
           <Field label="Bio" icon={FileText}>
             <div className="relative">
-              <textarea
-                value={bio}
-                onChange={e => { setBio(e.target.value); setDirty(true); }}
-                rows={3} maxLength={300}
-                placeholder="Ceritakan sedikit tentang dirimu…"
-                className="w-full resize-none rounded-xl border border-border/60 bg-card/40 px-4 py-2.5 text-sm outline-none placeholder:text-muted-foreground/25 focus:border-primary/40 focus:bg-card/60 focus:ring-2 focus:ring-primary/10 transition-all duration-150"
-              />
+              <textarea value={bio} onChange={e => { setBio(e.target.value); setDirty(true); }}
+                rows={3} maxLength={300} placeholder="Ceritakan sedikit tentang dirimu…"
+                className="w-full resize-none rounded-xl border border-border/60 bg-card/40 px-4 py-2.5 text-sm outline-none placeholder:text-muted-foreground/25 focus:border-primary/40 focus:bg-card/60 focus:ring-2 focus:ring-primary/10 transition-all" />
               <span className="absolute bottom-2.5 right-3 text-[10px] text-muted-foreground/25 tabular-nums">{bio.length}/300</span>
             </div>
           </Field>
-
           {/* Privacy toggle */}
           <button type="button" onClick={() => { setIsprivate(p => !p); setDirty(true); }}
             className={cn("flex items-center justify-between w-full rounded-xl border px-4 py-3 text-left transition-all",
@@ -382,22 +445,21 @@ function SettingsTab({
             </div>
             <div className={cn("relative flex h-5 w-9 items-center rounded-full transition-colors flex-shrink-0",
               isprivate ? "bg-primary" : "bg-muted/50")}>
-              <span className={cn("absolute h-3.5 w-3.5 rounded-full bg-white shadow transition-transform duration-200",
+              <span className={cn("absolute h-3.5 w-3.5 rounded-full bg-white shadow transition-transform",
                 isprivate ? "translate-x-[18px]" : "translate-x-[3px]")} />
             </div>
           </button>
         </SectionCard>
 
-        {/* Kanan */}
+        {/* Kanan — Media + Account */}
         <SectionCard title="Foto & Media" icon={Camera}>
-          <Field label="Avatar" icon={User} hint="URL gambar publik (jpg/png/webp). Rasio 1:1.">
+          <Field label="Avatar" icon={User} hint="URL gambar publik · rasio 1:1">
             <div className="flex gap-2.5">
               <div className="h-10 w-10 flex-shrink-0 rounded-xl overflow-hidden border border-border/40 bg-muted/20 flex items-center justify-center">
-                {avatarurl ? (
-                  <Image src={avatarurl} alt="" width={40} height={40} className="h-full w-full object-cover" onError={() => setAvatarurl("")} />
-                ) : (
-                  <User className="h-4 w-4 text-muted-foreground/20" />
-                )}
+                {avatarurl
+                  ? <Image src={avatarurl} alt="" width={40} height={40} className="h-full w-full object-cover" onError={() => setAvatarurl("")} />
+                  : <User className="h-4 w-4 text-muted-foreground/20" />
+                }
               </div>
               <div className="flex flex-1 gap-1.5">
                 <Input type="url" value={avatarurl} onChange={e => { setAvatarurl(e.target.value); setDirty(true); }} placeholder="https://cdn.example.com/avatar.jpg" className="flex-1" />
@@ -410,12 +472,11 @@ function SettingsTab({
               </div>
             </div>
           </Field>
-
-          <Field label="Cover / Banner" icon={Camera} hint="Saran: 1280×360px, rasio 16:9.">
+          <Field label="Cover / Banner" icon={Camera} hint="Saran: 1280×360px · rasio 16:9">
             <Input type="url" value={coverurl} onChange={e => { setCoverurl(e.target.value); setDirty(true); }} placeholder="https://cdn.example.com/cover.jpg" />
             {coverurl && (
-              <div className="relative mt-2 h-20 overflow-hidden rounded-xl border border-border/40 bg-muted/10">
-                <Image src={coverurl} alt="preview" fill className="object-cover" onError={() => setCoverurl("")} />
+              <div className="relative mt-2 h-20 overflow-hidden rounded-xl border border-border/40">
+                <Image src={coverurl} alt="" fill className="object-cover" onError={() => setCoverurl("")} />
                 <button type="button" onClick={() => { setCoverurl(""); setDirty(true); }}
                   className="absolute right-2 top-2 flex h-6 w-6 items-center justify-center rounded-lg bg-background/80 text-muted-foreground hover:text-destructive transition-colors backdrop-blur-sm">
                   <X className="h-3 w-3" />
@@ -426,11 +487,11 @@ function SettingsTab({
 
           {/* Account info tiles */}
           <div className="rounded-xl border border-border/30 bg-card/20 divide-y divide-border/20 overflow-hidden">
-            {[
-              { label: "Role",      value: roleMeta.label,   color: "text-yellow-300/80" },
-              { label: "Supporter", value: supportMeta?.label, color: "text-green-400/80" },
-              { label: "Bergabung", value: joinDate,           color: "text-green-500/50"  },
-            ].filter(r => r.value).map(row => (
+            {([
+              { label: "Role",      value: rm.label,     color: "text-yellow-300/80" },
+              { label: "Supporter", value: sm?.label,    color: "text-green-400/80"  },
+              { label: "Bergabung", value: joinDate,      color: "text-green-500/50"  },
+            ] as {label:string;value?:string;color:string}[]).filter(r => r.value).map(row => (
               <div key={row.label} className="flex items-center justify-between px-4 py-2.5">
                 <span className="text-xs text-muted-foreground/40">{row.label}</span>
                 <span className={cn("text-xs font-semibold", row.color)}>{row.value}</span>
@@ -446,12 +507,9 @@ function SettingsTab({
           {SOCIAL_FIELDS.map(({ key, label, placeholder, Icon }) => (
             <Field key={key} label={label} icon={Icon}>
               <div className="relative flex items-center">
-                <Input
-                  value={socials[key] ?? ""}
+                <Input value={socials[key] ?? ""} placeholder={placeholder}
                   onChange={e => { setSocials(prev => ({ ...prev, [key]: e.target.value })); setDirty(true); }}
-                  placeholder={placeholder}
-                  className="pr-9"
-                />
+                  className="pr-9" />
                 {socials[key] && (
                   <button type="button"
                     onClick={() => { setSocials(prev => { const n = {...prev}; delete n[key]; return n; }); setDirty(true); }}
@@ -467,7 +525,7 @@ function SettingsTab({
 
       {/* Admin shortcut */}
       {isStaff && (
-        <div className="glass-card rounded-2xl p-5 border-primary/15 bg-primary/3">
+        <div className="glass-card rounded-2xl p-5 border border-primary/15 bg-primary/3">
           <div className="flex items-center justify-between gap-4 flex-wrap">
             <div className="flex items-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 border border-primary/20">
@@ -475,7 +533,7 @@ function SettingsTab({
               </div>
               <div>
                 <p className="text-sm font-bold">Panel Admin</p>
-                <p className="text-xs text-muted-foreground/50">Kelola blog, event, galeri, dan pengguna platform</p>
+                <p className="text-xs text-muted-foreground/50">Kelola blog, event, galeri, dan pengguna</p>
               </div>
             </div>
             <Link href="/dash/admin"
@@ -490,33 +548,14 @@ function SettingsTab({
       <div className="flex items-center justify-between gap-3 flex-wrap pt-1">
         <button onClick={onSignout}
           className="flex items-center gap-1.5 rounded-xl border border-border/40 px-4 py-2.5 text-xs font-medium text-muted-foreground/60 hover:border-destructive/30 hover:text-destructive transition-all">
-          <LogOut className="h-3.5 w-3.5" /> Keluar dari akun
+          <LogOut className="h-3.5 w-3.5" /> Keluar
         </button>
         <button onClick={onSave} disabled={saving || !dirty}
-          className={cn(
-            "flex items-center gap-1.5 rounded-xl px-5 py-2.5 text-xs font-bold transition-all",
-            dirty && !saving
-              ? "bg-primary text-white shadow-lg shadow-primary/20 hover:-translate-y-0.5"
-              : "bg-muted/30 text-muted-foreground/30 cursor-not-allowed"
-          )}>
+          className={cn("flex items-center gap-1.5 rounded-xl px-5 py-2.5 text-xs font-bold transition-all",
+            dirty && !saving ? "bg-primary text-white shadow-lg shadow-primary/20 hover:-translate-y-0.5" : "bg-muted/30 text-muted-foreground/30 cursor-not-allowed")}>
           {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
           {saving ? "Menyimpan…" : "Simpan Perubahan"}
         </button>
-      </div>
-    </div>
-  );
-}
-
-// ─── Skeleton ─────────────────────────────────────────────────────────────────
-
-function Skeleton() {
-  return (
-    <div className="space-y-5 pb-10 animate-pulse">
-      <div className="glass-card h-12 rounded-2xl bg-muted/10" />
-      <div className="glass-card h-72 rounded-3xl bg-muted/10" />
-      <div className="grid gap-5 lg:grid-cols-2">
-        <div className="glass-card h-64 rounded-2xl bg-muted/10" />
-        <div className="glass-card h-64 rounded-2xl bg-muted/10" />
       </div>
     </div>
   );
@@ -527,7 +566,6 @@ function Skeleton() {
 export default function ProfilePage() {
   const router   = useRouter();
   const toastRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const mountRef = useRef(false);
 
   const [profile,  setProfile]  = useState<Profile | null>(null);
   const [loading,  setLoading]  = useState(true);
@@ -535,11 +573,9 @@ export default function ProfilePage() {
   const [saving,   setSaving]   = useState(false);
   const [dirty,    setDirty]    = useState(false);
   const [toast,    setToast]    = useState<{ msg: string; type: "ok" | "err" } | null>(null);
-
-  // Active tab + swipe direction
-  const [activeTab, setActiveTab]   = useState<Tab>("profile");
-  const [direction, setDirection]   = useState<"left" | "right">("right");
-  const [animating, setAnimating]   = useState(false);
+  const [activeTab, setActiveTab] = useState<Tab>("profile");
+  const [animating, setAnimating] = useState(false);
+  const [direction, setDirection] = useState<"left" | "right">("left");
 
   const [displayname, setDisplayname] = useState("");
   const [username,    setUsername]    = useState("");
@@ -560,9 +596,9 @@ export default function ProfilePage() {
     try {
       const r = await fetch("/api/profile", { cache: "no-store" });
       if (r.status === 401) { router.push("/login"); return; }
-      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      if (!r.ok) throw new Error();
       const d = await r.json();
-      if (!d.data) throw new Error("no data");
+      if (!d.data) throw new Error();
       const p: Profile = d.data;
       setProfile(p);
       setDisplayname(p.displayname ?? "");
@@ -573,35 +609,26 @@ export default function ProfilePage() {
       setIsprivate(p.isprivate ?? false);
       setSocials(p.sociallinks ?? {});
       setTimeout(() => setDirty(false), 0);
-    } catch {
-      setHasError(true);
-    } finally {
-      setLoading(false);
-    }
+    } catch { setHasError(true); }
+    finally   { setLoading(false); }
   }, [router]);
 
   useEffect(() => { load(); }, [load]);
-  useEffect(() => { if (!loading) mountRef.current = true; }, [loading]);
 
   const handleSave = async () => {
     setSaving(true);
     try {
       const res  = await fetch("/api/profile", {
-        method:  "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username: username || undefined, displayname: displayname || undefined, bio: bio || undefined, avatarurl: avatarurl || undefined, coverurl: coverurl || undefined, isprivate, sociallinks: socials }),
+        method: "PATCH", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username: username || undefined, displayname: displayname || undefined,
+          bio: bio || undefined, avatarurl: avatarurl || undefined, coverurl: coverurl || undefined,
+          isprivate, sociallinks: socials }),
       });
       const data = await res.json();
-      if (!res.ok || data.error) {
-        showToast(data.error?.message ?? "Gagal menyimpan.", "err");
-      } else {
-        setProfile(prev => prev ? { ...prev, ...data.data } : prev);
-        setDirty(false);
-        showToast("Profil berhasil disimpan!", "ok");
-      }
-    } catch {
-      showToast("Koneksi gagal. Coba lagi.", "err");
-    } finally { setSaving(false); }
+      if (!res.ok || data.error) showToast(data.error?.message ?? "Gagal menyimpan.", "err");
+      else { setProfile(prev => prev ? { ...prev, ...data.data } : prev); setDirty(false); showToast("Profil berhasil disimpan!", "ok"); }
+    } catch { showToast("Koneksi gagal. Coba lagi.", "err"); }
+    finally   { setSaving(false); }
   };
 
   const handleSignout = async () => {
@@ -609,15 +636,11 @@ export default function ProfilePage() {
     window.location.href = "/";
   };
 
-  // Tab switch dengan animasi
   const switchTab = useCallback((tab: Tab) => {
     if (tab === activeTab || animating) return;
     setDirection(tab === "settings" ? "left" : "right");
     setAnimating(true);
-    setTimeout(() => {
-      setActiveTab(tab);
-      setAnimating(false);
-    }, 200);
+    setTimeout(() => { setActiveTab(tab); setAnimating(false); }, 180);
   }, [activeTab, animating]);
 
   if (loading) return <><Skeleton /><Footer /></>;
@@ -638,10 +661,10 @@ export default function ProfilePage() {
     </>
   );
 
-  const roleMeta    = ROLE_META[profile.role] ?? ROLE_META.USER;
-  const supportMeta = profile.supporterrole ? SUPPORT_META[profile.supporterrole] : null;
-  const isStaff     = ["OWNER","MANAGER","ADMIN"].includes(profile.role);
-  const joinDate    = new Date(profile.createdat).toLocaleDateString("id-ID", { month: "long", year: "numeric" });
+  const rm      = ROLE_META[profile.role] ?? ROLE_META.USER;
+  const sm      = profile.supporterrole ? SUPPORT_META[profile.supporterrole] : null;
+  const isStaff = ["OWNER","MANAGER","ADMIN"].includes(profile.role);
+  const joinDate = new Date(profile.createdat).toLocaleDateString("id-ID", { month: "long", year: "numeric" });
 
   const TABS: { id: Tab; label: string; icon: React.ElementType }[] = [
     { id: "profile",  label: "Profil",   icon: UserCircle },
@@ -651,74 +674,47 @@ export default function ProfilePage() {
   return (
     <>
       {toast && <Toast msg={toast.msg} type={toast.type} onClose={() => setToast(null)} />}
-
       <div className="space-y-5 pb-2">
 
-        {/* ── Tab Bar with save indicator ── */}
+        {/* Tab bar */}
         <div className="flex items-center justify-between gap-4">
-          {/* Tabs */}
           <div className="relative flex gap-1 rounded-2xl border border-border/50 bg-card/30 p-1 backdrop-blur-sm">
             {TABS.map(tab => (
-              <button
-                key={tab.id}
-                onClick={() => switchTab(tab.id)}
-                className={cn(
-                  "relative flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-semibold transition-all duration-200",
-                  activeTab === tab.id
-                    ? "bg-primary text-white shadow-md shadow-primary/20"
-                    : "text-muted-foreground/60 hover:text-foreground hover:bg-muted/30"
-                )}
-              >
+              <button key={tab.id} onClick={() => switchTab(tab.id)}
+                className={cn("relative flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-semibold transition-all duration-200",
+                  activeTab === tab.id ? "bg-primary text-white shadow-md shadow-primary/20" : "text-muted-foreground/60 hover:text-foreground hover:bg-muted/30")}>
                 <tab.icon className="h-3.5 w-3.5" />
                 {tab.label}
-                {/* Dirty indicator di Settings tab */}
                 {tab.id === "settings" && dirty && (
                   <span className="absolute -right-0.5 -top-0.5 h-2 w-2 rounded-full bg-amber-400 ring-2 ring-background" />
                 )}
               </button>
             ))}
           </div>
-
-          {/* Save button (visible kalau di settings dan dirty) */}
           {activeTab === "settings" && (
             <button onClick={handleSave} disabled={saving || !dirty}
-              className={cn(
-                "flex items-center gap-1.5 rounded-xl px-4 py-2 text-xs font-bold transition-all",
-                dirty && !saving
-                  ? "bg-primary text-white shadow-lg shadow-primary/20 hover:-translate-y-0.5"
-                  : "bg-muted/30 text-muted-foreground/30 cursor-not-allowed"
-              )}>
+              className={cn("flex items-center gap-1.5 rounded-xl px-4 py-2 text-xs font-bold transition-all",
+                dirty && !saving ? "bg-primary text-white shadow-lg shadow-primary/20 hover:-translate-y-0.5" : "bg-muted/30 text-muted-foreground/30 cursor-not-allowed")}>
               {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
               {saving ? "Menyimpan…" : "Simpan"}
             </button>
           )}
         </div>
 
-        {/* ── Tab Content dengan slide animation ── */}
+        {/* Animated tab content */}
         <div className="relative overflow-hidden">
-          <div
-            className={cn(
-              "transition-all duration-200",
-              animating
-                ? direction === "left"
-                  ? "-translate-x-4 opacity-0"
-                  : "translate-x-4 opacity-0"
-                : "translate-x-0 opacity-100"
-            )}
-          >
-            {activeTab === "profile" && (
+          <div className={cn("transition-all duration-180",
+            animating ? (direction === "left" ? "-translate-x-3 opacity-0" : "translate-x-3 opacity-0") : "translate-x-0 opacity-100")}>
+            {activeTab === "profile" ? (
               <ProfileTab
-                profile={profile}
+                profile={profile} rm={rm} sm={sm} joinDate={joinDate}
                 displayname={displayname} username={username} bio={bio}
-                avatarurl={avatarurl} coverurl={coverurl} isprivate={isprivate}
-                socials={socials}
-                roleMeta={roleMeta} supportMeta={supportMeta} joinDate={joinDate}
+                avatarurl={avatarurl} coverurl={coverurl} isprivate={isprivate} socials={socials}
                 onGoSettings={() => switchTab("settings")}
               />
-            )}
-            {activeTab === "settings" && (
+            ) : (
               <SettingsTab
-                profile={profile} roleMeta={roleMeta} supportMeta={supportMeta} joinDate={joinDate}
+                profile={profile} rm={rm} sm={sm} joinDate={joinDate}
                 displayname={displayname} setDisplayname={setDisplayname}
                 username={username} setUsername={setUsername}
                 bio={bio} setBio={setBio}
@@ -726,17 +722,13 @@ export default function ProfilePage() {
                 coverurl={coverurl} setCoverurl={setCoverurl}
                 isprivate={isprivate} setIsprivate={setIsprivate}
                 socials={socials} setSocials={setSocials}
-                setDirty={setDirty}
-                saving={saving} dirty={dirty}
-                onSave={handleSave} onSignout={handleSignout}
-                isStaff={isStaff}
+                setDirty={setDirty} saving={saving} dirty={dirty}
+                onSave={handleSave} onSignout={handleSignout} isStaff={isStaff}
               />
             )}
           </div>
         </div>
-
       </div>
-
       <Footer />
     </>
   );
