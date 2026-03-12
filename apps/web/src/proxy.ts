@@ -22,7 +22,19 @@ export async function proxy(request: NextRequest) {
   )
 
   const { data: { user } } = await supabase.auth.getUser()
-  const { pathname } = request.nextUrl
+  const { pathname, searchParams, origin } = request.nextUrl
+
+  // ── OAuth error redirect — Supabase mengirim error params ke Site URL (/) ──
+  // Contoh: /?error=invalid_request&error_code=bad_oauth_callback&...
+  if (pathname === '/') {
+    const hasOauthError = ['error', 'error_code', 'error_description'].some(p => searchParams.has(p))
+    if (hasOauthError) {
+      const desc = searchParams.get('error_description') ?? searchParams.get('error') ?? 'oauth_error'
+      const loginUrl = new URL('/login', origin)
+      loginUrl.searchParams.set('error', desc)
+      return NextResponse.redirect(loginUrl)
+    }
+  }
 
   // ── Permanent redirects — deprecated routes ──────────────────────────────
 

@@ -4,7 +4,7 @@ export const dynamic = "force-dynamic";
 import Link from "next/link";
 import Image from "next/image";
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Eye, EyeOff, ArrowRight, AlertCircle, Home, User, LogOut, CheckCircle2 } from "lucide-react";
 import { DiscordIcon, GoogleIcon } from "@/components/icons/custom-icons";
 import { cn } from "@/lib/utils";
@@ -97,10 +97,19 @@ function AlreadyLoggedIn({ displayname, onLogout }: { displayname: string; onLog
 
 // ── Page ──────────────────────────────────────────────────────────────────────
 export default function LoginPage() {
-  const router = useRouter();
+  const router       = useRouter();
+  const searchParams = useSearchParams();
   const [showPass,     setShowPass]     = useState(false);
   const [loading,      setLoading]      = useState(false);
-  const [formError,    setFormError]    = useState("");
+  const [formError,    setFormError]    = useState(() => {
+    // Tampilkan error dari OAuth callback (redirect dari middleware)
+    const e = searchParams.get("error");
+    if (!e) return "";
+    const decoded = decodeURIComponent(e);
+    if (decoded.includes("state")) return "Sesi login kedaluwarsa. Silakan coba login lagi.";
+    if (decoded.includes("invalid_request")) return "Permintaan OAuth tidak valid. Gunakan tombol login Discord di bawah.";
+    return decoded.replace(/\+/g, " ");
+  });
   const [loggedIn,     setLoggedIn]     = useState<{ displayname: string } | null>(null);
   const [checkingAuth, setCheckingAuth] = useState(true);
 
