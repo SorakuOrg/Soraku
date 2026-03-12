@@ -17,7 +17,7 @@ const PatchSchema = z.object({
 export async function GET(req: NextRequest) {
   try {
     const session = await getSession()
-    if (!session || !isStaff(session.role)) return FORBIDDEN
+    if (!session || !isStaff(session.role)) return FORBIDDEN()
 
     const { searchParams } = new URL(req.url)
     const search = searchParams.get('q')
@@ -36,23 +36,23 @@ export async function GET(req: NextRequest) {
     if (role)   query = query.eq('role', role)
 
     const { data, error, count } = await query
-    if (error) return SERVER_ERROR
+    if (error) return SERVER_ERROR()
     return ok(data, 200, { total: count ?? 0, page, limit })
-  } catch { return SERVER_ERROR }
+  } catch { return SERVER_ERROR() }
 }
 
 // PATCH /api/admin/users — update role / ban
 export async function PATCH(req: NextRequest) {
   try {
     const session = await getSession()
-    if (!session || !isStaff(session.role)) return FORBIDDEN
+    if (!session || !isStaff(session.role)) return FORBIDDEN()
 
     const body   = await req.json()
     const parsed = PatchSchema.safeParse(body)
     if (!parsed.success) return err(parsed.error.message)
 
     // Hanya OWNER/MANAGER yang bisa ubah role
-    if (parsed.data.role && !isManager(session.role)) return FORBIDDEN
+    if (parsed.data.role && !isManager(session.role)) return FORBIDDEN()
 
     const { id, ...updates } = parsed.data
     const { data, error } = await adminDb()
@@ -60,5 +60,5 @@ export async function PATCH(req: NextRequest) {
 
     if (error) return err(error.message)
     return ok(data)
-  } catch { return SERVER_ERROR }
+  } catch { return SERVER_ERROR() }
 }

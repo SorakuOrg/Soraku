@@ -25,21 +25,21 @@ const PatchSchema = z.object({
 export async function GET(_req: NextRequest, { params }: Params) {
   try {
     const session = await getSession()
-    if (!session || !isStaff(session.role)) return FORBIDDEN
+    if (!session || !isStaff(session.role)) return FORBIDDEN()
     const { id } = await params
     const { data, error } = await adminDb()
       .from('events').select('*').eq('id', id).maybeSingle()
-    if (error) return SERVER_ERROR
-    if (!data) return NOT_FOUND
+    if (error) return SERVER_ERROR()
+    if (!data) return NOT_FOUND()
     return ok(data)
-  } catch { return SERVER_ERROR }
+  } catch { return SERVER_ERROR() }
 }
 
 // PATCH /api/admin/events/[id]
 export async function PATCH(req: NextRequest, { params }: Params) {
   try {
     const session = await getSession()
-    if (!session || !isStaff(session.role)) return FORBIDDEN
+    if (!session || !isStaff(session.role)) return FORBIDDEN()
     const { id } = await params
     const body    = await req.json()
     const parsed  = PatchSchema.safeParse(body)
@@ -51,19 +51,19 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     const { data, error } = await adminDb()
       .from('events').update(updates).eq('id', id).select().maybeSingle()
     if (error) return err(error.message)
-    if (!data) return NOT_FOUND
+    if (!data) return NOT_FOUND()
     return ok(data)
-  } catch { return SERVER_ERROR }
+  } catch { return SERVER_ERROR() }
 }
 
 // DELETE /api/admin/events/[id]
 export async function DELETE(_req: NextRequest, { params }: Params) {
   try {
     const session = await getSession()
-    if (!session || !isStaff(session.role)) return FORBIDDEN
+    if (!session || !isStaff(session.role)) return FORBIDDEN()
     const { id }  = await params
     const { error } = await adminDb().from('events').delete().eq('id', id)
     if (error) return err(error.message)
     return ok({ deleted: true })
-  } catch { return SERVER_ERROR }
+  } catch { return SERVER_ERROR() }
 }

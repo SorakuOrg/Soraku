@@ -24,7 +24,7 @@ export async function GET(req: NextRequest) {
     }
 
     const { data, error } = await query
-    if (error) return SERVER_ERROR
+    if (error) return SERVER_ERROR()
     return ok(data)
-  } catch { return SERVER_ERROR }
+  } catch { return SERVER_ERROR() }
 }

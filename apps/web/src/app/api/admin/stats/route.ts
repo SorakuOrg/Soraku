@@ -8,7 +8,7 @@ import { ok, FORBIDDEN, SERVER_ERROR } from '@/lib/api'
 export async function GET() {
   try {
     const session = await getSession()
-    if (!session || !isStaff(session.role)) return FORBIDDEN
+    if (!session || !isStaff(session.role)) return FORBIDDEN()
 
     const db = adminDb()
 
@@ -36,5 +36,5 @@ export async function GET() {
       recent_posts:    recentPosts    ?? [],
       pending_gallery: pendingGallery ?? [],
     })
-  } catch { return SERVER_ERROR }
+  } catch { return SERVER_ERROR() }
 }

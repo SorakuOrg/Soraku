@@ -61,5 +61,5 @@ export async function POST(req: NextRequest) {
       // Jika email confirmation aktif, user belum langsung login
       confirmed: authData.user.email_confirmed_at != null,
     }, 201)
-  } catch { return SERVER_ERROR }
+  } catch { return SERVER_ERROR() }
 }

@@ -25,5 +25,5 @@ export async function GET(req: NextRequest) {
     const { data, error, count } = await q
     if (error) return err(error.message)
     return ok(data ?? [], 200, { total: count ?? 0, page, limit })
-  } catch { return SERVER_ERROR }
+  } catch { return SERVER_ERROR() }
 }

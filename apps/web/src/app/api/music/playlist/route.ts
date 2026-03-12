@@ -13,7 +13,7 @@ export async function GET() {
       .eq('isactive', true)
       .order('ordernum', { ascending: true })
 
-    if (error) return SERVER_ERROR
+    if (error) return SERVER_ERROR()
 
     // Map ke shape yang dipakai music player context
     const tracks = (data ?? []).map(t => ({
@@ -27,5 +27,5 @@ export async function GET() {
     }))
 
     return ok(tracks)
-  } catch { return SERVER_ERROR }
+  } catch { return SERVER_ERROR() }
 }

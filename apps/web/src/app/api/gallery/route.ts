@@ -38,7 +38,7 @@ export async function GET(req: NextRequest) {
     if (tag) query = query.contains('tags', [tag])
 
     const { data, error, count } = await query
-    if (error) return SERVER_ERROR
+    if (error) return SERVER_ERROR()
     return ok(data, 200, { total: count ?? 0, page, limit })
-  } catch { return SERVER_ERROR }
+  } catch { return SERVER_ERROR() }
 }

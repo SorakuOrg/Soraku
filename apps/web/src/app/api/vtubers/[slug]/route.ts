@@ -18,5 +18,5 @@ export async function GET(_req: NextRequest, { params }: Params) {
       .single()
     if (error || !data) return err('VTuber tidak ditemukan', 404)
     return ok(data)
-  } catch { return SERVER_ERROR }
+  } catch { return SERVER_ERROR() }
 }

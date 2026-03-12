@@ -47,5 +47,5 @@ export async function POST(req: NextRequest) {
       supporterrole: profile?.supporterrole ?? null,
       issupporter:   profile?.supporterrole != null,
     })
-  } catch { return SERVER_ERROR }
+  } catch { return SERVER_ERROR() }
 }

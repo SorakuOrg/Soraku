@@ -13,7 +13,7 @@ export async function GET(_req: NextRequest, { params }: Params) {
     const { data, error } = await adminDb()
       .from('vtubers').select('*').eq('slug', slug).eq('isactive', true).single()
 
-    if (error || !data) return NOT_FOUND
+    if (error || !data) return NOT_FOUND()
     return ok(data)
-  } catch { return SERVER_ERROR }
+  } catch { return SERVER_ERROR() }
 }

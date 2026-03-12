@@ -18,7 +18,7 @@ const PatchSchema = z.object({
 export async function PATCH(req: NextRequest, { params }: Params) {
   try {
     const session = await getSession()
-    if (!session || !isStaff(session.role)) return FORBIDDEN
+    if (!session || !isStaff(session.role)) return FORBIDDEN()
     const { id } = await params
     const body    = await req.json()
     const parsed  = PatchSchema.safeParse(body)
@@ -40,17 +40,17 @@ export async function PATCH(req: NextRequest, { params }: Params) {
 
     if (error) return err(error.message)
     return ok(data)
-  } catch { return SERVER_ERROR }
+  } catch { return SERVER_ERROR() }
 }
 
 // DELETE /api/admin/gallery/[id]
 export async function DELETE(_req: NextRequest, { params }: Params) {
   try {
     const session = await getSession()
-    if (!session || !isStaff(session.role)) return FORBIDDEN
+    if (!session || !isStaff(session.role)) return FORBIDDEN()
     const { id }    = await params
     const { error } = await adminDb().from('gallery').delete().eq('id', id)
     if (error) return err(error.message)
     return ok({ deleted: true })
-  } catch { return SERVER_ERROR }
+  } catch { return SERVER_ERROR() }
 }

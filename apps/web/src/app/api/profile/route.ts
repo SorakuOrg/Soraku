@@ -32,7 +32,7 @@ function normalize(data: Record<string, unknown>) {
 export async function GET() {
   try {
     const session = await getSession()
-    if (!session) return UNAUTHORIZED
+    if (!session) return UNAUTHORIZED()
 
     // maybeSingle() — tidak throw jika row belum ada
     const { data, error } = await adminDb()
@@ -109,7 +109,7 @@ export async function GET() {
     return ok(normalize(data as Record<string, unknown>))
   } catch (e) {
     console.error('[api/profile GET] unexpected:', e)
-    return SERVER_ERROR
+    return SERVER_ERROR()
   }
 }
 
@@ -117,7 +117,7 @@ export async function GET() {
 export async function PATCH(req: NextRequest) {
   try {
     const session = await getSession()
-    if (!session) return UNAUTHORIZED
+    if (!session) return UNAUTHORIZED()
 
     const body   = await req.json()
     const parsed = UpdateSchema.safeParse(body)
@@ -137,13 +137,13 @@ export async function PATCH(req: NextRequest) {
 
     if (error) {
       console.error('[api/profile PATCH] DB error:', error.message)
-      return SERVER_ERROR
+      return SERVER_ERROR()
     }
     if (!data) return err('Profil tidak ditemukan', 404)
 
     return ok(normalize(data as Record<string, unknown>))
   } catch (e) {
     console.error('[api/profile PATCH] unexpected:', e)
-    return SERVER_ERROR
+    return SERVER_ERROR()
   }
 }

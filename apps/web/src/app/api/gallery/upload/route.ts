@@ -9,7 +9,7 @@ export const dynamic = 'force-dynamic'
 export async function POST(req: NextRequest) {
   try {
     const session = await getSession()
-    if (!session) return UNAUTHORIZED
+    if (!session) return UNAUTHORIZED()
 
     const form        = await req.formData()
     const file        = form.get('file') as File | null
@@ -43,5 +43,5 @@ export async function POST(req: NextRequest) {
 
     if (error) return err(error.message)
     return ok(data, 201)
-  } catch { return SERVER_ERROR }
+  } catch { return SERVER_ERROR() }
 }

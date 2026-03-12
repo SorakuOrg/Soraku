@@ -23,7 +23,7 @@ const EventSchema = z.object({
 export async function GET(req: NextRequest) {
   try {
     const session = await getSession()
-    if (!session || !isStaff(session.role)) return FORBIDDEN
+    if (!session || !isStaff(session.role)) return FORBIDDEN()
     const { searchParams } = new URL(req.url)
     const limit = Math.min(Number(searchParams.get('limit') ?? '100'), 200)
     const { data, error } = await adminDb()
@@ -31,16 +31,16 @@ export async function GET(req: NextRequest) {
       .select('id,slug,title,startdate,enddate,isonline,ispublished,tags,createdat')
       .order('startdate', { ascending: false })
       .limit(limit)
-    if (error) return SERVER_ERROR
+    if (error) return SERVER_ERROR()
     return ok(data ?? [])
-  } catch { return SERVER_ERROR }
+  } catch { return SERVER_ERROR() }
 }
 
 // POST /api/admin/events
 export async function POST(req: NextRequest) {
   try {
     const session = await getSession()
-    if (!session || !isStaff(session.role)) return FORBIDDEN
+    if (!session || !isStaff(session.role)) return FORBIDDEN()
     const body   = await req.json()
     const parsed = EventSchema.safeParse(body)
     if (!parsed.success) return err(parsed.error.issues[0]?.message ?? 'Input tidak valid')
@@ -66,5 +66,5 @@ export async function POST(req: NextRequest) {
       }
     }
     return ok(data, 201)
-  } catch { return SERVER_ERROR }
+  } catch { return SERVER_ERROR() }
 }

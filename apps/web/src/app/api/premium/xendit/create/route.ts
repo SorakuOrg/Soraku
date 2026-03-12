@@ -16,7 +16,7 @@ const Schema = z.object({ tier: z.enum(['VIP','VVIP']) })
 export async function POST(req: NextRequest) {
   try {
     const session = await getSession()
-    if (!session) return UNAUTHORIZED
+    if (!session) return UNAUTHORIZED()
 
     const body   = await req.json()
     const parsed = Schema.safeParse(body)
@@ -46,5 +46,5 @@ export async function POST(req: NextRequest) {
     if (!res.ok) return err('Gagal membuat invoice Xendit')
     const invoice = await res.json()
     return ok({ payment_url: invoice.invoice_url, external_id: extId })
-  } catch { return SERVER_ERROR }
+  } catch { return SERVER_ERROR() }
 }
