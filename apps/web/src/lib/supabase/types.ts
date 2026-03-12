@@ -43,6 +43,8 @@ export interface DbPost {
   updatedat: string
 }
 
+export type EventStatus = 'online' | 'pending' | 'selesai'
+
 export interface DbEvent {
   id: string
   slug: string
@@ -53,6 +55,7 @@ export interface DbEvent {
   enddate: string | null
   location: string | null
   isonline: boolean
+  status: EventStatus        // 'online' | 'pending' | 'selesai'
   ispublished: boolean
   tags: string[]
   createdby: string | null
@@ -140,4 +143,17 @@ export interface UserSession {
   role: UserRole
   supporterrole: SupporterRole | null
   issupporter: boolean
+}
+
+export type NotifType = 'info' | 'success' | 'warning' | 'system'
+
+export interface DbNotification {
+  id: string
+  userid: string
+  type: NotifType
+  title: string
+  body: string | null
+  href: string | null
+  isread: boolean
+  createdat: string
 }
