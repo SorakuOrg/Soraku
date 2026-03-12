@@ -330,3 +330,32 @@ Saat user baru daftar, kadang DB trigger `on_auth_user_created`
 insert row dengan role USER sebelum callback route selesai cek Discord ID.
 Saran: di callback route, selalu force-update role jika Discord ID match OWNER_DISCORD_IDS,
 bukan hanya cek `if (!existing)`.
+
+
+---
+
+## 📋 LAPORAN — 2026-03-12 #3 (Bubu — commit 2bd7d79)
+
+### ✅ Selesai
+
+**`/dash/profile/me` — Tab Navbar + Swipe Animation:**
+- Tab **Profil** → tampilan read-only identity card (cover, avatar, bio, sosmed)
+- Tab **Settings** → semua form edit yang sudah ada
+- Slide animation antar tab (translate-x + opacity)
+- Dirty dot indicator di Settings tab kalau ada unsaved changes
+- `@username` clickable → `/profile/[username]`
+- Footer ditambahkan
+
+**`/profile/[username]`** — sudah ada, public layout sudah handle Footer.
+
+---
+
+### ❌ SORA — Perlu Dikerjakan
+
+**1. Route `/profile/[username]` butuh data posts/aktivitas user**
+Saat ini hanya tampil info dasar. Jika Sora mau tambah feed publik (posts, gallery), perlu endpoint:
+`GET /api/users/[username]/posts` dan `GET /api/users/[username]/gallery`
+
+**2. Supabase Auth Redirect URLs** (masih urgent)
+
+**3. Partnership Admin API** — Bubu siap buat UI segera setelah ada endpoint

@@ -202,3 +202,24 @@ Agar Riu otomatis dapat role OWNER saat login Discord.
 Aktifkan di: Soraku Discord Server → Settings → Widget → Enable Server Widget ✅
 Guild ID: `1033369620989124628`
 Ini untuk stats real-time di homepage.
+
+
+---
+
+## 📋 LAPORAN — 2026-03-12 #3 (Bubu — commit 2bd7d79)
+
+### ✅ Selesai
+Profile redesign + tab system. `/profile/[username]` route sudah aktif.
+
+### ❌ KAIZO — Internal server error saat save profile
+
+Debug endpoint masih aktif di `/api/debug-save`.
+Buka di browser saat login: `https://soraku.vercel.app/api/debug-save`
+
+Cek hasil `key_is_jwt` dan `db_update`:
+- `key_is_jwt: false` → SUPABASE_SERVICE_ROLE_KEY salah format (harusnya eyJ..., bukan postgresql://...)
+- `db_update: { ok: false }` → ada error detail di response, kirim ke Bubu
+
+**WAJIB cek:** Di Vercel → Settings → Environment Variables:
+- `SUPABASE_SERVICE_ROLE_KEY` harus JWT yang diawali `eyJ`, ambil dari:
+  Supabase Dashboard → Project Settings → API → **service_role** (bukan connection string!)
