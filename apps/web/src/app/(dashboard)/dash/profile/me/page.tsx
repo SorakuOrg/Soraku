@@ -606,7 +606,7 @@ export default function ProfilePage() {
 
   const handleSignout = async () => {
     await fetch("/api/auth/signout", { method: "POST" }).catch(() => {});
-    router.push("/"); router.refresh();
+    window.location.href = "/";
   };
 
   // Tab switch dengan animasi

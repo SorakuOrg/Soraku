@@ -208,8 +208,10 @@ function UserDropdown({ user }: { user: SessionUser }) {
     try {
       await fetch("/api/auth/signout", { method: "POST" });
     } finally {
-      router.push("/");
-      router.refresh();
+      // Hard redirect — bukan router.push agar semua state client (session, cache)
+      // di-reset penuh oleh browser. router.push/refresh tidak cukup karena
+      // Next.js masih cache session lama di memory.
+      window.location.href = "/";
     }
   };
 
