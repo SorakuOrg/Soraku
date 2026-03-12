@@ -243,3 +243,34 @@ Cek hasil `key_is_jwt` dan `db_update`:
 2. **Set `DATABASE_URL` di Vercel** — ambil dari Supabase → Project Settings → Database → Transaction Pooler URI (port 6543)
 3. **Rename `TRAKTEER_WEBHOOK_TOKEN` → `TRAKTEER_WEBHOOK_SECRET`** di Vercel ENV dan di Trakteer Dashboard
 4. **Pastikan `dotenv` terinstall** di `apps/web/` untuk `drizzle-kit` CLI
+
+
+---
+
+## 📋 LAPORAN — 2026-03-12 #4 (Bubu — commit 624caa4)
+
+### ✅ Fix
+- PGRST106 sudah di-fix di level DB (pgrst.db_schemas expose)
+- OAuth error di homepage sudah di-handle → redirect ke /login dengan pesan jelas
+
+### ❌ KAIZO — Perlu Action
+
+**Bot Invite URL salah arah:**
+URL yang ada sekarang:
+```
+https://discord.com/oauth2/authorize?client_id=1022891520019419239
+  &redirect_uri=https://jrgknsxqwuygcoocnnnb.supabase.co/auth/v1/callback
+```
+`redirect_uri` ini adalah Supabase Auth callback — untuk user login, bukan bot invite.
+Kalau orang klik link ini untuk invite bot → Discord redirect ke Supabase → PKCE state missing → error.
+
+**URL bot invite yang benar** seharusnya:
+```
+https://discord.com/oauth2/authorize?client_id=1022891520019419239
+  &permissions=8&scope=bot+applications.commands&integration_type=0
+```
+(Tanpa `response_type=code` dan `redirect_uri` Supabase)
+
+**SUPABASE_SERVICE_ROLE_KEY** di Vercel:
+- Harus JWT format (`eyJ...`), bukan connection string (`postgresql://...`)
+- Ambil dari: Supabase Dashboard → Project Settings → API → `service_role` key

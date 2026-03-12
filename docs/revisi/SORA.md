@@ -195,3 +195,44 @@ const res = await fetch("/api/blog") // double round-trip
 | 9 | 2026-03-12 | DB sync fix — cleanup duplikat + types | Kaizo |
 | 10 | 2026-03-12 | Logout hard-refresh fix | Kaizo |
 | 11 | 2026-03-12 | .env.example lengkap di apps/web/ | Kaizo |
+
+
+---
+
+## 📋 LAPORAN — 2026-03-12 #4 (Bubu — commit 624caa4)
+
+### ✅ Fix yang dikerjakan
+
+**1. PGRST106 — Schema `soraku` tidak ter-expose ke PostgREST**
+- Root cause: Supabase PostgREST default hanya expose schema `public`
+- Fix: `ALTER ROLE authenticator SET pgrst.db_schemas TO 'public, soraku'` + `NOTIFY pgrst`
+- Dikonfirmasi lewat `pg_roles`: `pgrst.db_schemas=public, soraku` sudah aktif
+- Efek: `/api/profile`, `/api/notifications`, semua route pakai `adminDb()` → sudah bisa query
+
+**2. OAuth error di homepage (bad_oauth_callback)**
+- Supabase redirect `/?error=invalid_request&error_code=bad_oauth_callback` ke Site URL
+- Fix di `proxy.ts`: deteksi `?error=` / `?error_code=` di pathname `/` → redirect ke `/login?error=...`
+- Fix di `login/page.tsx`: baca `?error=` dari searchParams, tampilkan pesan ramah ke user
+
+**3. tsconfig.json**
+- Exclude `commitlint.config.ts` dari TypeScript build (Fix `Cannot find module '@commitlint/types'`)
+
+---
+
+### ❌ SORA — Perlu Action (URGENT)
+
+**Supabase Auth Config** (root cause `bad_oauth_callback`):
+1. **Site URL** → harus: `https://soraku.vercel.app`
+2. **Redirect URLs** → tambahkan: `https://soraku.vercel.app/**`
+
+Lokasi: Supabase Dashboard → Authentication → URL Configuration
+
+Kalau belum di-set, PKCE state tidak tersimpan → OAuth selalu gagal.
+
+**Bot Invite URL** (beda concern dari login):
+URL yang beredar:
+```
+https://discord.com/oauth2/authorize?...&redirect_uri=https://jrgknsxqwuygcoocnnnb.supabase.co/auth/v1/callback
+```
+Ini seharusnya redirect ke Railway bot endpoint, BUKAN ke Supabase callback.
+Koordinasi dengan Kaizo untuk pisahkan URL bot invite dari URL login user.
