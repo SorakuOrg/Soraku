@@ -1,24 +1,24 @@
 /**
- * lib/db/index.ts — Drizzle ORM client (standby)
- * Saat ini platform menggunakan Supabase JS client (adminDb/createClient).
- * Drizzle disiapkan untuk query kompleks di masa mendatang.
+ * lib/db/index.ts — Drizzle ORM client
+ * ENV via @/env (T3 Env — type-safe, validated).
  *
- * Untuk aktifkan: tambahkan DATABASE_URL ke env.ts + set di Vercel.
- * Format: postgresql://postgres.[ref]:[password]@aws-1-ap-southeast-2.pooler.supabase.com:6543/postgres
+ * DATABASE_URL diset di Vercel sebagai optional — tidak block build jika kosong.
+ * Jika diakses tanpa DATABASE_URL, throw error yang jelas.
  */
 import { drizzle } from 'drizzle-orm/postgres-js'
 import postgres from 'postgres'
 import * as schema from './schema'
+import { env } from '@/env'
 
-const url = process.env.DATABASE_URL
-
-if (!url) {
-  // Drizzle belum aktif — tidak crash, hanya warn
-  console.warn('[db] DATABASE_URL tidak diset — Drizzle standby, platform pakai Supabase client')
+function createDb() {
+  if (!env.DATABASE_URL) {
+    throw new Error(
+      '[db] DATABASE_URL belum diset di Vercel.\n' +
+      'Supabase → Project Settings → Database → Connection string → Transaction (port 6543)'
+    )
+  }
+  const client = postgres(env.DATABASE_URL, { prepare: false })
+  return drizzle(client, { schema })
 }
 
-// Lazy init — hanya connect jika DATABASE_URL ada
-const client = url ? postgres(url, { prepare: false }) : null
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export const db = client ? drizzle(client, { schema }) : null as any
+export const db = createDb()
