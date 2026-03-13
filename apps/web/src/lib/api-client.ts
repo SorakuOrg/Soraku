@@ -5,23 +5,27 @@
  * Pakai di Server Components atau API Routes:
  *   import { api } from "@/lib/api-client"
  *   const { data } = await api.blog.list({ tag: "anime" })
+ *
+ * Pakai dengan auth user (Server Component):
+ *   import { apiWithToken } from "@/lib/api-client"
+ *   const session = await getSession()
+ *   const { data } = await apiWithToken(session?.accessToken).premium.status()
  */
 import { createApiClient } from "@soraku/utils"
+import { env } from "@/env"
 
-const API_URL = process.env.API_URL ?? process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000"
+/** Client publik — untuk data yang tidak perlu auth */
+export const api = createApiClient({ baseUrl: env.API_URL })
 
-/** Client tanpa auth — untuk data publik */
-export const api = createApiClient({ baseUrl: API_URL })
-
-/** Client dengan Supabase JWT — untuk data private/premium */
-export function apiWithToken(token: string) {
-  return createApiClient({ baseUrl: API_URL, token })
+/** Client dengan Supabase JWT user — untuk data private/premium */
+export function apiWithToken(token: string | undefined) {
+  return createApiClient({ baseUrl: env.API_URL, token })
 }
 
-/** Client dengan internal secret — untuk komunikasi bot/webhook */
+/** Client internal — untuk komunikasi web ↔ bot via secret */
 export function apiInternal() {
   return createApiClient({
-    baseUrl: API_URL,
-    internalSecret: process.env.SORAKU_API_SECRET ?? "",
+    baseUrl:        env.API_URL,
+    internalSecret: env.SORAKU_API_SECRET ?? "",
   })
 }

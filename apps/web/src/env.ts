@@ -5,7 +5,7 @@
  * Import: import { env } from '@/env'
  *
  * ▸ Server : DATABASE_URL, SUPABASE_SERVICE_ROLE_KEY, XENDIT_SECRET_KEY,
- *            TRAKTEER_WEBHOOK_SECRET, SORAKU_API_SECRET, BOT_*
+ *            TRAKTEER_WEBHOOK_SECRET, SORAKU_API_SECRET, BOT_*, API_URL
  * ▸ Client : NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY,
  *            NEXT_PUBLIC_SITE_URL
  *
@@ -30,6 +30,10 @@ export const env = createEnv({
     XENDIT_WEBHOOK_TOKEN:    z.string().optional(),
     TRAKTEER_WEBHOOK_SECRET: z.string().min(1).optional(),
 
+    // Central API (services/api) — URL untuk koneksi ke services/api
+    // Dev: http://localhost:4000 | Prod: https://soraku-api.vercel.app
+    API_URL: z.string().url().default('http://localhost:4000'),
+
     // Bot + internal
     SORAKU_API_SECRET:   z.string().min(1).optional(),
     BOT_WEBHOOK_URL:     z.string().url().optional(),
@@ -53,6 +57,7 @@ export const env = createEnv({
     XENDIT_SECRET_KEY:          process.env.XENDIT_SECRET_KEY,
     XENDIT_WEBHOOK_TOKEN:       process.env.XENDIT_WEBHOOK_TOKEN,
     TRAKTEER_WEBHOOK_SECRET:    process.env.TRAKTEER_WEBHOOK_SECRET,
+    API_URL:                    process.env.API_URL,
     SORAKU_API_SECRET:          process.env.SORAKU_API_SECRET,
     BOT_WEBHOOK_URL:            process.env.BOT_WEBHOOK_URL,
     BOT_WEBHOOK_SECRET:         process.env.BOT_WEBHOOK_SECRET,

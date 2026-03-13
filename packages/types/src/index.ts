@@ -174,3 +174,55 @@ export type PaginatedResponse<T> = ApiResponse<{
   limit: number
   total: number
 }>
+
+// ── Anime Streaming ───────────────────────────────────────────
+export type AnimeSource =
+  | "gogoanime"   // Sub English — gogoanime
+  | "hianime"     // Sub English — HiAnime / Aniwatch
+  | "animekai"    // Sub English — Animekai
+  | "anibaru"     // Sub Indonesia — AniBaru.id
+  | "samehadaku"  // Sub Indonesia — Samehadaku
+
+export type AnimeLang = "sub-en" | "sub-id" | "dub-en"
+
+export interface AnimeSearchResult {
+  id:          string          // source-specific ID / slug
+  title:       string
+  altTitles:   string[]
+  cover:       string | null
+  source:      AnimeSource
+  url:         string
+  totalEpisodes: number | null
+  status:      "Ongoing" | "Completed" | "Unknown"
+  genres:      string[]
+}
+
+export interface AnimeEpisode {
+  id:      string    // episode ID dari source
+  number:  number
+  title:   string | null
+  isFiller: boolean
+}
+
+export interface AnimeDetail extends AnimeSearchResult {
+  description: string | null
+  episodes:    AnimeEpisode[]
+  year:        number | null
+  rating:      number | null
+}
+
+export interface AnimeStreamSource {
+  url:     string   // M3U8 / direct video URL
+  quality: string   // "1080p" | "720p" | "360p" | "default"
+  isM3U8:  boolean
+  isDASH:  boolean
+}
+
+export interface AnimeStreamResult {
+  episodeId: string
+  source:    AnimeSource
+  streams:   AnimeStreamSource[]
+  subtitles: { url: string; lang: string }[]
+  intro:     { start: number; end: number } | null
+  outro:     { start: number; end: number } | null
+}

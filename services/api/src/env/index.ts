@@ -3,13 +3,29 @@ import { z } from "zod"
 
 export const env = createEnv({
   server: {
-    DATABASE_URL:              z.string().url(),
+    // Database — Supabase Transaction Pooler (port 6543)
+    DATABASE_URL: z.string().url(),
+
+    // Supabase
     SUPABASE_URL:              z.string().url(),
     SUPABASE_SERVICE_ROLE_KEY: z.string().min(1),
-    SORAKU_API_SECRET:         z.string().min(32),
-    XENDIT_SECRET_KEY:         z.string().optional(),
-    TRAKTEER_WEBHOOK_TOKEN:    z.string().optional(),
-    NODE_ENV:                  z.enum(["development", "production", "test"]).default("development"),
+
+    // Secret untuk auth antar service (web ↔ api ↔ bot)
+    SORAKU_API_SECRET: z.string().min(32),
+
+    // Payment (opsional)
+    XENDIT_SECRET_KEY:       z.string().optional(),
+    TRAKTEER_WEBHOOK_SECRET: z.string().optional(), // renamed dari TOKEN
+
+    // CORS — comma-separated origins yang diizinkan
+    // Contoh: https://soraku.vercel.app,https://stream.soraku.vercel.app
+    CORS_ORIGINS: z.string().optional(),
+
+    // Consumet API — untuk anime streaming data (self-hosted atau public)
+    // https://github.com/consumet/consumet.ts
+    CONSUMET_API_URL: z.string().url().optional(),
+
+    NODE_ENV: z.enum(["development", "production", "test"]).default("development"),
   },
   client: {},
   runtimeEnv: {
@@ -18,7 +34,11 @@ export const env = createEnv({
     SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY,
     SORAKU_API_SECRET:         process.env.SORAKU_API_SECRET,
     XENDIT_SECRET_KEY:         process.env.XENDIT_SECRET_KEY,
-    TRAKTEER_WEBHOOK_TOKEN:    process.env.TRAKTEER_WEBHOOK_TOKEN,
+    TRAKTEER_WEBHOOK_SECRET:   process.env.TRAKTEER_WEBHOOK_SECRET,
+    CORS_ORIGINS:              process.env.CORS_ORIGINS,
+    CONSUMET_API_URL:          process.env.CONSUMET_API_URL,
     NODE_ENV:                  process.env.NODE_ENV,
   },
+  skipValidation:         !!process.env.SKIP_ENV_VALIDATION,
+  emptyStringAsUndefined: true,
 })

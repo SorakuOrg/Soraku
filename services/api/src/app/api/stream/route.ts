@@ -1,32 +1,58 @@
+/**
+ * GET /api/stream
+ * List streaming content dari Soraku DB (VTuber VOD, clips, live).
+ *
+ * GET /api/stream?anime=true&q=naruto&source=hianime
+ * Search anime dari provider eksternal (GogoAnime, HiAnime, Animekai, AniBaru).
+ */
 import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
 import { streamcontent, users } from "@/lib/db/schema"
-import { StreamQuerySchema } from "@/lib/validators"
+import { StreamQuerySchema, AnimeSearchQuerySchema } from "@/lib/validators"
 import { verifyAuth } from "@/lib/auth"
+import { searchAnime } from "@/lib/anime"
 import { eq, and, desc } from "drizzle-orm"
 
 export const dynamic = "force-dynamic"
 
-// GET /api/stream
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url)
+
+  // ── Mode anime search (dari sumber eksternal) ─────────────
+  if (searchParams.get("anime") === "true") {
+    const parsed = AnimeSearchQuerySchema.safeParse(Object.fromEntries(searchParams))
+    if (!parsed.success) {
+      return NextResponse.json({ data: null, error: parsed.error.issues[0]?.message }, { status: 400 })
+    }
+    const { q, source, page } = parsed.data
+    const results = await searchAnime(q, source, page)
+    return NextResponse.json({ data: results, error: null })
+  }
+
+  // ── Mode Soraku DB streaming content ─────────────────────
   const parsed = StreamQuerySchema.safeParse(Object.fromEntries(searchParams))
-  if (!parsed.success) return NextResponse.json({ data: null, error: parsed.error.issues[0]?.message }, { status: 400 })
+  if (!parsed.success) {
+    return NextResponse.json({ data: null, error: parsed.error.issues[0]?.message }, { status: 400 })
+  }
 
   const { type, vtuberid, ispremium, page, limit } = parsed.data
   const offset = (page - 1) * limit
 
-  // Konten premium — wajib punya subscription aktif
+  // Konten premium — wajib subscription aktif
   if (ispremium) {
     const auth = await verifyAuth(req)
-    if ("error" in auth || !("userId" in auth)) {
-      return NextResponse.json({ data: null, error: "Premium content requires login" }, { status: 401 })
+    if ("error" in auth) {
+      return NextResponse.json({ data: null, error: "Konten premium — login dulu" }, { status: 401 })
     }
-    const [user] = await db
-      .select({ supporterrole: users.supporterrole, supporteruntil: users.supporteruntil })
-      .from(users).where(eq(users.id, auth.userId)).limit(1)
-    const isActive = user?.supporterrole && (!user.supporteruntil || user.supporteruntil > new Date())
-    if (!isActive) return NextResponse.json({ data: null, error: "Premium subscription required" }, { status: 403 })
+    if ("userId" in auth) {
+      const [user] = await db
+        .select({ supporterrole: users.supporterrole, supporteruntil: users.supporteruntil })
+        .from(users).where(eq(users.id, auth.userId)).limit(1)
+      const isActive = user?.supporterrole && (!user.supporteruntil || user.supporteruntil > new Date())
+      if (!isActive) {
+        return NextResponse.json({ data: null, error: "Butuh subscription premium" }, { status: 403 })
+      }
+    }
   }
 
   const rows = await db

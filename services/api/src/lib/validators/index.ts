@@ -56,3 +56,10 @@ export const TrakteerWebhookSchema = z.object({
   unit:              z.string(),
   created_at:        z.string(),
 })
+
+// ── Anime Search (via external providers) ────────────────────
+export const AnimeSearchQuerySchema = z.object({
+  q:      z.string().min(1).max(200),
+  source: z.enum(["gogoanime", "hianime", "animekai", "anibaru", "samehadaku"]).default("hianime"),
+  page:   z.coerce.number().min(1).default(1),
+})
