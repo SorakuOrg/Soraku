@@ -9,13 +9,13 @@ export const dynamic = "force-dynamic"
 
 // POST /api/donate/trakteer
 export async function POST(req: NextRequest) {
-  if (!env.TRAKTEER_WEBHOOK_TOKEN) {
+  if (!env.TRAKTEER_WEBHOOK_SECRET) {
     return NextResponse.json({ error: "Not configured" }, { status: 503 })
   }
 
   const sig      = req.headers.get("x-trakteer-signature") ?? ""
   const rawBody  = await req.text()
-  const expected = createHash("sha256").update(env.TRAKTEER_WEBHOOK_TOKEN + rawBody).digest("hex")
+  const expected = createHash("sha256").update(env.TRAKTEER_WEBHOOK_SECRET + rawBody).digest("hex")
   if (sig !== expected) return NextResponse.json({ error: "Invalid signature" }, { status: 401 })
 
   const parsed = TrakteerWebhookSchema.safeParse(JSON.parse(rawBody))
