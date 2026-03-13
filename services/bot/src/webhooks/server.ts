@@ -97,7 +97,8 @@ app.post("/webhook/discord-event", async (c) => {
 
   try {
     const channel = client.channels.cache.get(channelId);
-    if (!channel || !channel.isTextBased()) return c.json({ error: "Channel not found" }, 404);
+    if (!channel || !("send" in channel)) return c.json({ error: "Channel not found or not sendable" }, 404);
+    const textChannel = channel as { send: (msg: string) => Promise<unknown> };
 
     const { title, description, startAt, eventUrl } = parsed.data;
     const date = new Date(startAt).toLocaleString("id-ID", {
@@ -112,7 +113,7 @@ app.post("/webhook/discord-event", async (c) => {
       `\n🔔 Jangan sampai terlewat, Sorakuuu~`,
     ].filter(Boolean).join("\n");
 
-    await channel.send(msg);
+    await textChannel.send(msg);
     return c.json({ announced: true });
   } catch (err) {
     console.error("[bot] discord-event error:", err);
