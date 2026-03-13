@@ -1,14 +1,3 @@
-/**
- * GET /api/stream/[slug]
- * Soraku DB streaming content detail (VTuber VOD).
- *
- * GET /api/stream/[episodeId]?anime=true&source=hianime
- * Anime episode stream sources dari provider eksternal.
- * Response berisi HLS streams + subtitles + skip intro/outro.
- *
- * GET /api/stream/[animeId]?anime=true&source=hianime&info=true
- * Anime detail (metadata + episode list).
- */
 import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
 import { streamcontent, users } from "@/lib/db/schema"
@@ -26,13 +15,12 @@ export async function GET(
   const { slug } = await params
   const { searchParams } = new URL(req.url)
 
-  // ── Mode anime — dari provider eksternal ─────────────────
+  // ── Mode anime ────────────────────────────────────────────
   if (searchParams.get("anime") === "true") {
     const source = (searchParams.get("source") ?? "hianime") as AnimeSource
     const info   = searchParams.get("info") === "true"
 
     if (info) {
-      // Detail anime + episode list
       const detail = await getAnimeDetail(slug, source)
       if (!detail) {
         return NextResponse.json({ data: null, error: "Anime tidak ditemukan" }, { status: 404 })
@@ -40,7 +28,6 @@ export async function GET(
       return NextResponse.json({ data: detail, error: null })
     }
 
-    // Episode streams — HLS/MP4 sources
     const quality = (searchParams.get("quality") ?? "auto") as "auto" | "1080p" | "720p" | "360p"
     const stream  = await getEpisodeStream(slug, source, quality)
     if (!stream) {
@@ -49,7 +36,7 @@ export async function GET(
     return NextResponse.json({ data: stream, error: null })
   }
 
-  // ── Mode Soraku DB — VTuber streaming content ─────────────
+  // ── Mode Soraku DB ────────────────────────────────────────
   const [content] = await db
     .select()
     .from(streamcontent)
@@ -64,18 +51,19 @@ export async function GET(
   if (content.ispremium) {
     const auth = await verifyAuth(req)
     if ("error" in auth) {
-      return NextResponse.json({ data: null, error: "Login dulu untuk akses konten premium" }, { status: 401 })
+      return NextResponse.json({ data: null, error: "Login dulu untuk konten premium" }, { status: 401 })
     }
-    if ("userId" in auth) {
+    const userId = ("userId" in auth && typeof auth.userId === "string") ? auth.userId : null
+    if (userId) {
       const [user] = await db
         .select({ supporterrole: users.supporterrole, supporteruntil: users.supporteruntil })
-        .from(users).where(eq(users.id, auth.userId)).limit(1)
+        .from(users).where(eq(users.id, userId)).limit(1)
       const isActive = user?.supporterrole && (!user.supporteruntil || user.supporteruntil > new Date())
       if (!isActive) {
-        return NextResponse.json({ data: null, error: "Butuh subscription premium untuk konten ini" }, { status: 403 })
+        return NextResponse.json({ data: null, error: "Butuh subscription premium" }, { status: 403 })
       }
     }
-    // API key / internal client — boleh lewat
+    // API key / internal — trusted, lewat
   }
 
   // Increment viewcount (fire and forget)

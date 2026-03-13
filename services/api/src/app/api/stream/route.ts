@@ -1,10 +1,3 @@
-/**
- * GET /api/stream
- * List streaming content dari Soraku DB (VTuber VOD, clips, live).
- *
- * GET /api/stream?anime=true&q=naruto&source=hianime
- * Search anime dari provider eksternal (GogoAnime, HiAnime, Animekai, AniBaru).
- */
 import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
 import { streamcontent, users } from "@/lib/db/schema"
@@ -18,7 +11,7 @@ export const dynamic = "force-dynamic"
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url)
 
-  // ── Mode anime search (dari sumber eksternal) ─────────────
+  // ── Mode anime search ─────────────────────────────────────
   if (searchParams.get("anime") === "true") {
     const parsed = AnimeSearchQuerySchema.safeParse(Object.fromEntries(searchParams))
     if (!parsed.success) {
@@ -29,7 +22,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ data: results, error: null })
   }
 
-  // ── Mode Soraku DB streaming content ─────────────────────
+  // ── Mode Soraku DB ────────────────────────────────────────
   const parsed = StreamQuerySchema.safeParse(Object.fromEntries(searchParams))
   if (!parsed.success) {
     return NextResponse.json({ data: null, error: parsed.error.issues[0]?.message }, { status: 400 })
@@ -38,21 +31,23 @@ export async function GET(req: NextRequest) {
   const { type, vtuberid, ispremium, page, limit } = parsed.data
   const offset = (page - 1) * limit
 
-  // Konten premium — wajib subscription aktif
+  // Premium gate
   if (ispremium) {
     const auth = await verifyAuth(req)
     if ("error" in auth) {
       return NextResponse.json({ data: null, error: "Konten premium — login dulu" }, { status: 401 })
     }
-    if ("userId" in auth) {
+    const userId = ("userId" in auth && typeof auth.userId === "string") ? auth.userId : null
+    if (userId) {
       const [user] = await db
         .select({ supporterrole: users.supporterrole, supporteruntil: users.supporteruntil })
-        .from(users).where(eq(users.id, auth.userId)).limit(1)
+        .from(users).where(eq(users.id, userId)).limit(1)
       const isActive = user?.supporterrole && (!user.supporteruntil || user.supporteruntil > new Date())
       if (!isActive) {
         return NextResponse.json({ data: null, error: "Butuh subscription premium" }, { status: 403 })
       }
     }
+    // API key client — boleh lewat (trusted service)
   }
 
   const rows = await db
@@ -67,8 +62,8 @@ export async function GET(req: NextRequest) {
     .from(streamcontent)
     .where(and(
       eq(streamcontent.status, "published"),
-      type      ? eq(streamcontent.type, type)            : undefined,
-      vtuberid  ? eq(streamcontent.vtuberid, vtuberid)    : undefined,
+      type      ? eq(streamcontent.type, type)         : undefined,
+      vtuberid  ? eq(streamcontent.vtuberid, vtuberid) : undefined,
       ispremium !== undefined ? eq(streamcontent.ispremium, ispremium) : undefined,
     ))
     .orderBy(desc(streamcontent.createdat))
