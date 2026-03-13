@@ -6,6 +6,7 @@ import {
 import { linkCommand }    from "./handlers/link"
 import { profileCommand } from "./handlers/profile"
 import { aboutCommand }   from "./handlers/about"
+import { helpCommand }    from "./handlers/help"
 
 export type Command = {
   data: SlashCommandBuilder | SlashCommandOptionsOnlyBuilder
@@ -18,6 +19,7 @@ const commandList: Command[] = [
   linkCommand    as Command,
   profileCommand as Command,
   aboutCommand   as Command,
+  helpCommand    as Command,
 ]
 
 for (const cmd of commandList) {
