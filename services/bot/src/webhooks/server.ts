@@ -135,6 +135,6 @@ app.post("/webhook/role-sync", async (c) => {
 // ─── Start server ──────────────────────────────────────────────────────────────
 export async function startWebhookServer() {
   const port = parseInt(process.env.PORT ?? "3001")
-  serve({ fetch: app.fetch, port })
-  console.log(`[bot] 🌐 Webhook server running on port ${port}`)
+  serve({ fetch: app.fetch, port, hostname: "0.0.0.0" })
+  console.log(`[bot] 🌐 Webhook server listening on 0.0.0.0:${port}`)
 }
