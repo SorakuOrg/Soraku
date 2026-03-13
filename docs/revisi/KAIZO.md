@@ -1,276 +1,85 @@
-# KAIZO — Brief & Task List
-> From: Sora (Full Stack Lead)
-> Last updated: 2026-03-11 (v1.0.1)
+# Revisi untuk Kaizo — Back-end
+> Updated: 2026-03-13
 
 ---
 
-## ✅ Sudah Selesai
+## ✅ Status services/api
 
-| Area | Status |
-|------|--------|
-| Schema DB soraku (15 tabel) + RLS | ✅ |
-| Auth callback, OAuth PKCE fix | ✅ |
-| Auto-trigger create soraku.users | ✅ |
-| API: blog, events, gallery, vtubers, donate | ✅ |
-| API: admin CRUD + moderasi | ✅ |
-| Fix semua bug auth (logout, bad_oauth_state) | ✅ |
-| Migration runner otomatis | ✅ |
+`services/api` sudah deploy ke Vercel. Landing page sudah ada di root `/`.
+
+**Domain:**
+- `https://apisoraku-git-master-soraku.vercel.app`
+- `https://apisoraku-8jsns0leq-soraku.vercel.app`
 
 ---
 
-## 🔴 Pending Kaizo — Segera
+## 🔧 Yang perlu Kaizo lakukan sekarang
 
-### 1. Jalankan Migration `notifications`
+### 1. Assign custom domain (opsional tapi recommended)
+Di Vercel project `apisoraku` → Settings → Domains → tambah:
+```
+api.soraku.vercel.app
+```
+Atau domain custom kalau ada.
 
-File: `supabase/migrations/20260311_notifications.sql`
+### 2. Set `API_URL` di apps/web di Vercel
+Setelah domain final diketahui, update ENV di project `soraku` (apps/web):
+```
+API_URL = https://apisoraku-git-master-soraku.vercel.app
+```
 
-Buka [Supabase SQL Editor](https://supabase.com/dashboard/project/jrgknsxqwuygcoocnnnb/sql) dan jalankan isinya.
+### 3. Run migration `20260313_level_badge_system.sql`
+Kalau belum di-run, execute di Supabase SQL Editor:
+```
+supabase/migrations/20260313_level_badge_system.sql
+```
+Ini untuk tabel `userlevels` dan `userbadges`.
 
-Tabel yang dibuat:
+### 4. Generate + simpan API Key untuk Discord Bot
+```bash
+node -e "
+const crypto = require('crypto');
+const key  = 'bot_' + crypto.randomBytes(32).toString('hex');
+const hash = crypto.createHash('sha256').update(key).digest('hex');
+console.log('KEY  (→ BOT_API_KEY di Railway):', key);
+console.log('HASH (→ simpan ke DB):', hash);
+"
+```
+
+Simpan HASH ke Supabase:
 ```sql
-soraku.notifications (
-  id UUID PK,
-  userid UUID FK → soraku.users,
-  type TEXT,       -- 'info' | 'success' | 'warning' | 'system'
-  title TEXT,
-  body TEXT,
-  href TEXT,
-  isread BOOLEAN DEFAULT false,
-  createdat TIMESTAMPTZ DEFAULT now()
-)
-```
-RLS: user hanya bisa lihat/update notif sendiri. Insert/delete via service role.
-
-### 2. Enable Realtime di Supabase
-
-Buka: **Supabase → Database → Replication → Tables → Realtime**
-
-Enable untuk:
-- `soraku.notifications` — agar useNotifications hook bisa live update
-- `soraku.gallery` — agar admin gallery muncul kiriman baru tanpa refresh
-
-### 3. Fix `GET /api/gallery` — support filter `?status=`
-
-Saat ini admin gallery fetch `/api/gallery?status=pending` tapi API mungkin tidak handle parameter `status`.
-
-Cek dan fix di `app/api/gallery/route.ts`:
-```ts
-const status = searchParams.get('status') ?? 'approved'
-// jika status !== 'approved', cek session & isStaff dulu
-let query = adminDb().from('gallery').select('...')
-if (status !== 'all') query = query.eq('status', status)
+INSERT INTO soraku.apikeys (name, keyhash, prefix, client, permissions)
+VALUES (
+  'Discord Bot',
+  '<HASH dari command di atas>',
+  LEFT('<KEY>', 8),
+  'bot',
+  '["read"]'
+);
 ```
 
-### 4. API Admin VTubers — (untuk Bubu buat UI-nya)
+Lalu set `BOT_API_KEY=<KEY>` di Railway ENV bot.
 
-Buat route baru:
+### 5. Set Railway ENV untuk bot
 ```
-app/api/admin/vtubers/route.ts          ← GET list + POST create
-app/api/admin/vtubers/[id]/route.ts     ← GET by id + PATCH + DELETE
+DISCORD_TOKEN       = (dari Discord Developer Portal)
+DISCORD_GUILD_ID    = (ID server Discord Soraku)
+SORAKU_API_URL      = https://apisoraku-git-master-soraku.vercel.app
+SORAKU_WEB_URL      = https://soraku.vercel.app
+SORAKU_API_SECRET   = (sama dengan di apps/web)
+WEBHOOK_SECRET      = (sama dengan BOT_WEBHOOK_SECRET di apps/web)
+DISCORD_INVITE_CODE = qm3XJvRa6B
+BOT_API_KEY         = (dari langkah 4)
 ```
 
-Field vtubers: `slug, name, charactername, avatarurl, coverurl, description, debutdate, tags, sociallinks, isactive, islive, liveurl, subscribercount, ispublished`
-
-### 5. Supabase Storage — Pastikan bucket `gallery` ada
-
-Buka: **Supabase → Storage**
-
-Jika bucket `gallery` belum ada:
-1. New Bucket → nama: `gallery`
-2. Public bucket: ✅ (agar imageurl bisa diakses publik)
-3. File size limit: 5MB (sesuai validasi di API)
+### 6. Aktifkan Privileged Intents di Discord Developer Portal
+Discord Dev Portal → aplikasi bot → **Bot** → Privileged Gateway Intents:
+- ✅ Server Members Intent
+- ✅ Presence Intent
 
 ---
 
-## 📌 Konvensi Schema DB (wajib diingat)
-
-| ✅ Benar | ❌ Salah |
-|---------|---------|
-| `displayname` | `display_name` |
-| `avatarurl` | `avatar_url` |
-| `coverurl` | `cover_url` |
-| `ispublished` | `is_published` |
-| `isread` | `is_read` / `read` |
-| `createdat` | `created_at` |
-| `updatedat` | `updated_at` |
-| `startdate` | `start_date` / `starts_at` |
-
----
-
-## Pattern API Wajib
-
-```ts
-export const dynamic = 'force-dynamic'
-
-// ✅ Selalu maybeSingle() bukan single()
-const { data } = await adminDb().from('table').select('*').eq('id', id).maybeSingle()
-
-// ✅ Error response yang konsisten
-import { ok, err, UNAUTHORIZED, FORBIDDEN, NOT_FOUND, SERVER_ERROR } from '@/lib/api'
-
-// ✅ Auth check
-const session = await getSession()
-if (!session) return UNAUTHORIZED
-if (!isStaff(session.role)) return FORBIDDEN
-
-// ✅ Zod validasi
-const parsed = Schema.safeParse(body)
-if (!parsed.success) return err(parsed.error.issues[0]?.message ?? 'Input tidak valid')
-```
-
----
-
-## Bot — Railway Deploy
-
-ENV yang wajib ada di Railway:
-
-```env
-DISCORD_TOKEN=
-DISCORD_GUILD_ID=
-DISCORD_EVENT_CHANNEL_ID=
-SORAKU_API_URL=https://soraku.vercel.app
-SORAKU_API_SECRET=          ← sama dengan SORAKU_API_SECRET di Vercel
-WEBHOOK_SECRET=             ← sama dengan BOT_WEBHOOK_SECRET di Vercel
-PORT=3001
-```
-
-ENV yang wajib ada di Vercel (untuk komunikasi web → bot):
-```env
-BOT_WEBHOOK_URL=https://<project>.up.railway.app
-BOT_WEBHOOK_SECRET=         ← sama dengan WEBHOOK_SECRET di Railway
-SORAKU_API_SECRET=          ← sama dengan SORAKU_API_SECRET di Railway
-```
-
----
-
-## Log Revisi
-
-| # | Tanggal | Revisi | Oleh |
-|---|---------|--------|------|
-| 1–10 | 2026-03-10/11 | (lihat CHANGELOG) | Kaizo |
-| 11 | 2026-03-11 | Update task v1.1.x: migration notifs, Realtime, gallery API fix, admin vtubers | Sora |
-
-
----
-
-## 📋 LAPORAN — 2026-03-11 (dari Bubu) — Homepage Redesign
-
-### ✅ URGENT: Set ENV di Vercel (sudah diingatkan sebelumnya)
-
-Ini WAJIB agar profile loading tidak error:
-
-**Vercel Dashboard → soraku → Settings → Environment Variables:**
-
-```
-SUPABASE_SERVICE_ROLE_KEY = eyJ...   ← dari Supabase Dashboard → Project Settings → API → service_role
-OWNER_DISCORD_IDS = 1020644780075659356  ← agar Riu otomatis jadi OWNER saat login
-```
-
-Setelah tambah → klik **Redeploy** di Vercel.
-
-### Discord Widget API
-Homepage sekarang fetch Discord Widget untuk stats real-time.
-Guild ID yang dipakai: `1033369620989124628`
-Pastikan Discord Widget **enabled** di: Server Settings → Widget → Enable Server Widget ✅
-
-
----
-
-## 📋 LAPORAN — 2026-03-12 (dari Bubu) — Profile Redesign
-
-### ✅ Selesai
-Profile card `/dash/profile/me` sudah diredesign dengan color coding.
-Navbar user dropdown sudah bersih dari tombol Donate/Premium.
-
-### ❌ KAIZO — URGENT ACTIONS
-
-**1. SUPABASE_SERVICE_ROLE_KEY di Vercel** ← BELUM ADA, INI BIANG SEMUA ERROR
-Tanpa ini: profile gagal load, edit gagal, semua API server-side error.
-```
-Vercel Dashboard → soraku → Settings → Environment Variables:
-SUPABASE_SERVICE_ROLE_KEY = eyJ... (dari Supabase → Project Settings → API → service_role)
-```
-Setelah tambah → klik REDEPLOY.
-
-**2. OWNER_DISCORD_IDS**
-```
-OWNER_DISCORD_IDS = 1020644780075659356
-```
-Agar Riu otomatis dapat role OWNER saat login Discord.
-
-**3. Discord Widget**
-Aktifkan di: Soraku Discord Server → Settings → Widget → Enable Server Widget ✅
-Guild ID: `1033369620989124628`
-Ini untuk stats real-time di homepage.
-
-
----
-
-## 📋 LAPORAN — 2026-03-12 #3 (Bubu — commit 2bd7d79)
-
-### ✅ Selesai
-Profile redesign + tab system. `/profile/[username]` route sudah aktif.
-
-### ❌ KAIZO — Internal server error saat save profile
-
-Debug endpoint masih aktif di `/api/debug-save`.
-Buka di browser saat login: `https://soraku.vercel.app/api/debug-save`
-
-Cek hasil `key_is_jwt` dan `db_update`:
-- `key_is_jwt: false` → SUPABASE_SERVICE_ROLE_KEY salah format (harusnya eyJ..., bukan postgresql://...)
-- `db_update: { ok: false }` → ada error detail di response, kirim ke Bubu
-
-**WAJIB cek:** Di Vercel → Settings → Environment Variables:
-- `SUPABASE_SERVICE_ROLE_KEY` harus JWT yang diawali `eyJ`, ambil dari:
-  Supabase Dashboard → Project Settings → API → **service_role** (bukan connection string!)
-
----
-
-## Update — 2026-03-12 (dari Sora)
-
-### ✅ Selesai — T3 Env System (v1.1.0)
-
-`apps/web/src/env.ts` sudah dibuat sesuai spec:
-- `DATABASE_URL` — wajib, untuk Drizzle ORM
-- `SUPABASE_SERVICE_ROLE_KEY` — wajib
-- `XENDIT_SECRET_KEY` — opsional
-- `TRAKTEER_WEBHOOK_SECRET` — opsional (**renamed dari `TRAKTEER_WEBHOOK_TOKEN`**)
-- Client vars: `NEXT_PUBLIC_SITE_URL`, `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-
-### ⚠️ Action Required oleh Kaizo:
-
-1. **Jalankan `npm install` di `apps/web/`** — zod downgrade ke `^3.23.8` perlu di-apply
-2. **Set `DATABASE_URL` di Vercel** — ambil dari Supabase → Project Settings → Database → Transaction Pooler URI (port 6543)
-3. **Rename `TRAKTEER_WEBHOOK_TOKEN` → `TRAKTEER_WEBHOOK_SECRET`** di Vercel ENV dan di Trakteer Dashboard
-4. **Pastikan `dotenv` terinstall** di `apps/web/` untuk `drizzle-kit` CLI
-
-
----
-
-## 📋 LAPORAN — 2026-03-12 #4 (Bubu — commit 624caa4)
-
-### ✅ Fix
-- PGRST106 sudah di-fix di level DB (pgrst.db_schemas expose)
-- OAuth error di homepage sudah di-handle → redirect ke /login dengan pesan jelas
-
-### ❌ KAIZO — Perlu Action
-
-**Bot Invite URL salah arah:**
-URL yang ada sekarang:
-```
-https://discord.com/oauth2/authorize?client_id=1022891520019419239
-  &redirect_uri=https://jrgknsxqwuygcoocnnnb.supabase.co/auth/v1/callback
-```
-`redirect_uri` ini adalah Supabase Auth callback — untuk user login, bukan bot invite.
-Kalau orang klik link ini untuk invite bot → Discord redirect ke Supabase → PKCE state missing → error.
-
-**URL bot invite yang benar** seharusnya:
-```
-https://discord.com/oauth2/authorize?client_id=1022891520019419239
-  &permissions=8&scope=bot+applications.commands&integration_type=0
-```
-(Tanpa `response_type=code` dan `redirect_uri` Supabase)
-
-**SUPABASE_SERVICE_ROLE_KEY** di Vercel:
-- Harus JWT format (`eyJ...`), bukan connection string (`postgresql://...`)
-- Ambil dari: Supabase Dashboard → Project Settings → API → `service_role` key
+## ⚠️ Yang JANGAN dilakukan
+- Jangan pakai Prisma / ioredis / bullmq
+- Jangan query DB langsung dari apps/web — semua lewat services/api
+- Jangan commit `.env` ke Git
