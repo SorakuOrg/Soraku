@@ -1,29 +1,170 @@
 # Database Migration & Architecture — Soraku Monorepo
-> Dibuat oleh: Kaizo (Back-end)  
+> Dibuat oleh: Kaizo (Back-end)
 > Last updated: 2026-03-12
 
 ---
 
-## Monorepo Structure
+## Arsitektur Monorepo
 
 ```
 SorakuCommunity/Soraku/
 ├── apps/
-│   ├── web/          → Soraku Community (komunitas, admin, donation, login)
-│   ├── stream/       → Anime Streaming Web (Next.js)
-│   └── mobile/       → Mobile App (React Native / Expo) ← TODO
+│   ├── web/        → Soraku Komunitas (community site, auth, admin, donate)
+│   ├── stream/     → Anime Streaming Web
+│   └── mobile/     → Mobile App (React Native / Expo)
 ├── services/
-│   ├── api/          → Central API — satu otak untuk semua apps & services
-│   └── bot/          → Discord Bot (Railway)
+│   ├── api/        → ★ CENTRAL API — satu-satunya yang akses DB langsung
+│   └── bot/        → Discord Bot (Railway)
 └── packages/
-    ├── types/        → Shared TypeScript types (@soraku/types)
-    ├── ui/           → Shared UI components
-    ├── config/       → Shared config (eslint, tsconfig)
-    └── utils/        → Shared utilities
+    ├── types/      → @soraku/types  — shared TypeScript interfaces
+    ├── utils/      → @soraku/utils  — shared API client
+    ├── ui/         → @soraku/ui     — shared components
+    └── config/     → shared eslint, tsconfig
 ```
 
-**Prinsip:** `services/api` adalah satu-satunya yang boleh akses DB langsung.  
-Semua apps (`web`, `stream`, `mobile`) dan `services/bot` konsumsi data melalui `services/api`.
+---
+
+## Prinsip Utama — Satu Otak, Semua Terhubung
+
+```
+┌─────────────────────────────────────────────────┐
+│                 services/api                    │
+│         (Central API — satu-satunya             │
+│          yang boleh akses DB Supabase)          │
+└──────────────┬────────────────┬─────────────────┘
+               │  fetch via     │
+    ┌──────────┴─────┐   ┌──────┴──────────┐
+    │   apps/web     │   │  apps/stream    │
+    │  (komunitas)   │   │  (anime web)    │
+    └────────────────┘   └─────────────────┘
+               │                │
+    ┌──────────┴─────┐   ┌──────┴──────────┐
+    │  apps/mobile   │   │  services/bot   │
+    │  (React Native)│   │  (Discord)      │
+    └────────────────┘   └─────────────────┘
+
+Semua pakai @soraku/utils → createApiClient()
+Semua types dari @soraku/types
+```
+
+**Yang HANYA ada di `apps/web`** (tidak dipindah ke services/api):
+- `/api/auth/*` — Supabase Auth OAuth flow (Discord, Google, login, register)
+- `/api/admin/*` — Admin CRUD (create/update posts, events, gallery review)
+- `/api/gallery/upload` — Upload file ke Supabase Storage
+- `/api/notifications` — Notifikasi real-time user
+- `/api/bot/*` — Incoming webhook dari Discord bot
+- `/api/discord/*` — Discord role sync
+
+---
+
+## Cara Koneksi — Pakai `@soraku/utils`
+
+Semua apps sudah punya file `src/lib/api-client.ts`. Tinggal import dan pakai:
+
+### apps/web (Server Component)
+```ts
+import { api, apiWithToken } from "@/lib/api-client"
+
+// Data publik — tanpa auth
+const { data: posts } = await api.blog.list({ tag: "anime", page: 1 })
+const { data: events } = await api.events.list({ status: "online" })
+const { data: vtubers } = await api.vtubers.list()
+
+// Data premium — dengan JWT user
+const token = (await supabase.auth.getSession()).data.session?.access_token
+const { data: stream } = await apiWithToken(token).stream.get(slug)
+```
+
+### apps/stream (Server Component)
+```ts
+import { api, apiWithToken } from "@/lib/api-client"
+
+// List konten VOD
+const { data: list } = await api.stream.list({ type: "vod" })
+
+// Detail konten + HLS URL untuk player
+const { data: content } = await api.stream.get(slug)
+// content.hlsurl → feed ke HLS.js
+// content.thumbnailurl → poster image
+// content.ispremium → premium gate
+```
+
+### apps/mobile (React Native)
+```ts
+import { api, apiWithToken } from "@/lib/api-client"
+
+// Sama persis dengan web — cukup ganti BASE URL di env
+const { data: events } = await api.events.list()
+
+// Setelah user login dengan Supabase di mobile:
+const session = await supabase.auth.getSession()
+const client  = apiWithToken(session.data.session?.access_token ?? "")
+const { data: premium } = await client.premium.status()
+```
+
+### services/bot (Discord Bot)
+```ts
+import { api } from "@/lib/api-client"
+
+// Bot pakai API Key (bukan JWT)
+// BOT_API_KEY sudah di-set di .env Railway
+const { data: events } = await api.events.list({ status: "online" })
+const { data: vtuber } = await api.vtubers.get("nama-slug")
+```
+
+---
+
+## ENV yang Diperlukan per App
+
+### apps/web
+```
+API_URL = https://soraku-api.vercel.app    ← URL services/api setelah deploy
+# (development: http://localhost:4000)
+```
+
+### apps/stream
+```
+API_URL = https://soraku-api.vercel.app
+NEXT_PUBLIC_API_URL = https://soraku-api.vercel.app  ← kalau butuh di client
+```
+
+### apps/mobile
+```
+EXPO_PUBLIC_API_URL = https://soraku-api.vercel.app
+```
+
+### services/bot
+```
+SORAKU_API_URL     = https://soraku-api.vercel.app
+BOT_API_KEY        = bot_xxxxxxxxxxxx   ← generate + simpan hash di DB
+SORAKU_API_SECRET  = xxxxxxxxxxxx       ← sama dengan apps/web
+```
+
+---
+
+## Cara Generate API Key untuk Bot
+
+```bash
+node -e "
+const crypto = require('crypto');
+const key  = 'bot_' + crypto.randomBytes(32).toString('hex');
+const hash = crypto.createHash('sha256').update(key).digest('hex');
+console.log('KEY  (→ BOT_API_KEY di Railway):', key);
+console.log('HASH (→ simpan ke DB):', hash);
+"
+```
+
+Simpan HASH ke `soraku.apikeys`:
+```sql
+INSERT INTO soraku.apikeys (name, keyhash, prefix, client, permissions)
+VALUES (
+  'Discord Bot',
+  '<HASH dari command di atas>',
+  LEFT('<KEY>', 8),
+  'bot',
+  '["read"]'
+);
+```
 
 ---
 
@@ -35,277 +176,118 @@ Semua apps (`web`, `stream`, `mobile`) dan `services/bot` konsumsi data melalui 
 | 2 | `20260311_follows.sql` | 2026-03-11 | Tabel follows, rename kolom ke tanpa underscore | ✅ Applied |
 | 3 | `20260311_notifications.sql` | 2026-03-11 | Notifications, supporter history, discord mappings | ✅ Applied |
 | 4 | `20260312_fix_sync_cleanup_all.sql` | 2026-03-12 | Cleanup duplikat functions/triggers/policies | ✅ Applied |
-| 5 | `20260312_services_api_setup.sql` | 2026-03-12 | Tabel `streamcontent` + `apikeys` untuk services/api | ✅ Applied |
+| 5 | `20260312_services_api_setup.sql` | 2026-03-12 | Tabel `streamcontent` + `apikeys` | ✅ Applied |
 
 ---
 
-## DB Schema — `soraku.*`
+## DB Schema Aktif — `soraku.*`
 
-### ⚠️ Naming Convention (WAJIB)
-Semua kolom **lowercase tanpa underscore**:
+### Naming Convention
+Semua kolom **lowercase tanpa underscore**: `displayname`, `avatarurl`, `createdat`
 
-| ✅ Benar | ❌ Salah |
-|---------|---------|
-| `displayname` | `display_name` |
-| `avatarurl` | `avatar_url` |
-| `createdat` | `created_at` |
+### Tabel & Consumer
 
----
-
-### Tabel Lengkap
-
-| Tabel | Deskripsi | Consumer |
-|-------|-----------|---------|
-| `users` | User utama, sync auth | semua |
-| `posts` | Blog/artikel komunitas | web, bot |
-| `events` | Event online/offline | web, mobile, bot |
-| `gallery` | Karya fan art member | web, mobile |
-| `vtubers` | Profil VTuber | web, stream, mobile |
-| `streamcontent` | Konten HLS streaming | stream, mobile |
-| `donatur` | Riwayat donasi publik | web, mobile |
-| `notifications` | Notifikasi per user | web, mobile |
-| `supporterhistory` | Riwayat upgrade supporter | web, bot |
-| `discordrolemappings` | Mapping Discord role ↔ tier | bot |
-| `apikeys` | API key auth antar service | services/api |
-| `musictracks` | Playlist musik website | web |
-| `partnerships` | Partnership komunitas | web |
-| `userlevels` | XP & level user | web |
-| `userbadges` | Badge koleksi user | web |
-| `webhooks` | Konfigurasi webhook | bot |
-| `sitesettings` | Setting global website | web |
-
----
-
-## Services/API — Central Brain
-
-### Struktur
-```
-services/api/
-├── src/
-│   ├── app/
-│   │   └── api/
-│   │       ├── route.ts                    → GET /api (health check)
-│   │       ├── users/[username]/route.ts   → GET, PATCH user
-│   │       ├── premium/route.ts            → GET status + ?leaderboard=true
-│   │       ├── vtubers/route.ts            → GET list
-│   │       ├── vtubers/[slug]/route.ts     → GET detail
-│   │       ├── events/route.ts             → GET list + ?status=
-│   │       ├── events/[slug]/route.ts      → GET detail
-│   │       ├── blog/route.ts               → GET list + ?search= ?tag=
-│   │       ├── blog/[slug]/route.ts        → GET detail
-│   │       ├── gallery/route.ts            → GET approved
-│   │       ├── stream/route.ts             → GET list + premium gating
-│   │       ├── stream/[slug]/route.ts      → GET metadata + HLS URL
-│   │       ├── donate/xendit/create/route.ts  → POST buat invoice
-│   │       ├── donate/xendit/webhook/route.ts → POST Xendit callback
-│   │       └── donate/trakteer/route.ts    → POST Trakteer webhook
-│   ├── lib/
-│   │   ├── db/index.ts      → Drizzle client
-│   │   ├── db/schema.ts     → Schema semua tabel (sync DB)
-│   │   ├── auth/index.ts    → verifyAuth() + verifySecret()
-│   │   └── validators/      → Zod schemas
-│   └── env/index.ts         → T3 env type-safe
-├── .env.example
-├── drizzle.config.ts
-├── package.json
-└── tsconfig.json
-```
-
-### API Endpoints
-
-| Method | Endpoint | Auth | Deskripsi |
-|--------|----------|------|-----------|
-| GET | `/api` | — | Health check |
-| GET | `/api/users/:username` | — | Profil user publik |
-| PATCH | `/api/users/:username` | JWT | Update profil |
-| GET | `/api/premium` | JWT | Status subscriber saya |
-| GET | `/api/premium?leaderboard=true` | — | Top donatur publik |
-| GET | `/api/vtubers` | — | Semua VTuber aktif |
-| GET | `/api/vtubers/:slug` | — | Detail VTuber |
-| GET | `/api/events` | — | List event (filter: `?status=`) |
-| GET | `/api/events/:slug` | — | Detail event |
-| GET | `/api/blog` | — | List post (filter: `?search= ?tag= ?page=`) |
-| GET | `/api/blog/:slug` | — | Detail post |
-| GET | `/api/gallery` | — | Galeri approved (filter: `?tag=`) |
-| GET | `/api/stream` | — / JWT | List stream (premium: JWT required) |
-| GET | `/api/stream/:slug` | — / JWT | Metadata + HLS URL |
-| POST | `/api/donate/xendit/create` | JWT | Buat invoice Xendit |
-| POST | `/api/donate/xendit/webhook` | x-callback-token | Xendit payment callback |
-| POST | `/api/donate/trakteer` | x-trakteer-signature | Trakteer webhook |
-
-### Auth Pattern
-
-```
-# 1. Supabase JWT — untuk user (web, mobile, stream)
-Authorization: Bearer <supabase-jwt>
-
-# 2. API Key — untuk service (bot, mobile app)
-Authorization: Bearer sk_xxxxxxxxxxxxxxxx
-
-# 3. Internal Secret — untuk bot ↔ web
-x-soraku-secret: <SORAKU_API_SECRET>
-```
-
-### Cara Generate API Key untuk Bot / Mobile
-```bash
-node -e "
-const crypto = require('crypto');
-const key  = 'bot_' + crypto.randomBytes(32).toString('hex');
-const hash = crypto.createHash('sha256').update(key).digest('hex');
-console.log('KEY (berikan ke bot):', key);
-console.log('HASH (simpan di DB) :', hash);
-"
-# Simpan hash ke soraku.apikeys.keyhash
-```
-
----
-
-## ENV services/api
-
-Lihat `services/api/.env.example`
-
-| Variable | Keterangan |
-|----------|-----------|
-| `DATABASE_URL` | Supabase Transaction Pooler port 6543 |
-| `SUPABASE_URL` | Project URL Supabase |
-| `SUPABASE_SERVICE_ROLE_KEY` | Service role (bypass RLS) |
-| `SORAKU_API_SECRET` | Harus sama dengan apps/web & services/bot |
-| `XENDIT_SECRET_KEY` | Opsional — payment |
-| `TRAKTEER_WEBHOOK_TOKEN` | Opsional — payment |
+| Tabel | Consumer |
+|-------|---------|
+| `users` | semua |
+| `posts` | web, bot |
+| `events` | web, stream, mobile, bot |
+| `gallery` | web, mobile |
+| `vtubers` | web, stream, mobile |
+| `streamcontent` | stream, mobile |
+| `donatur` | web, mobile |
+| `notifications` | web, mobile |
+| `supporterhistory` | web, bot |
+| `discordrolemappings` | bot |
+| `apikeys` | services/api |
+| `musictracks` | web |
+| `partnerships` | web |
+| `userlevels` | web |
+| `userbadges` | web |
 
 ---
 
 ## Cara Tambah Migration Baru
 
 1. Buat file: `supabase/migrations/YYYYMMDD_nama.sql`
-2. Gunakan `ALTER TABLE ADD COLUMN IF NOT EXISTS` — jangan drop tabel yang ada data
-3. Selalu `ALTER TABLE ... ENABLE ROW LEVEL SECURITY`
-4. Track:
-   ```sql
-   INSERT INTO soraku._migrations (name, checksum)
-   VALUES ('YYYYMMDD_nama', md5('...'))
-   ON CONFLICT (name) DO NOTHING;
-   ```
-5. Koordinasi dengan Kaizo sebelum apply
+2. Gunakan `ALTER TABLE ADD COLUMN IF NOT EXISTS`
+3. Selalu tambah RLS + policy
+4. Track di `soraku._migrations`
+5. **Koordinasi dengan Kaizo sebelum apply**
 
 ---
 
 ## Tugas Sora (Full Stack)
 
-### Prioritas Tinggi
-
-**1. Integrasikan `apps/web` ke `services/api`**
-
-Semua fetch data di `apps/web` yang langsung ke Supabase via `adminDb()` perlu perlahan dipindah ke hit `services/api`. Untuk sementara tidak perlu migrasi masif — cukup route baru pakai `services/api`.
-
+### 1. Tambah `API_URL` ke `apps/web/src/env/index.ts`
 ```ts
-// ❌ Sekarang (langsung ke DB)
-const { data } = await adminDb().from("posts").select("*")
-
-// ✅ Target (via services/api)
-const res  = await fetch(`${env.API_URL}/api/blog`)
-const { data } = await res.json()
+server: {
+  API_URL: z.string().url().default("http://localhost:4000"),
+  // ...existing
+}
 ```
 
-**2. Setup `apps/stream` (Anime Streaming Web)**
-
-Struktur awal yang dibutuhkan:
-```
-apps/stream/
-├── src/app/
-│   ├── page.tsx          → homepage — list anime
-│   ├── anime/[slug]/     → detail anime
-│   ├── watch/[slug]/     → video player HLS
-│   └── layout.tsx
-```
-
-Pakai type dari `@soraku/types`:
+### 2. Update pages apps/web — ganti `adminDb()` langsung ke `api.*`
+Semua Server Component yang fetch data publik (blog, events, vtubers, gallery):
 ```ts
-import type { StreamContent, VTuber } from "@soraku/types"
+// ❌ Sebelum
+import { adminDb } from "@/lib/supabase/admin"
+const { data } = await adminDb().from("posts").select("*").eq("ispublished", true)
+
+// ✅ Sekarang
+import { api } from "@/lib/api-client"
+const { data } = await api.blog.list()
 ```
 
-Fetch dari `services/api`:
-```ts
-// List konten stream
-GET ${API_URL}/api/stream?type=vod&page=1
-
-// Detail + HLS URL untuk player
-GET ${API_URL}/api/stream/:slug
-// Response: { data: { hlsurl: "https://...", thumbnailurl, duration, ... } }
+### 3. Setup `apps/stream`
+Struktur minimal yang dibutuhkan:
+```
+apps/stream/src/app/
+├── page.tsx              → list anime/VTuber stream
+├── watch/[slug]/page.tsx → HLS video player
+└── layout.tsx
 ```
 
-**3. Tambah ENV `API_URL` ke `apps/web`**
-
-Di `apps/web/src/env/index.ts`, tambah:
-```ts
-API_URL: z.string().url().default("http://localhost:4000"),
-```
-
-Dan di Vercel: `API_URL = https://soraku-api.vercel.app` (setelah services/api deploy)
+### 4. Deploy `services/api` ke Vercel sebagai project terpisah
+- Root Directory: `services/api`
+- URL hasil deploy → isi `API_URL` di semua apps
 
 ---
 
 ## Tugas Bubu (Front-end)
 
-### `apps/stream` — UI Components yang Dibutuhkan
+### 1. `apps/web` — Halaman yang perlu update setelah routes dihapus
+Semua halaman yang sebelumnya fetch ke `/api/blog`, `/api/events`, dll
+sekarang otomatis dapat data dari `api.*` client (Sora yang update Server Component-nya).
+Bubu cukup pastikan UI masih berfungsi normal.
 
-**1. Video Player (`/watch/[slug]`)**
+### 2. `apps/stream` — Komponen yang dibutuhkan
 
-Data yang tersedia dari API:
-```ts
-content.hlsurl       // string — HLS playlist .m3u8
-content.thumbnailurl // string | null — poster image
-content.duration     // number | null — detik, convert ke "mm:ss"
-content.title        // string
-content.ispremium    // boolean — tampilkan badge 👑
+**StreamCard** (untuk list halaman):
+```tsx
+interface StreamCardProps {
+  title:        string
+  thumbnail:    string | null   // content.thumbnailurl
+  duration:     number | null   // detik → format ke "24:15"
+  type:         "vod" | "live" | "clip"
+  isPremium:    boolean         // tampilkan crown badge 👑
+  slug:         string
+}
 ```
 
-Player pakai **HLS.js** (sudah ada di `apps/stream`):
+**VideoPlayer** (untuk `/watch/[slug]`):
 ```tsx
+// content.hlsurl → feed ke HLS.js
+// Kalau HLS.js tidak support → fallback ke <video src={hlsurl}>
 import Hls from "hls.js"
-// Mount ke <video> element, load content.hlsurl
 ```
 
-**2. Stream Card Component**
-
+**PremiumGate** (overlay kalau belum subscribe):
 ```tsx
-// Tampilkan di homepage / list
-<StreamCard
-  title={content.title}
-  thumbnail={content.thumbnailurl}
-  duration={formatDuration(content.duration)} // "24:15"
-  isPremium={content.ispremium}               // crown badge
-  type={content.type}                          // "VOD" | "LIVE" | "CLIP"
-/>
+// content.ispremium === true && !user.isSubscriber
+// Tampilkan blur overlay + tombol "Upgrade ke Supporter"
+// Link ke apps/web/premium
 ```
 
-**3. Premium Gate UI**
-
-Kalau `content.ispremium === true` dan user belum subscribe:
-- Tampilkan overlay blur pada thumbnail
-- Tombol "Upgrade ke Supporter"
-- Link ke `apps/web/premium`
-
-**4. `apps/mobile` (kelak)**
-
-Stack yang akan dipakai: **React Native + Expo**  
-Konsumsi dari `services/api` — sama persis dengan web, cukup ganti `fetch` URL.  
-Types dari `@soraku/types` bisa langsung dipakai.
-
----
-
-## packages/types — Shared Types
-
-Import di mana saja:
-```ts
-import type {
-  User, UserSession, UserRole,
-  Post, Event, GalleryItem,
-  VTuber, StreamContent, StreamType,
-  Donatur, PremiumStatus,
-  Notification, NotifType,
-  ApiResponse, PaginatedResponse,
-} from "@soraku/types"
-```
-
-Kalau perlu tambah type baru, edit `packages/types/src/index.ts` dan koordinasi dengan Kaizo.
+### 3. `apps/mobile` — nanti (React Native / Expo)
+Types dan API client sudah siap — tinggal bangun UI-nya.
