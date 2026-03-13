@@ -16,7 +16,7 @@ interface User {
 }
 
 const API_URL = process.env.SORAKU_API_URL ?? "http://localhost:4000"
-const WEB_URL = process.env.SORAKU_WEB_URL ?? "https://soraku.vercel.app"
+const WEB_URL = process.env.SORAKU_WEB_URL ?? "https://www.soraku.id"
 
 const ROLE_DISPLAY: Record<string, { label: string; emoji: string; color: number }> = {
   OWNER:   { label: "Owner",   emoji: "👑", color: 0xeab308 },
@@ -96,7 +96,7 @@ export const profileCommand = {
 
     const embed = new EmbedBuilder()
       .setColor(tierInfo ? 0x7c3aed : roleInfo.color)
-      .setAuthor({ name: "Soraku Community — Profil", iconURL: "https://soraku.vercel.app/icon.png", url: WEB_URL })
+      .setAuthor({ name: "Soraku Community — Profil", iconURL: "https://www.soraku.id/icon.png", url: WEB_URL })
       .setTitle(`${roleInfo.emoji} ${displayName}`)
       .setURL(`${WEB_URL}/profile/${username}`)
       .setThumbnail(user.avatarurl ?? `https://cdn.discordapp.com/embed/avatars/0.png`)

@@ -17,7 +17,7 @@ import {
 
 const WEB_URL = process.env.SORAKU_API_URL?.replace("/api", "") 
   ?? process.env.SORAKU_WEB_URL 
-  ?? "https://soraku.vercel.app"
+  ?? "https://www.soraku.id"
 
 export const linkCommand = {
   data: new SlashCommandBuilder()
@@ -41,7 +41,7 @@ export const linkCommand = {
       .setColor(aksi === "register" ? 0x7c3aed : 0x3b82f6)  // purple / blue
       .setAuthor({
         name: "Soraku Community",
-        iconURL: "https://soraku.vercel.app/icon.png",
+        iconURL: "https://www.soraku.id/icon.png",
         url: WEB_URL,
       })
       .setTitle(

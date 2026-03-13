@@ -16,7 +16,7 @@ import {
   ButtonStyle,
 } from "discord.js"
 
-const WEB_URL = process.env.SORAKU_WEB_URL ?? "https://soraku.vercel.app"
+const WEB_URL = process.env.SORAKU_WEB_URL ?? "https://www.soraku.id"
 const DISCORD_INVITE = process.env.DISCORD_INVITE
   ? `https://discord.gg/${process.env.DISCORD_INVITE}`
   : "https://discord.gg/qm3XJvRa6B"
@@ -54,7 +54,7 @@ export const aboutCommand = {
       .setColor(0x7c3aed)  // Soraku purple
       .setAuthor({
         name:    "Soraku Community",
-        iconURL: "https://soraku.vercel.app/icon.png",
+        iconURL: "https://www.soraku.id/icon.png",
         url:     WEB_URL,
       })
       .setTitle("空 Tentang Soraku Community")
@@ -118,7 +118,7 @@ export const aboutCommand = {
       inline: false,
     })
 
-    embed.setImage("https://soraku.vercel.app/banner.png")  // banner komunitas (kalau ada)
+    embed.setImage("https://www.soraku.id/banner.png")  // banner komunitas (kalau ada)
     embed.setFooter({ text: "Soraku Community · Versi 1.0 · Made with ❤️ in Indonesia" })
     embed.setTimestamp()
 
