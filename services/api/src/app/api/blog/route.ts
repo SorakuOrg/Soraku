@@ -15,12 +15,6 @@ export async function GET(req: NextRequest) {
   const { tag, search, page, limit } = parsed.data
   const offset = (page - 1) * limit
 
-  const where = and(
-    eq(posts.ispublished, true),
-    search ? ilike(posts.title, `%${search}%`) : undefined,
-    tag ? sql`${tag} = ANY(${posts.tags})` : undefined,
-  )
-
   const rows = await db
     .select({
       id: posts.id, slug: posts.slug, title: posts.title,
@@ -28,22 +22,14 @@ export async function GET(req: NextRequest) {
       tags: posts.tags, publishedat: posts.publishedat, authorid: posts.authorid,
     })
     .from(posts)
-    .where(where)
+    .where(and(
+      eq(posts.ispublished, true),
+      search ? ilike(posts.title, `%${search}%`) : undefined,
+      tag    ? sql`${tag} = ANY(${posts.tags})` : undefined,
+    ))
     .orderBy(desc(posts.publishedat))
     .limit(limit)
     .offset(offset)
 
   return NextResponse.json({ data: rows, error: null })
-}
-
-// GET /api/blog/:slug
-export async function getBySlug(_req: NextRequest, { params }: { params: { slug: string } }) {
-  const [post] = await db
-    .select()
-    .from(posts)
-    .where(and(eq(posts.slug, params.slug), eq(posts.ispublished, true)))
-    .limit(1)
-
-  if (!post) return NextResponse.json({ data: null, error: "Post not found" }, { status: 404 })
-  return NextResponse.json({ data: post, error: null })
 }

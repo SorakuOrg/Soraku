@@ -1,17 +1,29 @@
-# Database Migration — Soraku Community
-> Dibuat oleh: Kaizo (Back-end)
+# Database Migration & Architecture — Soraku Monorepo
+> Dibuat oleh: Kaizo (Back-end)  
 > Last updated: 2026-03-12
 
 ---
 
-## Overview
+## Monorepo Structure
 
-Semua migration DB ada di `supabase/migrations/` dan ditrack di tabel `soraku._migrations`.
+```
+SorakuCommunity/Soraku/
+├── apps/
+│   ├── web/          → Soraku Community (komunitas, admin, donation, login)
+│   ├── stream/       → Anime Streaming Web (Next.js)
+│   └── mobile/       → Mobile App (React Native / Expo) ← TODO
+├── services/
+│   ├── api/          → Central API — satu otak untuk semua apps & services
+│   └── bot/          → Discord Bot (Railway)
+└── packages/
+    ├── types/        → Shared TypeScript types (@soraku/types)
+    ├── ui/           → Shared UI components
+    ├── config/       → Shared config (eslint, tsconfig)
+    └── utils/        → Shared utilities
+```
 
-**Jangan pernah:**
-- Drop atau recreate tabel yang sudah ada data
-- Edit migration yang sudah applied
-- Jalankan migration tanpa koordinasi dengan Kaizo
+**Prinsip:** `services/api` adalah satu-satunya yang boleh akses DB langsung.  
+Semua apps (`web`, `stream`, `mobile`) dan `services/bot` konsumsi data melalui `services/api`.
 
 ---
 
@@ -20,228 +32,146 @@ Semua migration DB ada di `supabase/migrations/` dan ditrack di tabel `soraku._m
 | # | File | Tanggal | Isi | Status |
 |---|------|---------|-----|--------|
 | 1 | `20260310_init.sql` | 2026-03-10 | Schema awal — users, posts, events, gallery, vtubers | ✅ Applied |
-| 2 | `20260311_follows.sql` | 2026-03-11 | Tabel follows, rename kolom ke camelCase tanpa underscore | ✅ Applied |
-| 3 | `20260311_notifications.sql` | 2026-03-11 | Tabel notifications, supporter history, discord mappings | ✅ Applied |
-| 4 | `20260312_fix_sync_cleanup_all.sql` | 2026-03-12 | Hapus duplikat functions/triggers/policies, fix notifications.body nullable | ✅ Applied |
-| 5 | `20260312_services_api_setup.sql` | 2026-03-12 | Tabel `streamcontent` dan `apikeys` untuk services/api | ✅ Applied |
+| 2 | `20260311_follows.sql` | 2026-03-11 | Tabel follows, rename kolom ke tanpa underscore | ✅ Applied |
+| 3 | `20260311_notifications.sql` | 2026-03-11 | Notifications, supporter history, discord mappings | ✅ Applied |
+| 4 | `20260312_fix_sync_cleanup_all.sql` | 2026-03-12 | Cleanup duplikat functions/triggers/policies | ✅ Applied |
+| 5 | `20260312_services_api_setup.sql` | 2026-03-12 | Tabel `streamcontent` + `apikeys` untuk services/api | ✅ Applied |
 
 ---
 
-## Schema Aktif — `soraku.*`
+## DB Schema — `soraku.*`
 
-### Naming Convention (WAJIB)
-Semua kolom menggunakan **lowercase tanpa underscore**:
+### ⚠️ Naming Convention (WAJIB)
+Semua kolom **lowercase tanpa underscore**:
 
 | ✅ Benar | ❌ Salah |
 |---------|---------|
 | `displayname` | `display_name` |
 | `avatarurl` | `avatar_url` |
-| `isprivate` | `is_private` |
 | `createdat` | `created_at` |
-| `updatedat` | `updated_at` |
 
 ---
 
-### Tabel-tabel yang Ada
+### Tabel Lengkap
 
-#### `soraku.users`
-User utama — sync dengan `auth.users` via trigger `handle_new_auth_user`.
-
-| Kolom | Tipe | Keterangan |
-|-------|------|-----------|
-| `id` | uuid PK | Sama dengan `auth.users.id` |
-| `username` | text unique | Lowercase, max 30 char |
-| `displayname` | text | Nama tampil, max 50 char |
-| `avatarurl` | text | URL avatar |
-| `bio` | text | Bio profil |
-| `coverurl` | text | URL cover/banner |
-| `role` | enum | `OWNER\|MANAGER\|ADMIN\|AGENSI\|KREATOR\|USER` |
-| `supporterrole` | enum nullable | `DONATUR\|VIP\|VVIP` |
-| `supportersince` | timestamptz | Tanggal mulai supporter |
-| `supporteruntil` | timestamptz | Tanggal berakhir (null = selamanya) |
-| `supportersource` | text | `xendit\|trakteer\|discord\|manual` |
-| `sociallinks` | jsonb | `{"youtube": "...", "twitter": "..."}` |
-| `isprivate` | boolean | Profil tersembunyi |
-| `isbanned` | boolean | User diblokir |
-
-#### `soraku.posts`
-Artikel/blog komunitas.
-
-| Kolom | Tipe | Keterangan |
-|-------|------|-----------|
-| `slug` | text unique | URL-friendly ID |
-| `title` | text | Judul artikel |
-| `excerpt` | text | Ringkasan pendek |
-| `content` | text | Konten penuh (markdown) |
-| `coverurl` | text | URL gambar cover |
-| `tags` | text[] | Array tag |
-| `ispublished` | boolean | Published atau draft |
-| `publishedat` | timestamptz | Tanggal publish |
-| `authorid` | uuid FK users | Penulis |
-
-#### `soraku.events`
-Event komunitas.
-
-| Kolom | Tipe | Keterangan |
-|-------|------|-----------|
-| `slug` | text unique | URL-friendly ID |
-| `title` | text | Nama event |
-| `startdate` | timestamptz | Tanggal mulai |
-| `enddate` | timestamptz | Tanggal selesai |
-| `location` | text | Lokasi (kalau offline) |
-| `isonline` | boolean | Online atau offline |
-| `status` | text | `pending\|online\|selesai` |
-| `ispublished` | boolean | Tampil di website |
-
-#### `soraku.gallery`
-Galeri karya member.
-
-| Kolom | Tipe | Keterangan |
-|-------|------|-----------|
-| `imageurl` | text | URL gambar |
-| `status` | text | `pending\|approved\|rejected` |
-| `uploadedby` | uuid FK users | Pengunggah |
-| `reviewedby` | uuid FK users | Staff yang review |
-| `rejectionreason` | text | Alasan ditolak |
-
-#### `soraku.vtubers`
-Data VTuber di komunitas.
-
-| Kolom | Tipe | Keterangan |
-|-------|------|-----------|
-| `slug` | text unique | URL-friendly ID |
-| `name` | text | Nama asli/IRL |
-| `charactername` | text | Nama karakter VTuber |
-| `islive` | boolean | Sedang live sekarang |
-| `liveurl` | text | URL stream aktif |
-| `subscribercount` | integer | Jumlah subscriber |
-| `userid` | uuid FK users | Link ke akun user |
-
-#### `soraku.streamcontent` ← BARU (migration 5)
-Konten streaming — video on demand, live, clip.
-
-| Kolom | Tipe | Keterangan |
-|-------|------|-----------|
-| `slug` | text unique | URL-friendly ID |
-| `title` | text | Judul konten |
-| `thumbnailurl` | text | URL thumbnail |
-| `hlsurl` | text | URL HLS playlist (.m3u8) |
-| `duration` | integer | Durasi dalam detik |
-| `type` | text | `vod\|live\|clip` |
-| `status` | text | `draft\|published\|archived` |
-| `vtuberid` | uuid FK vtubers | VTuber yang bersangkutan |
-| `viewcount` | integer | Total view |
-| `ispremium` | boolean | Khusus subscriber (DONATUR/VIP/VVIP) |
-| `metadata` | jsonb | Resolution, bitrate, dll |
-
-#### `soraku.apikeys` ← BARU (migration 5)
-API key untuk auth antar service (bot, mobile, stream).
-
-| Kolom | Tipe | Keterangan |
-|-------|------|-----------|
-| `name` | text | Label: "Discord Bot", "Mobile App" |
-| `keyhash` | text unique | SHA256 hash dari key asli |
-| `prefix` | text | 8 char prefix untuk identify |
-| `client` | text | `web\|bot\|stream\|mobile\|internal` |
-| `permissions` | jsonb | `["read"]`, `["read","write"]`, dll |
-| `expiresat` | timestamptz | Null = tidak expired |
-| `isactive` | boolean | Key aktif atau dicabut |
+| Tabel | Deskripsi | Consumer |
+|-------|-----------|---------|
+| `users` | User utama, sync auth | semua |
+| `posts` | Blog/artikel komunitas | web, bot |
+| `events` | Event online/offline | web, mobile, bot |
+| `gallery` | Karya fan art member | web, mobile |
+| `vtubers` | Profil VTuber | web, stream, mobile |
+| `streamcontent` | Konten HLS streaming | stream, mobile |
+| `donatur` | Riwayat donasi publik | web, mobile |
+| `notifications` | Notifikasi per user | web, mobile |
+| `supporterhistory` | Riwayat upgrade supporter | web, bot |
+| `discordrolemappings` | Mapping Discord role ↔ tier | bot |
+| `apikeys` | API key auth antar service | services/api |
+| `musictracks` | Playlist musik website | web |
+| `partnerships` | Partnership komunitas | web |
+| `userlevels` | XP & level user | web |
+| `userbadges` | Badge koleksi user | web |
+| `webhooks` | Konfigurasi webhook | bot |
+| `sitesettings` | Setting global website | web |
 
 ---
 
-## RLS Policies
-
-Semua tabel punya RLS enabled. Pattern policy yang dipakai:
-
-```sql
--- Public read
-CREATE POLICY "table_public_read" ON soraku.table
-  FOR SELECT USING (kondisi_public);
-
--- Staff bisa semua
-CREATE POLICY "table_staff_all" ON soraku.table
-  FOR ALL USING (soraku.is_staff(auth.uid()));
-```
-
-**Functions yang tersedia:**
-- `soraku.is_staff(uid uuid)` → true kalau role OWNER/MANAGER/ADMIN
-- `soraku.is_manager(uid uid)` → true kalau role OWNER/MANAGER
-- `soraku.set_updated_at()` → trigger function, update `updatedat = now()`
-- `soraku.handle_new_auth_user()` → trigger, auto-insert ke `soraku.users` saat register
-
----
-
-## Services/API Setup (Baru)
+## Services/API — Central Brain
 
 ### Struktur
 ```
 services/api/
 ├── src/
-│   ├── env/index.ts          — T3 env type-safe
+│   ├── app/
+│   │   └── api/
+│   │       ├── route.ts                    → GET /api (health check)
+│   │       ├── users/[username]/route.ts   → GET, PATCH user
+│   │       ├── premium/route.ts            → GET status + ?leaderboard=true
+│   │       ├── vtubers/route.ts            → GET list
+│   │       ├── vtubers/[slug]/route.ts     → GET detail
+│   │       ├── events/route.ts             → GET list + ?status=
+│   │       ├── events/[slug]/route.ts      → GET detail
+│   │       ├── blog/route.ts               → GET list + ?search= ?tag=
+│   │       ├── blog/[slug]/route.ts        → GET detail
+│   │       ├── gallery/route.ts            → GET approved
+│   │       ├── stream/route.ts             → GET list + premium gating
+│   │       ├── stream/[slug]/route.ts      → GET metadata + HLS URL
+│   │       ├── donate/xendit/create/route.ts  → POST buat invoice
+│   │       ├── donate/xendit/webhook/route.ts → POST Xendit callback
+│   │       └── donate/trakteer/route.ts    → POST Trakteer webhook
 │   ├── lib/
-│   │   ├── db/
-│   │   │   ├── index.ts      — Drizzle client
-│   │   │   └── schema.ts     — Schema semua tabel
-│   │   ├── auth/index.ts     — verifyAuth(), verifySecret()
-│   │   └── validators/index.ts — Zod schemas
-│   └── routes/
-│       ├── users/            — GET & PATCH user
-│       ├── premium/          — Status supporter
-│       ├── vtubers/          — Data VTuber
-│       ├── events/           — Events dengan filter status
-│       ├── blog/             — Posts dengan search & tag filter
-│       ├── gallery/          — Gallery approved
-│       ├── donate/           — Xendit & Trakteer webhook
-│       └── stream/           — HLS playlist & metadata
+│   │   ├── db/index.ts      → Drizzle client
+│   │   ├── db/schema.ts     → Schema semua tabel (sync DB)
+│   │   ├── auth/index.ts    → verifyAuth() + verifySecret()
+│   │   └── validators/      → Zod schemas
+│   └── env/index.ts         → T3 env type-safe
+├── .env.example
 ├── drizzle.config.ts
-├── tsconfig.json
 ├── package.json
-└── .env.example
+└── tsconfig.json
 ```
 
-### ENV yang diperlukan
-Lihat `services/api/.env.example`.
+### API Endpoints
 
-| ENV | Keterangan |
-|-----|-----------|
-| `DATABASE_URL` | Supabase Transaction Pooler (port 6543) |
-| `SUPABASE_URL` | URL project Supabase |
-| `SUPABASE_SERVICE_ROLE_KEY` | Service role key (bypass RLS) |
-| `SORAKU_API_SECRET` | Harus sama dengan `apps/web` dan `services/bot` |
-| `XENDIT_SECRET_KEY` | Opsional — payment |
-| `TRAKTEER_WEBHOOK_TOKEN` | Opsional — payment |
+| Method | Endpoint | Auth | Deskripsi |
+|--------|----------|------|-----------|
+| GET | `/api` | — | Health check |
+| GET | `/api/users/:username` | — | Profil user publik |
+| PATCH | `/api/users/:username` | JWT | Update profil |
+| GET | `/api/premium` | JWT | Status subscriber saya |
+| GET | `/api/premium?leaderboard=true` | — | Top donatur publik |
+| GET | `/api/vtubers` | — | Semua VTuber aktif |
+| GET | `/api/vtubers/:slug` | — | Detail VTuber |
+| GET | `/api/events` | — | List event (filter: `?status=`) |
+| GET | `/api/events/:slug` | — | Detail event |
+| GET | `/api/blog` | — | List post (filter: `?search= ?tag= ?page=`) |
+| GET | `/api/blog/:slug` | — | Detail post |
+| GET | `/api/gallery` | — | Galeri approved (filter: `?tag=`) |
+| GET | `/api/stream` | — / JWT | List stream (premium: JWT required) |
+| GET | `/api/stream/:slug` | — / JWT | Metadata + HLS URL |
+| POST | `/api/donate/xendit/create` | JWT | Buat invoice Xendit |
+| POST | `/api/donate/xendit/webhook` | x-callback-token | Xendit payment callback |
+| POST | `/api/donate/trakteer` | x-trakteer-signature | Trakteer webhook |
 
 ### Auth Pattern
-Services/api mendukung dua jenis auth:
 
-1. **Supabase JWT** — untuk user biasa (login via web/mobile)
-   ```
-   Authorization: Bearer <supabase-access-token>
-   ```
+```
+# 1. Supabase JWT — untuk user (web, mobile, stream)
+Authorization: Bearer <supabase-jwt>
 
-2. **API Key** — untuk service-to-service (bot, mobile app, stream)
-   ```
-   Authorization: Bearer sk_xxxxxxxx...
-   ```
-   Key disimpan sebagai SHA256 hash di tabel `soraku.apikeys`.
+# 2. API Key — untuk service (bot, mobile app)
+Authorization: Bearer sk_xxxxxxxxxxxxxxxx
 
-3. **Internal Secret** — untuk komunikasi web ↔ bot
-   ```
-   x-soraku-secret: <SORAKU_API_SECRET>
-   ```
+# 3. Internal Secret — untuk bot ↔ web
+x-soraku-secret: <SORAKU_API_SECRET>
+```
 
-### Cara Generate API Key (untuk bot/mobile)
+### Cara Generate API Key untuk Bot / Mobile
 ```bash
 node -e "
 const crypto = require('crypto');
-const key = 'bot_' + crypto.randomBytes(32).toString('hex');
+const key  = 'bot_' + crypto.randomBytes(32).toString('hex');
 const hash = crypto.createHash('sha256').update(key).digest('hex');
-console.log('Key:', key);
-console.log('Hash (simpan di DB):', hash);
-console.log('Prefix:', key.substring(0, 8));
+console.log('KEY (berikan ke bot):', key);
+console.log('HASH (simpan di DB) :', hash);
 "
+# Simpan hash ke soraku.apikeys.keyhash
 ```
-Simpan `Hash` ke tabel `soraku.apikeys.keyhash`, dan berikan `Key` ke bot/mobile.
+
+---
+
+## ENV services/api
+
+Lihat `services/api/.env.example`
+
+| Variable | Keterangan |
+|----------|-----------|
+| `DATABASE_URL` | Supabase Transaction Pooler port 6543 |
+| `SUPABASE_URL` | Project URL Supabase |
+| `SUPABASE_SERVICE_ROLE_KEY` | Service role (bypass RLS) |
+| `SORAKU_API_SECRET` | Harus sama dengan apps/web & services/bot |
+| `XENDIT_SECRET_KEY` | Opsional — payment |
+| `TRAKTEER_WEBHOOK_TOKEN` | Opsional — payment |
 
 ---
 
@@ -249,41 +179,133 @@ Simpan `Hash` ke tabel `soraku.apikeys.keyhash`, dan berikan `Key` ke bot/mobile
 
 1. Buat file: `supabase/migrations/YYYYMMDD_nama.sql`
 2. Gunakan `ALTER TABLE ADD COLUMN IF NOT EXISTS` — jangan drop tabel yang ada data
-3. Selalu tambah RLS policy untuk tabel baru
-4. Track di `soraku._migrations`:
+3. Selalu `ALTER TABLE ... ENABLE ROW LEVEL SECURITY`
+4. Track:
    ```sql
    INSERT INTO soraku._migrations (name, checksum)
    VALUES ('YYYYMMDD_nama', md5('...'))
    ON CONFLICT (name) DO NOTHING;
    ```
-5. Apply via Supabase MCP atau Supabase CLI
-6. Update file ini (docs/migration.md)
+5. Koordinasi dengan Kaizo sebelum apply
 
 ---
 
-## Packages/Types
+## Tugas Sora (Full Stack)
 
-Semua shared types ada di `packages/types/src/index.ts`.
-Dipakai oleh semua app dan service di monorepo:
+### Prioritas Tinggi
+
+**1. Integrasikan `apps/web` ke `services/api`**
+
+Semua fetch data di `apps/web` yang langsung ke Supabase via `adminDb()` perlu perlahan dipindah ke hit `services/api`. Untuk sementara tidak perlu migrasi masif — cukup route baru pakai `services/api`.
 
 ```ts
-import type { User, StreamContent, ApiResponse } from "@soraku/types"
+// ❌ Sekarang (langsung ke DB)
+const { data } = await adminDb().from("posts").select("*")
+
+// ✅ Target (via services/api)
+const res  = await fetch(`${env.API_URL}/api/blog`)
+const { data } = await res.json()
 ```
 
-Types yang tersedia: `User`, `UserSession`, `Post`, `Event`, `GalleryItem`, `VTuber`, `StreamContent`, `Donatur`, `PremiumStatus`, `Notification`, dan semua enum types.
+**2. Setup `apps/stream` (Anime Streaming Web)**
+
+Struktur awal yang dibutuhkan:
+```
+apps/stream/
+├── src/app/
+│   ├── page.tsx          → homepage — list anime
+│   ├── anime/[slug]/     → detail anime
+│   ├── watch/[slug]/     → video player HLS
+│   └── layout.tsx
+```
+
+Pakai type dari `@soraku/types`:
+```ts
+import type { StreamContent, VTuber } from "@soraku/types"
+```
+
+Fetch dari `services/api`:
+```ts
+// List konten stream
+GET ${API_URL}/api/stream?type=vod&page=1
+
+// Detail + HLS URL untuk player
+GET ${API_URL}/api/stream/:slug
+// Response: { data: { hlsurl: "https://...", thumbnailurl, duration, ... } }
+```
+
+**3. Tambah ENV `API_URL` ke `apps/web`**
+
+Di `apps/web/src/env/index.ts`, tambah:
+```ts
+API_URL: z.string().url().default("http://localhost:4000"),
+```
+
+Dan di Vercel: `API_URL = https://soraku-api.vercel.app` (setelah services/api deploy)
 
 ---
 
-## Untuk Sora & Bubu
+## Tugas Bubu (Front-end)
 
-**Sora (Full Stack):**
-- `services/api` siap diintegrasikan ke `apps/web` — import dari `@soraku/types` untuk type-safety
-- Supabase Auth tetap di `apps/web` — `services/api` hanya untuk data layer
-- Kalau perlu route baru di `services/api`, koordinasi dengan Kaizo
+### `apps/stream` — UI Components yang Dibutuhkan
 
-**Bubu (Front-end):**
-- Untuk streaming UI, pakai types `StreamContent` dari `@soraku/types`
-- Thumbnail: `content.thumbnailurl`
-- HLS URL: `content.hlsurl` (butuh HLS.js untuk playback)
-- Duration: `content.duration` (dalam detik, convert ke `mm:ss`)
-- Premium badge: tampilkan jika `content.ispremium === true`
+**1. Video Player (`/watch/[slug]`)**
+
+Data yang tersedia dari API:
+```ts
+content.hlsurl       // string — HLS playlist .m3u8
+content.thumbnailurl // string | null — poster image
+content.duration     // number | null — detik, convert ke "mm:ss"
+content.title        // string
+content.ispremium    // boolean — tampilkan badge 👑
+```
+
+Player pakai **HLS.js** (sudah ada di `apps/stream`):
+```tsx
+import Hls from "hls.js"
+// Mount ke <video> element, load content.hlsurl
+```
+
+**2. Stream Card Component**
+
+```tsx
+// Tampilkan di homepage / list
+<StreamCard
+  title={content.title}
+  thumbnail={content.thumbnailurl}
+  duration={formatDuration(content.duration)} // "24:15"
+  isPremium={content.ispremium}               // crown badge
+  type={content.type}                          // "VOD" | "LIVE" | "CLIP"
+/>
+```
+
+**3. Premium Gate UI**
+
+Kalau `content.ispremium === true` dan user belum subscribe:
+- Tampilkan overlay blur pada thumbnail
+- Tombol "Upgrade ke Supporter"
+- Link ke `apps/web/premium`
+
+**4. `apps/mobile` (kelak)**
+
+Stack yang akan dipakai: **React Native + Expo**  
+Konsumsi dari `services/api` — sama persis dengan web, cukup ganti `fetch` URL.  
+Types dari `@soraku/types` bisa langsung dipakai.
+
+---
+
+## packages/types — Shared Types
+
+Import di mana saja:
+```ts
+import type {
+  User, UserSession, UserRole,
+  Post, Event, GalleryItem,
+  VTuber, StreamContent, StreamType,
+  Donatur, PremiumStatus,
+  Notification, NotifType,
+  ApiResponse, PaginatedResponse,
+} from "@soraku/types"
+```
+
+Kalau perlu tambah type baru, edit `packages/types/src/index.ts` dan koordinasi dengan Kaizo.

@@ -6,8 +6,22 @@ import { eq, desc } from "drizzle-orm"
 
 export const dynamic = "force-dynamic"
 
-// GET /api/premium — status supporter user yang sedang login
+// GET /api/premium — status subscriber user yang login
 export async function GET(req: NextRequest) {
+  const { searchParams } = new URL(req.url)
+
+  // Kalau ada ?leaderboard=true → return top donatur publik
+  if (searchParams.get("leaderboard") === "true") {
+    const rows = await db
+      .select()
+      .from(donatur)
+      .where(eq(donatur.ispublic, true))
+      .orderBy(desc(donatur.amount))
+      .limit(50)
+    return NextResponse.json({ data: rows, error: null })
+  }
+
+  // Default: return status subscriber milik user yang login
   const auth = await verifyAuth(req)
   if ("error" in auth || !("userId" in auth)) return unauthorized()
 
@@ -24,23 +38,9 @@ export async function GET(req: NextRequest) {
 
   if (!user) return NextResponse.json({ data: null, error: "User not found" }, { status: 404 })
 
-  const isActive = user.supporterrole !== null &&
+  const isActive =
+    user.supporterrole !== null &&
     (user.supporteruntil === null || user.supporteruntil > new Date())
 
-  return NextResponse.json({
-    data: { ...user, isActive },
-    error: null,
-  })
-}
-
-// GET /api/premium/leaderboard — top donatur publik
-export async function leaderboard(_req: NextRequest) {
-  const rows = await db
-    .select()
-    .from(donatur)
-    .where(eq(donatur.ispublic, true))
-    .orderBy(desc(donatur.amount))
-    .limit(50)
-
-  return NextResponse.json({ data: rows, error: null })
+  return NextResponse.json({ data: { ...user, isActive }, error: null })
 }

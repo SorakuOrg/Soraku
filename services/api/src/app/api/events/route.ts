@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
 import { events } from "@/lib/db/schema"
 import { EventQuerySchema } from "@/lib/validators"
-import { eq, and, asc, desc } from "drizzle-orm"
+import { eq, and, asc } from "drizzle-orm"
 
 export const dynamic = "force-dynamic"
 
@@ -15,30 +15,16 @@ export async function GET(req: NextRequest) {
   const { status, page, limit } = parsed.data
   const offset = (page - 1) * limit
 
-  const where = and(
-    eq(events.ispublished, true),
-    status ? eq(events.status, status) : undefined,
-  )
-
   const rows = await db
     .select()
     .from(events)
-    .where(where)
+    .where(and(
+      eq(events.ispublished, true),
+      status ? eq(events.status, status) : undefined,
+    ))
     .orderBy(asc(events.startdate))
     .limit(limit)
     .offset(offset)
 
   return NextResponse.json({ data: rows, error: null })
-}
-
-// GET /api/events/:slug
-export async function getBySlug(_req: NextRequest, { params }: { params: { slug: string } }) {
-  const [event] = await db
-    .select()
-    .from(events)
-    .where(and(eq(events.slug, params.slug), eq(events.ispublished, true)))
-    .limit(1)
-
-  if (!event) return NextResponse.json({ data: null, error: "Event not found" }, { status: 404 })
-  return NextResponse.json({ data: event, error: null })
 }

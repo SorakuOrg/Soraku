@@ -6,7 +6,7 @@ import { eq, and, sql, desc } from "drizzle-orm"
 
 export const dynamic = "force-dynamic"
 
-// GET /api/gallery — hanya approved yang bisa diakses publik
+// GET /api/gallery
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url)
   const parsed = GalleryQuerySchema.safeParse(Object.fromEntries(searchParams))
@@ -15,11 +15,6 @@ export async function GET(req: NextRequest) {
   const { tag, page, limit } = parsed.data
   const offset = (page - 1) * limit
 
-  const where = and(
-    eq(gallery.status, "approved"),
-    tag ? sql`${tag} = ANY(${gallery.tags})` : undefined,
-  )
-
   const rows = await db
     .select({
       id: gallery.id, imageurl: gallery.imageurl, title: gallery.title,
@@ -27,7 +22,10 @@ export async function GET(req: NextRequest) {
       uploadedby: gallery.uploadedby, createdat: gallery.createdat,
     })
     .from(gallery)
-    .where(where)
+    .where(and(
+      eq(gallery.status, "approved"),
+      tag ? sql`${tag} = ANY(${gallery.tags})` : undefined,
+    ))
     .orderBy(desc(gallery.createdat))
     .limit(limit)
     .offset(offset)
