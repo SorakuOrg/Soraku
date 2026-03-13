@@ -31,8 +31,9 @@ export const env = createEnv({
     TRAKTEER_WEBHOOK_SECRET: z.string().min(1).optional(),
 
     // Central API (services/api) — URL untuk koneksi ke services/api
-    // Dev: http://localhost:4000 | Prod: https://soraku-api.vercel.app
-    API_URL: z.string().url().default('http://localhost:4000'),
+    // Dev: http://localhost:4000 | Prod: https://apisoraku.vercel.app
+    // Optional — kalau belum diset, fallback ke localhost (tidak block build)
+    API_URL: z.string().url().optional().default('http://localhost:4000'),
 
     // Bot + internal
     SORAKU_API_SECRET:   z.string().min(1).optional(),
