@@ -17,8 +17,8 @@ import {
 } from "discord.js"
 
 const WEB_URL = process.env.SORAKU_WEB_URL ?? "https://soraku.vercel.app"
-const DISCORD_INVITE = process.env.DISCORD_INVITE_CODE
-  ? `https://discord.gg/${process.env.DISCORD_INVITE_CODE}`
+const DISCORD_INVITE = process.env.DISCORD_INVITE
+  ? `https://discord.gg/${process.env.DISCORD_INVITE}`
   : "https://discord.gg/qm3XJvRa6B"
 
 export const aboutCommand = {

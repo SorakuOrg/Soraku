@@ -1,15 +1,19 @@
 /**
- * services/bot — API Client (inline, tidak pakai @soraku/utils)
- * Docker standalone build tidak resolve workspace packages.
+ * services/bot — API Client
+ * Konek ke services/api. ENV Railway yang relevan:
+ *   SORAKU_API_SECRET — internal secret
+ *   SORAKU_WEB_URL    — URL web (fallback jika SORAKU_API_URL tidak diset)
  */
 
-const API_URL     = process.env.SORAKU_API_URL    ?? "http://localhost:4000"
+// SORAKU_API_URL belum ada di Railway → fallback ke SORAKU_WEB_URL
+// Setelah Kaizo set SORAKU_API_URL di Railway, otomatis terbaca
+const API_URL     = process.env.SORAKU_API_URL
+                 ?? process.env.SORAKU_WEB_URL
+                 ?? "http://localhost:3000"
 const BOT_SECRET  = process.env.SORAKU_API_SECRET ?? ""
-const BOT_API_KEY = process.env.BOT_API_KEY       ?? ""
 
 async function fetcher<T>(
   path: string,
-  token?: string,
   secret?: string,
   options: RequestInit = {}
 ): Promise<T> {
@@ -18,9 +22,7 @@ async function fetcher<T>(
     "Content-Type": "application/json",
     ...(options.headers as Record<string, string> ?? {}),
   }
-  if (token)  headers["Authorization"]   = `Bearer ${token}`
   if (secret) headers["x-soraku-secret"] = secret
-
   const res = await fetch(url, { ...options, headers })
   return res.json() as Promise<T>
 }
@@ -33,29 +35,29 @@ function qs(p?: Record<string, string | number | boolean | undefined>): string {
   return q ? `?${q}` : ""
 }
 
-/** Client bot — pakai API Key */
 export const api = {
-  health:   ()                   => fetcher("/api",                              undefined, BOT_SECRET),
+  health:   () => fetcher("/api", BOT_SECRET),
   users: {
-    get:    (id: string)         => fetcher(`/api/users/${id}`,                  BOT_API_KEY),
-    update: (id: string, d: unknown) => fetcher(`/api/users/${id}`,             BOT_API_KEY, undefined, { method: "PATCH", body: JSON.stringify(d) }),
+    get:    (id: string) => fetcher(`/api/users/${id}`, BOT_SECRET),
+    update: (id: string, d: unknown) => fetcher(`/api/users/${id}`, BOT_SECRET, {
+      method: "PATCH", body: JSON.stringify(d),
+    }),
   },
-  events:  {
-    list:   (p?: { status?: string; page?: number; limit?: number }) =>
-      fetcher(`/api/events${qs(p)}`, BOT_API_KEY),
-    get:    (slug: string)       => fetcher(`/api/events/${slug}`,               BOT_API_KEY),
+  events: {
+    list: (p?: { status?: string; page?: number; limit?: number }) =>
+      fetcher(`/api/events${qs(p)}`, BOT_SECRET),
+    get: (slug: string) => fetcher(`/api/events/${slug}`, BOT_SECRET),
   },
   vtubers: {
-    list:   ()                   => fetcher("/api/vtubers",                       BOT_API_KEY),
-    get:    (slug: string)       => fetcher(`/api/vtubers/${slug}`,              BOT_API_KEY),
+    list: () => fetcher("/api/vtubers", BOT_SECRET),
+    get:  (slug: string) => fetcher(`/api/vtubers/${slug}`, BOT_SECRET),
   },
   premium: {
-    leaderboard: ()              => fetcher("/api/premium?leaderboard=true",      BOT_API_KEY),
+    leaderboard: () => fetcher("/api/premium?leaderboard=true", BOT_SECRET),
   },
 }
 
-/** Client internal — untuk webhook ke web */
 export const apiInternal = {
   post: <T>(path: string, body: unknown) =>
-    fetcher<T>(path, undefined, BOT_SECRET, { method: "POST", body: JSON.stringify(body) }),
+    fetcher<T>(path, BOT_SECRET, { method: "POST", body: JSON.stringify(body) }),
 }

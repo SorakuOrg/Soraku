@@ -61,7 +61,7 @@ app.post("/webhook/role-update", async (c) => {
   if (!parsed.success) return c.json({ error: parsed.error.message }, 400);
 
   try {
-    const guild  = client.guilds.cache.get(process.env.DISCORD_GUILD_ID!);
+    const guild  = client.guilds.cache.get(process.env.GUILD_ID!);
     if (!guild) return c.json({ error: "Guild not found" }, 404);
 
     const member = await guild.members.fetch(parsed.data.discordId);

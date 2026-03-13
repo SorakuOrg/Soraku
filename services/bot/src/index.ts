@@ -2,21 +2,32 @@
  * services/bot/src/index.ts
  * Entry point SorakuBot — Discord Bot Soraku Community
  *
- * Commands aktif: /link /profile /about /ping /member /event
+ * ENV (Railway):
+ *   BOT_TOKEN         — Discord bot token
+ *   CLIENT_ID         — Discord application/client ID
+ *   GUILD_ID          — Discord server ID
+ *   OWNER_ID          — Discord ID owner (Riu)
+ *   SORAKU_API_SECRET — Internal secret untuk services/api
+ *   SORAKU_WEB_URL    — URL web komunitas (https://soraku.vercel.app)
+ *   WEBHOOK_SECRET    — Secret validasi webhook dari web
+ *   ROLE_DONATUR      — Discord Role ID tier Donatur
+ *   ROLE_VIP          — Discord Role ID tier VIP
+ *   ROLE_VVIP         — Discord Role ID tier VVIP
  */
 
 import { Client, GatewayIntentBits, Events } from "discord.js"
 import { startWebhookServer } from "./webhooks/server"
 import { syncRoleOnUpdate }   from "./events/guildMemberUpdate"
 import { handleReady }        from "./events/ready"
-import { registerCommands, commands } from "./commands/register"
+import { deployCommands, commands } from "./commands/register"
 
 // ── ENV validation ────────────────────────────────────────────
 const required = [
-  "DISCORD_TOKEN",
-  "DISCORD_GUILD_ID",
-  "SORAKU_API_URL",
+  "BOT_TOKEN",
+  "CLIENT_ID",
+  "GUILD_ID",
   "SORAKU_API_SECRET",
+  "SORAKU_WEB_URL",
   "WEBHOOK_SECRET",
 ]
 for (const key of required) {
@@ -32,7 +43,7 @@ export const client = new Client({
     GatewayIntentBits.Guilds,
     GatewayIntentBits.GuildMembers,
     GatewayIntentBits.GuildMessages,
-    GatewayIntentBits.GuildPresences,   // ← untuk /about (cek online count)
+    GatewayIntentBits.GuildPresences,
     GatewayIntentBits.MessageContent,
   ],
 })
@@ -64,14 +75,9 @@ client.on(Events.InteractionCreate, async interaction => {
 async function main() {
   console.log("[bot] 🚀 Starting SorakuBot...")
 
-  // 1. Register slash commands ke Discord
-  await registerCommands()
-
-  // 2. Start HTTP webhook server (terima request dari web & Railway health check)
+  await deployCommands()
   await startWebhookServer()
-
-  // 3. Login Discord
-  await client.login(process.env.DISCORD_TOKEN)
+  await client.login(process.env.BOT_TOKEN)
 }
 
 main().catch(err => {
