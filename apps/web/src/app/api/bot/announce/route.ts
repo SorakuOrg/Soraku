@@ -48,7 +48,7 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const res = await fetch(`${botUrl}/webhook/discord-event`, {
+    const res = await fetch(`${botUrl}/webhook/event-announce`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

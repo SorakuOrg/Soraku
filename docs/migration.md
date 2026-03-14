@@ -291,3 +291,82 @@ import Hls from "hls.js"
 
 ### 3. `apps/mobile` — nanti (React Native / Expo)
 Types dan API client sudah siap — tinggal bangun UI-nya.
+
+---
+
+## Bot Schema — `bot.*`
+
+Migration applied: `20260314_bot_schema_setup` ✅
+
+Schema `bot` terpisah dari `soraku` — pakai Supabase service role key langsung dari bot.
+
+| Tabel | Deskripsi |
+|-------|-----------|
+| `bot.bot_guilds` | Setting per server (prefix, embed color, log channel) |
+| `bot.bot_antinuke` | Konfigurasi antinuke per server |
+| `bot.bot_antilink` | Konfigurasi antilink per server |
+| `bot.bot_antispam` | Konfigurasi antispam + threshold |
+| `bot.bot_autorole` | Role otomatis saat member join |
+| `bot.bot_autorespond` | Trigger → response otomatis |
+| `bot.bot_autoreact` | Keyword → emoji react otomatis |
+| `bot.bot_welcome` | Konfigurasi welcome message |
+| `bot.bot_afk` | Status AFK per user per server |
+| `bot.bot_playlists` | Playlist musik per user |
+| `bot.bot_247` | Konfigurasi 24/7 music per server |
+| `bot.bot_roles` | Setup role hierarchy per server |
+| `bot.bot_blacklist` | User yang di-blacklist dari bot |
+| `bot.bot_noprefix` | User dengan akses tanpa prefix |
+| `bot.bot_ignorechan` | Channel yang diabaikan prefix bot |
+| `bot.bot_snipe` | Cache pesan terakhir yang dihapus |
+
+> Bot tidak butuh RLS — akses langsung pakai `SUPABASE_SERVICE_KEY`.
+
+---
+
+## Bot ↔ Web — Webhook Flow
+
+```
+apps/web  ──────────────────→  services/bot
+          POST /webhook/notify          (kirim DM ke user Discord)
+          POST /webhook/role-sync       (assign role Discord)
+          POST /webhook/event-announce  (announce event ke channel)
+          Header: x-soraku-secret: <BOT_WEBHOOK_SECRET>
+
+services/bot  ──────────────→  apps/web
+          POST /api/discord/role-sync   (sync tier dari Discord roles)
+          Header: x-soraku-secret: <SORAKU_API_SECRET>
+```
+
+### ENV yang harus sama antara web dan bot
+
+| apps/web (Vercel) | services/bot (Railway) |
+|-------------------|------------------------|
+| `SORAKU_API_SECRET` | `SORAKU_API_SECRET` |
+| `BOT_WEBHOOK_SECRET` | `WEBHOOK` |
+| `BOT_WEBHOOK_URL` | ← URL Railway bot |
+
+---
+
+## ENV Railway — services/bot
+
+| Key | Keterangan |
+|-----|-----------|
+| `TOKEN` | Discord Dev Portal → Bot → Reset Token |
+| `CLIENT_ID` | Discord Dev Portal → Application ID |
+| `GUILD_ID` | ID server Discord Soraku |
+| `CHANNEL_ID` | ID channel announce event |
+| `SUPABASE_URL` | `https://jrgknsxqwuygcoocnnnb.supabase.co` |
+| `SUPABASE_SERVICE_KEY` | Supabase → Settings → API → service_role |
+| `SORAKU_WEB_URL` | `https://www.soraku.id` |
+| `SORAKU_API_SECRET` | Harus sama dengan apps/web |
+| `WEBHOOK` | Harus sama dengan `BOT_WEBHOOK_SECRET` di apps/web |
+| `BOT_PREFIX` | `!` (default) |
+| `OWNER_ID` | `1020644780075659356` |
+| `ROLE_DONATUR` | `1436534227708543046` |
+| `ROLE_VIP` | `1447194092965728307` |
+| `ROLE_VVIP` | `1447194196401459320` |
+| `LAVA_URL` | `lava-v4.ajieblogs.eu.org:443` |
+| `LAVA_AUTH` | `https://dsc.gg/ajidevserver` |
+| `LAVA_SECURE` | `true` |
+
+> Setelah set ENV di Railway → Redeploy → cek `https://soraku.up.railway.app/status`
