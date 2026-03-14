@@ -1,33 +1,20 @@
 /**
- * Supabase DB Layer — pengganti semua Mongoose models
- * Schema "bot" untuk data bot, schema "soraku" untuk data shared dengan apps/web
+ * Supabase DB Layer — schema "bot" untuk data bot, "soraku" untuk data shared web
  */
 const { createClient } = require("@supabase/supabase-js")
 
-// Lazy init — tidak crash saat load jika ENV belum ada atau format salah
 let _supabase = null
-
 function getSupabase() {
   if (_supabase) return _supabase
   const url = process.env.SUPABASE_URL
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.SUPABASE_SERVICE_KEY
-  if (!url || !key) throw new Error("SUPABASE_URL atau SUPABASE_SERVICE_KEY belum diset di Railway Variables")
-  // Pastikan URL punya format https://
+  if (!url || !key) throw new Error("SUPABASE_URL atau SUPABASE_SERVICE_KEY belum diset")
   const fixedUrl = url.startsWith("http") ? url : "https://" + url
   _supabase = createClient(fixedUrl, key)
   return _supabase
 }
 
-// Proxy agar kode lain tetap pakai `supabase.schema(...)` seperti biasa
-const supabase = new Proxy({}, {
-  get: (_, prop) => {
-    const client = getSupabase()
-    const val = client[prop]
-    return typeof val === "function" ? val.bind(client) : val
-  }
-})
-
-const bot = () => getSupabase().schema("bot")
+const bot    = () => getSupabase().schema("bot")
 const soraku = () => getSupabase().schema("soraku")
 
 async function upsert(table, data, conflict) {
@@ -35,7 +22,6 @@ async function upsert(table, data, conflict) {
   if (error) throw error
   return r
 }
-
 async function findOne(table, filters) {
   let q = bot().from(table).select("*")
   for (const [k, v] of Object.entries(filters)) q = q.eq(k, v)
@@ -43,7 +29,6 @@ async function findOne(table, filters) {
   if (error) throw error
   return data
 }
-
 async function findAll(table, filters) {
   let q = bot().from(table).select("*")
   for (const [k, v] of Object.entries(filters)) q = q.eq(k, v)
@@ -51,7 +36,6 @@ async function findAll(table, filters) {
   if (error) throw error
   return data ?? []
 }
-
 async function remove(table, filters) {
   let q = bot().from(table).delete()
   for (const [k, v] of Object.entries(filters)) q = q.eq(k, v)
@@ -59,109 +43,113 @@ async function remove(table, filters) {
   if (error) throw error
 }
 
+// ── Guild ─────────────────────────────────────────────────────
 const Guild = {
-  get: (guildId) => findOne("bot_guilds", { guild_id: guildId }),
-  set: (guildId, data) => upsert("bot_guilds", { guild_id: guildId, ...data }, "guild_id"),
+  get:       (guildId)         => findOne("guilds", { guild_id: guildId }),
+  set:       (guildId, data)   => upsert("guilds", { guild_id: guildId, ...data }, "guild_id"),
   getPrefix: async (guildId, def = "!") => {
-    const row = await findOne("bot_guilds", { guild_id: guildId })
+    const row = await findOne("guilds", { guild_id: guildId })
     return row?.prefix ?? def
   },
-  setPrefix: (guildId, prefix) => upsert("bot_guilds", { guild_id: guildId, prefix }, "guild_id"),
+  setPrefix: (guildId, prefix) => upsert("guilds", { guild_id: guildId, prefix }, "guild_id"),
 }
 
-const Antinuke = {
-  get: (guildId) => findOne("bot_antinuke", { guild_id: guildId }),
-  upsert: (guildId, data) => upsert("bot_antinuke", { guild_id: guildId, ...data }, "guild_id"),
-}
+// ── Antinuke / Automod ────────────────────────────────────────
+const Antinuke   = { get: g => findOne("antinuke",   { guild_id: g }), upsert: (g, d) => upsert("antinuke",   { guild_id: g, ...d }, "guild_id") }
+const Antilink   = { get: g => findOne("antilink",   { guild_id: g }), upsert: (g, d) => upsert("antilink",   { guild_id: g, ...d }, "guild_id") }
+const Antispam   = { get: g => findOne("antispam",   { guild_id: g }), upsert: (g, d) => upsert("antispam",   { guild_id: g, ...d }, "guild_id") }
+const Autorole   = { get: g => findOne("autorole",   { guild_id: g }), upsert: (g, d) => upsert("autorole",   { guild_id: g, ...d }, "guild_id") }
+const Welcome    = { get: g => findOne("welcome",    { guild_id: g }), upsert: (g, d) => upsert("welcome",    { guild_id: g, ...d }, "guild_id") }
+const Roles      = { get: g => findOne("roles",      { guild_id: g }), upsert: (g, d) => upsert("roles",      { guild_id: g, ...d }, "guild_id") }
 
-const Antilink = {
-  get: (guildId) => findOne("bot_antilink", { guild_id: guildId }),
-  upsert: (guildId, data) => upsert("bot_antilink", { guild_id: guildId, ...data }, "guild_id"),
-}
-
-const Antispam = {
-  get: (guildId) => findOne("bot_antispam", { guild_id: guildId }),
-  upsert: (guildId, data) => upsert("bot_antispam", { guild_id: guildId, ...data }, "guild_id"),
-}
-
-const Autorole = {
-  get: (guildId) => findOne("bot_autorole", { guild_id: guildId }),
-  upsert: (guildId, data) => upsert("bot_autorole", { guild_id: guildId, ...data }, "guild_id"),
-}
-
+// ── Autorespond / Autoreact ───────────────────────────────────
 const Autorespond = {
-  getAll: (guildId) => findAll("bot_autorespond", { guild_id: guildId }),
-  add: (guildId, trigger, response) => upsert("bot_autorespond", { guild_id: guildId, trigger, response }, "guild_id,trigger"),
-  remove: (guildId, trigger) => remove("bot_autorespond", { guild_id: guildId, trigger }),
+  getAll: g          => findAll("autorespond", { guild_id: g }),
+  add:    (g, t, r)  => upsert("autorespond", { guild_id: g, trigger: t, response: r }, "guild_id,trigger"),
+  remove: (g, t)     => remove("autorespond", { guild_id: g, trigger: t }),
 }
-
 const Autoreact = {
-  getAll: (guildId) => findAll("bot_autoreact", { guild_id: guildId }),
-  add: (guildId, keyword, emoji) => upsert("bot_autoreact", { guild_id: guildId, keyword, emoji }, "guild_id,keyword"),
-  remove: (guildId, keyword) => remove("bot_autoreact", { guild_id: guildId, keyword }),
+  getAll: g          => findAll("autoreact", { guild_id: g }),
+  add:    (g, k, e)  => upsert("autoreact", { guild_id: g, keyword: k, emoji: e }, "guild_id,keyword"),
+  remove: (g, k)     => remove("autoreact", { guild_id: g, keyword: k }),
 }
 
-const Welcome = {
-  get: (guildId) => findOne("bot_welcome", { guild_id: guildId }),
-  upsert: (guildId, data) => upsert("bot_welcome", { guild_id: guildId, ...data }, "guild_id"),
-}
-
+// ── AFK ───────────────────────────────────────────────────────
 const Afk = {
-  get: (guildId, userId) => findOne("bot_afk", { guild_id: guildId, user_id: userId }),
-  set: (guildId, userId, reason) => upsert("bot_afk", { guild_id: guildId, user_id: userId, reason, since: new Date().toISOString() }, "guild_id,user_id"),
-  remove: (guildId, userId) => remove("bot_afk", { guild_id: guildId, user_id: userId }),
+  get:    (g, u)         => findOne("afk", { guild_id: g, user_id: u }),
+  set:    (g, u, reason) => upsert("afk",  { guild_id: g, user_id: u, reason, since: new Date().toISOString() }, "guild_id,user_id"),
+  remove: (g, u)         => remove("afk",  { guild_id: g, user_id: u }),
 }
 
+// ── Playlist ──────────────────────────────────────────────────
 const Playlist = {
-  getAll: (userId) => findAll("bot_playlists", { user_id: userId }),
-  get: async (userId, name) => {
-    const { data } = await bot().from("bot_playlists").select("*").eq("user_id", userId).ilike("name", name).maybeSingle()
+  getAll: u           => findAll("playlists", { user_id: u }),
+  get: async (u, n)  => {
+    const { data } = await bot().from("playlists").select("*").eq("user_id", u).ilike("name", n).maybeSingle()
     return data
   },
-  create: (userId, name) => upsert("bot_playlists", { user_id: userId, name, tracks: [] }, "user_id,name"),
-  update: (userId, name, tracks) => bot().from("bot_playlists").update({ tracks }).eq("user_id", userId).ilike("name", name),
-  delete: (userId, name) => bot().from("bot_playlists").delete().eq("user_id", userId).ilike("name", name),
+  create: (u, n)     => upsert("playlists", { user_id: u, name: n, tracks: [] }, "user_id,name"),
+  update: (u, n, t)  => bot().from("playlists").update({ tracks: t }).eq("user_id", u).ilike("name", n),
+  delete: (u, n)     => bot().from("playlists").delete().eq("user_id", u).ilike("name", n),
 }
 
+// ── Music 24/7 ────────────────────────────────────────────────
 const Music247 = {
-  get: (guildId) => findOne("bot_247", { guild_id: guildId }),
-  set: (guildId, textId, voiceId) => upsert("bot_247", { guild_id: guildId, text_channel_id: textId, voice_channel_id: voiceId }, "guild_id"),
-  remove: (guildId) => remove("bot_247", { guild_id: guildId }),
+  get:    g              => findOne("music247", { guild_id: g }),
+  set:    (g, tId, vId)  => upsert("music247", { guild_id: g, text_channel_id: tId, voice_channel_id: vId }, "guild_id"),
+  remove: g              => remove("music247", { guild_id: g }),
 }
 
-const Roles = {
-  get: (guildId) => findOne("bot_roles", { guild_id: guildId }),
-  upsert: (guildId, data) => upsert("bot_roles", { guild_id: guildId, ...data }, "guild_id"),
-}
-
+// ── Owner Tools ───────────────────────────────────────────────
 const Blacklist = {
-  get: (userId) => findOne("bot_blacklist", { user_id: userId }),
-  add: (userId) => upsert("bot_blacklist", { user_id: userId, created_at: new Date().toISOString() }, "user_id"),
-  remove: (userId) => remove("bot_blacklist", { user_id: userId }),
+  get:    u  => findOne("blacklist", { user_id: u }),
+  add:    u  => upsert("blacklist", { user_id: u, created_at: new Date().toISOString() }, "user_id"),
+  remove: u  => remove("blacklist", { user_id: u }),
 }
-
 const Noprefix = {
-  get: (userId) => findOne("bot_noprefix", { user_id: userId }),
-  add: (userId, expiresAt) => upsert("bot_noprefix", { user_id: userId, expires_at: expiresAt ?? null }, "user_id"),
-  remove: (userId) => remove("bot_noprefix", { user_id: userId }),
+  get:    u           => findOne("noprefix", { user_id: u }),
+  add:    (u, exp)    => upsert("noprefix", { user_id: u, expires_at: exp ?? null }, "user_id"),
+  remove: u           => remove("noprefix", { user_id: u }),
 }
-
 const IgnoreChan = {
-  getAll: (guildId) => findAll("bot_ignorechan", { guild_id: guildId }),
-  add: (guildId, channelId) => upsert("bot_ignorechan", { guild_id: guildId, channel_id: channelId }, "guild_id,channel_id"),
-  remove: (guildId, channelId) => remove("bot_ignorechan", { guild_id: guildId, channel_id: channelId }),
+  getAll: g          => findAll("ignorechan", { guild_id: g }),
+  add:    (g, c)     => upsert("ignorechan", { guild_id: g, channel_id: c }, "guild_id,channel_id"),
+  remove: (g, c)     => remove("ignorechan", { guild_id: g, channel_id: c }),
+}
+const Snipe = {
+  get: c          => findOne("snipe", { channel_id: c }),
+  set: (c, data)  => upsert("snipe", { channel_id: c, ...data, deleted_at: new Date().toISOString() }, "channel_id"),
 }
 
+// ── Soraku Web Integration ────────────────────────────────────
 const SorakuUser = {
+  /** Cari user Soraku berdasarkan Discord ID */
   get: async (discordId) => {
-    const { data } = await soraku().from("users")
-      .select("id,username,displayname,avatarurl,role,supporterrole,supporteruntil,isprivate")
-      .eq("discordid", discordId).maybeSingle()
+    const { data, error } = await soraku().from("users")
+      .select("id,username,displayname,avatarurl,bio,role,supporterrole,supporteruntil,isprivate")
+      .eq("discordid", discordId)
+      .maybeSingle()
+    if (error) { console.error("[SorakuUser.get]", error); return null }
     return data
   },
+  /** Set discordid saat user link akun */
+  link: async (userId, discordId) => {
+    const { error } = await soraku().from("users")
+      .update({ discordid: discordId })
+      .eq("id", userId)
+    if (error) throw error
+  },
+  /** Sync supporter role dari Discord ke DB */
   syncRole: async (discordId, tier) => {
-    await soraku().from("users").update({ supporterrole: tier }).eq("discordid", discordId)
+    const { error } = await soraku().from("users")
+      .update({ supporterrole: tier, supportersource: "discord" })
+      .eq("discordid", discordId)
+    if (error) throw error
   },
 }
 
-module.exports = { supabase, Guild, Antinuke, Antilink, Antispam, Autorole, Autorespond, Autoreact, Welcome, Afk, Playlist, Music247, Roles, Blacklist, Noprefix, IgnoreChan, SorakuUser }
+module.exports = {
+  Guild, Antinuke, Antilink, Antispam, Autorole, Autorespond, Autoreact,
+  Welcome, Afk, Playlist, Music247, Roles, Blacklist, Noprefix, IgnoreChan, Snipe,
+  SorakuUser,
+}

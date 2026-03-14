@@ -7,12 +7,14 @@ module.exports = {
     const total = client.guilds.cache.reduce((a, g) => a + g.memberCount, 0)
     client.logger.log(`${client.user.tag} online! ${client.guilds.cache.size} servers, ${total} users`, "ready")
 
+    const webHost = (client.webUrl ?? "soraku.vercel.app").replace(/^https?:\/\//, "")
+
     const acts = [
-      { name: `${client.webUrl.replace("https://", "")} 🌐`, type: ActivityType.Streaming, url: client.webUrl },
-      { name: "komunitas anime Indonesia 🇮🇩",               type: ActivityType.Watching },
-      { name: `${client.prefix}help | /help`,                type: ActivityType.Listening },
-      { name: "Soraku Community 空",                          type: ActivityType.Streaming, url: client.webUrl },
-      { name: "anime, manga & vtuber bareng~",               type: ActivityType.Watching },
+      { name: "Soraku Community 🌸",              type: ActivityType.Streaming, url: client.webUrl },
+      { name: webHost,                             type: ActivityType.Watching },
+      { name: `${client.prefix}help | /help`,      type: ActivityType.Listening },
+      { name: `${client.prefix}profile | /profile`,type: ActivityType.Playing },
+      { name: "komunitas anime Indonesia 🇮🇩",    type: ActivityType.Watching },
     ]
 
     let i = 0
@@ -25,6 +27,6 @@ module.exports = {
       i++
     }
     rotate()
-    setInterval(rotate, 5 * 60 * 1000)
+    setInterval(rotate, 5 * 60 * 1000) // ganti tiap 5 menit
   },
 }
