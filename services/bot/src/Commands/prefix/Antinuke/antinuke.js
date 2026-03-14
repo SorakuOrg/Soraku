@@ -1,4 +1,4 @@
-const { Antinuke } = require("../../Schema/db")
+const { Antinuke } = require("../../../Schema/db")
 module.exports = {
   name:"antinuke",aliases:["an"],category:"Antinuke",description:"Konfigurasi sistem antinuke server",usage:"antinuke [enable|disable]",
   execute:async(message,args,client)=>{

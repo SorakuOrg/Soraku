@@ -1,5 +1,5 @@
 const { ActionRowBuilder, ButtonBuilder, ButtonStyle } = require("discord.js")
-const { convertTime } = require("../../Utils/convert")
+const { convertTime } = require("../../../Utils/convert")
 module.exports = {
   name:"queue",aliases:["q"],category:"Music",description:"Tampilkan queue musik",usage:"queue",player:true,
   execute:async(message,_,client)=>{

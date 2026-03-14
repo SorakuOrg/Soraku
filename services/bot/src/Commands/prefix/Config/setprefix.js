@@ -1,5 +1,5 @@
 const { PermissionFlagsBits } = require("discord.js")
-const { Guild } = require("../../Schema/db")
+const { Guild } = require("../../../Schema/db")
 module.exports = {
   name:"setprefix",aliases:["prefix","sp"],category:"Config",description:"Ganti prefix bot untuk server ini",usage:"setprefix <prefix>",
   execute:async(message,args,client)=>{

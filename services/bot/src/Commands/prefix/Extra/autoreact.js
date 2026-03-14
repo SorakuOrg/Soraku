@@ -1,5 +1,5 @@
 const { PermissionFlagsBits } = require("discord.js")
-const { Autoreact } = require("../../Schema/db")
+const { Autoreact } = require("../../../Schema/db")
 module.exports = {
   name:"autoreact",aliases:["react"],category:"Extra",description:"Kelola auto-react pada keyword",usage:"autoreact <add|remove|list> [keyword] [emoji]",
   execute:async(message,args,client)=>{

@@ -1,4 +1,4 @@
-const { Antinuke } = require("../../Schema/db")
+const { Antinuke } = require("../../../Schema/db")
 module.exports = {
   name:"extraowner",aliases:["eo"],category:"Antinuke",description:"Tambah/hapus extra owner antinuke",usage:"extraowner <add|remove> @user",
   execute:async(message,args,client)=>{

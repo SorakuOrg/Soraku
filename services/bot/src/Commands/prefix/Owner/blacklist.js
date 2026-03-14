@@ -1,4 +1,4 @@
-const { Blacklist, supabase } = require("../../Schema/db")
+const { Blacklist, supabase } = require("../../../Schema/db")
 module.exports = {
   name:"blacklist",aliases:["bl"],category:"Owner",description:"Tambah/hapus user dari blacklist",usage:"blacklist <add|remove|list> [@user]",owner:true,
   execute:async(message,args,client)=>{

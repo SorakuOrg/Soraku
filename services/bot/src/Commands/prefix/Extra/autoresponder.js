@@ -1,5 +1,5 @@
 const { PermissionFlagsBits } = require("discord.js")
-const { Autorespond } = require("../../Schema/db")
+const { Autorespond } = require("../../../Schema/db")
 module.exports = {
   name:"autoresponder",aliases:["ar"],category:"Extra",description:"Kelola auto-responder trigger",usage:"autoresponder <add|remove|list> [trigger] [response]",
   execute:async(message,args,client)=>{

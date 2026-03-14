@@ -1,5 +1,5 @@
 const { PermissionFlagsBits } = require("discord.js")
-const { IgnoreChan } = require("../../Schema/db")
+const { IgnoreChan } = require("../../../Schema/db")
 module.exports = {
   name:"ignore",aliases:["ignorechan"],category:"Config",description:"Toggle ignore prefix di channel ini",usage:"ignore",
   execute:async(message,_,client)=>{

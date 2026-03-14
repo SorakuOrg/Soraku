@@ -1,4 +1,4 @@
-const { Afk } = require("../../Schema/db")
+const { Afk } = require("../../../Schema/db")
 
 module.exports = {
   name: "afk", aliases: ["away"], category: "Utility",

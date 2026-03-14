@@ -1,5 +1,5 @@
 const { PermissionFlagsBits } = require("discord.js")
-const { Welcome } = require("../../Schema/db")
+const { Welcome } = require("../../../Schema/db")
 module.exports = {
   name:"welcome",aliases:["setwlc"],category:"Welcome",description:"Konfigurasi sistem welcome member",usage:"welcome <enable|disable|channel|test>",
   execute:async(message,args,client)=>{

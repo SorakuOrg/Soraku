@@ -1,5 +1,5 @@
-const { Playlist } = require("../../Schema/db")
-const { convertTime } = require("../../Utils/convert")
+const { Playlist } = require("../../../Schema/db")
+const { convertTime } = require("../../../Utils/convert")
 module.exports = {
   name:"playlist",aliases:["pl"],category:"Playlist",description:"Kelola playlist musik pribadi",usage:"playlist <create|delete|list|save|load> [nama]",
   execute:async(message,args,client)=>{

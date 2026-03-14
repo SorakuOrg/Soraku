@@ -1,5 +1,5 @@
 const { ActionRowBuilder, ButtonBuilder, ButtonStyle } = require("discord.js")
-const { SorakuUser } = require("../../Schema/db")
+const { SorakuUser } = require("../../../Schema/db")
 const ROLE = { OWNER:"👑",MANAGER:"⭐",ADMIN:"🛡️",AGENSI:"🎭",KREATOR:"🎨",USER:"👤" }
 const TIER = { VVIP:"💎 VVIP",VIP:"💜 VIP",DONATUR:"💙 Donatur" }
 module.exports = {

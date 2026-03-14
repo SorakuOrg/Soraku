@@ -1,5 +1,5 @@
 const { ActionRowBuilder, ButtonBuilder, ButtonStyle } = require("discord.js")
-const { Noprefix, supabase } = require("../../Schema/db")
+const { Noprefix, supabase } = require("../../../Schema/db")
 module.exports = {
   name:"noprefix",aliases:["nop"],category:"Owner",description:"Kelola akses NoPrefix user",usage:"noprefix @user | noprefix list",owner:true,
   execute:async(message,args,client)=>{

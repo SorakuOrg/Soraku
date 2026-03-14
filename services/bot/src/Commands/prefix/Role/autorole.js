@@ -1,5 +1,5 @@
 const { PermissionFlagsBits } = require("discord.js")
-const { Autorole } = require("../../Schema/db")
+const { Autorole } = require("../../../Schema/db")
 module.exports = {
   name:"autorole",aliases:["atr"],category:"Role",description:"Konfigurasi auto-role untuk member baru",usage:"autorole <human|bot> <add|remove> @role",
   execute:async(message,args,client)=>{

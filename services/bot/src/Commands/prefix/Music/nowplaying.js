@@ -1,4 +1,4 @@
-const { convertTime, progressbar } = require("../../Utils/convert")
+const { convertTime, progressbar } = require("../../../Utils/convert")
 module.exports = {
   name:"nowplaying",aliases:["np"],category:"Music",description:"Info lagu yang sedang diputar",usage:"nowplaying",player:true,
   execute:async(message,_,client)=>{

@@ -1,4 +1,4 @@
-const { supabase } = require("../../Schema/db")
+const { supabase } = require("../../../Schema/db")
 
 module.exports = {
   name: "snipe", aliases: ["s"], category: "Utility",

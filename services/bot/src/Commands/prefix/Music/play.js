@@ -1,4 +1,4 @@
-const { convertTime } = require("../../Utils/convert")
+const { convertTime } = require("../../../Utils/convert")
 module.exports = {
   name:"play",aliases:["p"],category:"Music",description:"Putar lagu dari YouTube/Spotify",usage:"play <nama/url>",cooldown:3,inVoiceChannel:true,sameVoiceChannel:true,
   execute:async(message,args,client)=>{

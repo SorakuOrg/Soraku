@@ -1,5 +1,5 @@
 const { PermissionFlagsBits } = require("discord.js")
-const { Antilink } = require("../../Schema/db")
+const { Antilink } = require("../../../Schema/db")
 module.exports = {
   name:"antilink",aliases:["al"],category:"Automod",description:"Konfigurasi antilink",usage:"antilink <enable|disable>",
   execute:async(message,args,client)=>{
