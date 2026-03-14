@@ -31,12 +31,12 @@ async function startWebhookServer(client) {
 
   // Status endpoint — debug info (tidak butuh auth, baca saja)
   app.get("/status", c => {
-    const required = ["BOT_TOKEN","CLIENT_ID","GUILD_ID","SUPABASE_URL","SUPABASE_SERVICE_KEY","SORAKU_WEB_URL","WEBHOOK_SECRET"]
+    const required = ["TOKEN","CLIENT_ID","GUILD_ID","SUPABASE_URL","SUPABASE_SERVICE_KEY","SORAKU_WEB_URL","WEBHOOK"]
     const envCheck = {}
     // Check dengan alias support
     const aliases = {
-      BOT_TOKEN: ["BOT_TOKEN","DISCORD_TOKEN"],
-      GUILD_ID: ["GUILD_ID","DISCORD_GUILD_ID"],
+      TOKEN: ["TOKEN"],
+      GUILD_ID: ["GUILD_ID"],
       SUPABASE_SERVICE_KEY: ["SUPABASE_SERVICE_KEY","SUPABASE_SERVICE_ROLE_KEY"],
     }
     for (const k of required) {
@@ -58,7 +58,7 @@ async function startWebhookServer(client) {
 
   // Auth middleware — hanya untuk webhook routes
   app.use("/webhook/*", async (c, next) => {
-    if (c.req.header("x-soraku-secret") !== process.env.WEBHOOK_SECRET)
+    if (c.req.header("x-soraku-secret") !== process.env.WEBHOOK)
       return c.json({ error: "Unauthorized" }, 401)
     await next()
   })
@@ -78,7 +78,7 @@ async function startWebhookServer(client) {
   // POST /webhook/role-sync — sync supporter tier dari web
   app.post("/webhook/role-sync", async c => {
     const { discordId, tier } = await c.req.json()
-    const guildId = process.env.GUILD_ID ?? process.env.DISCORD_GUILD_ID
+    const guildId = process.env.GUILD_ID ?? process.env.GUILD_ID
     const ROLES   = { DONATUR: process.env.ROLE_DONATUR, VIP: process.env.ROLE_VIP, VVIP: process.env.ROLE_VVIP }
     try {
       const guild  = _client.guilds.cache.get(guildId)
@@ -95,7 +95,7 @@ async function startWebhookServer(client) {
   // POST /webhook/event-announce — announce event ke channel
   app.post("/webhook/event-announce", async c => {
     const { title, description, startAt, eventUrl } = await c.req.json()
-    const channelId = process.env.DISCORD_EVENT_CHANNEL_ID
+    const channelId = process.env.CHANNEL_ID
     if (!channelId) return c.json({ error: "DISCORD_EVENT_CHANNEL_ID not set" }, 500)
     try {
       const channel = _client.channels.cache.get(channelId)

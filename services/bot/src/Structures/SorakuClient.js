@@ -118,9 +118,9 @@ class SorakuClient extends Client {
   /** Deploy slash commands ke Discord */
   async deploySlash() {
     const { REST, Routes } = require("discord.js")
-    const token    = process.env.BOT_TOKEN ?? process.env.DISCORD_TOKEN
+    const token    = process.env.TOKEN
     const clientId = process.env.CLIENT_ID
-    const guildId  = process.env.GUILD_ID ?? process.env.DISCORD_GUILD_ID
+    const guildId  = process.env.GUILD_ID
     const rest     = new REST({ version: "10" }).setToken(token)
     const body     = [...this.slash.values()].map(c => ({ name: c.name, description: c.description, options: c.options ?? [] }))
 
@@ -182,13 +182,13 @@ class SorakuClient extends Client {
     // 2. Validasi ENV
     // Cek semua kemungkinan nama ENV (support Railway Riu punya + nama baru)
     const required = [
-      ["BOT_TOKEN", "DISCORD_TOKEN"],           // token Discord
+      ["TOKEN"],           // token Discord
       ["CLIENT_ID"],                             // application ID
-      ["GUILD_ID", "DISCORD_GUILD_ID"],          // server ID
+      ["GUILD_ID"],          // server ID
       ["SUPABASE_URL"],                          // supabase URL
       ["SUPABASE_SERVICE_KEY","SUPABASE_SERVICE_ROLE_KEY"], // supabase key
       ["SORAKU_WEB_URL"],                        // web URL
-      ["WEBHOOK_SECRET"],                        // webhook secret
+      ["WEBHOOK"],                        // webhook secret
     ]
     const missing  = required.filter(keys => !keys.some(k => !!process.env[k]))
     const missingStr = missing.map(keys => keys[0]).join(", ")
@@ -220,13 +220,13 @@ class SorakuClient extends Client {
     // 6. Login Discord — ini yang bikin bot online
     log("Logging in to Discord...", "info")
     try {
-      await this.login(process.env.BOT_TOKEN ?? process.env.DISCORD_TOKEN)
+      await this.login(process.env.TOKEN)
       // ready event akan di-emit setelah login berhasil
     } catch (err) {
       setState("loginError", err.message)
       log("❌ Discord login GAGAL: " + err.message, "error")
       log("Kemungkinan penyebab:", "error")
-      log("  1. BOT_TOKEN salah atau expired → buat ulang di Discord Dev Portal", "error")
+      log("  1. TOKEN salah atau expired → buat ulang di Discord Dev Portal → Bot → Reset Token", "error")
       log("  2. Bot belum di-invite ke server", "error")
       log("  3. Privileged Intents belum diaktifkan di Discord Dev Portal", "error")
     }
