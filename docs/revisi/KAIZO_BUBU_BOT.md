@@ -1,130 +1,146 @@
-# Update Bot SorakuBot — Untuk Kaizo & Bubu
-> Dari: Sora | 2026-03-14
+# SorakuBot — Panduan Deploy & Integrasi
+> Dari: Sora | Update: 2026-03-14 | Commit terbaru: `6502794`
 
 ---
 
-## 🔧 Fix yang baru di-push (commit `6dd1567`)
+## 🚨 Untuk Kaizo — Checklist agar bot online
 
-### Masalah sebelumnya
-Health check Railway selalu gagal karena webhook server (`/health`) baru
-start **setelah** login Discord dan deploy slash commands. Discord API bisa
-lambat 10–30 detik → Railway timeout → bot dianggap crash terus.
+### 1. ENV Railway (wajib diisi / update sekarang)
 
-### Fix
-HTTP server sekarang **start pertama** sebelum apapun → Railway langsung
-dapat response dari `/health` → tidak timeout lagi.
+> **Rename ENV lama yang sudah salah nama:**
 
----
+| Hapus nama lama | Ganti dengan | Isi |
+|-----------------|-------------|-----|
+| `BOT_TOKEN` / `DISCORD_TOKEN` | **`TOKEN`** | Discord Dev Portal → Bot → Reset Token |
+| `DISCORD_GUILD_ID` | **`GUILD_ID`** | ID server Discord Soraku |
+| `DISCORD_EVENT_CHANNEL_ID` | **`CHANNEL_ID`** | ID channel untuk announce event |
+| `WEBHOOK_SECRET` | **`WEBHOOK`** | Secret webhook dari web |
 
-## 📋 Checklist deploy untuk Kaizo
-
-### 1. ENV Railway yang WAJIB ada (cek semua ini)
+> **ENV yang sudah benar — tidak perlu diubah:**
 
 | Key | Keterangan |
 |-----|-----------|
-| `BOT_TOKEN` | Token Discord bot |
 | `CLIENT_ID` | Application ID dari Discord Dev Portal |
-| `GUILD_ID` | ID server Discord Soraku |
-| `SUPABASE_URL` | URL Supabase (sama dengan apps/web) |
-| `SUPABASE_SERVICE_ROLE_KEY` | Service role key Supabase |
+| `SUPABASE_URL` | Format: `https://xxxx.supabase.co` (**wajib ada `https://`**) |
+| `SUPABASE_SERVICE_KEY` | Supabase Dashboard → Settings → API → service_role |
 | `SORAKU_WEB_URL` | `https://www.soraku.id` |
-| `WEBHOOK_SECRET` | Secret untuk webhook dari web |
+| `SORAKU_API_SECRET` | Secret internal web ↔ bot |
 
-### 2. ENV Railway yang opsional tapi recommended
+> **ENV opsional:**
 
-| Key | Value | Keterangan |
-|-----|-------|-----------|
-| `BOT_PREFIX` | `!` | Prefix command (default sudah `!`) |
-| `OWNER_ID` | `1020644780075659356` | Discord ID Riu |
-| `ROLE_DONATUR` | `1436534227708543046` | Role ID Discord Donatur |
-| `ROLE_VIP` | `1447194092965728307` | Role ID Discord VIP |
-| `ROLE_VVIP` | `1447194196401459320` | Role ID Discord VVIP |
-| `DISCORD_EVENT_CHANNEL_ID` | *(ID channel announce)* | Untuk announce event otomatis |
-
-### 3. ENV untuk musik Lavalink (opsional)
-Kalau tidak diset, musik otomatis nonaktif tanpa crash.
-
-| Key | Contoh value |
-|-----|-------------|
+| Key | Value default |
+|-----|--------------|
+| `BOT_PREFIX` | `!` |
+| `OWNER_ID` | `1020644780075659356` |
+| `ROLE_DONATUR` | `1436534227708543046` |
+| `ROLE_VIP` | `1447194092965728307` |
+| `ROLE_VVIP` | `1447194196401459320` |
 | `LAVA_URL` | `lava-v4.ajieblogs.eu.org:443` |
 | `LAVA_AUTH` | `https://dsc.gg/ajidevserver` |
 | `LAVA_SECURE` | `true` |
-| `SPOTIFY_ID` | *(dari Spotify Developer)* |
-| `SPOTIFY_SECRET` | *(dari Spotify Developer)* |
-
-### 4. Supabase SQL Migration
-**WAJIB dirun sebelum bot online** — buat semua tabel bot di Supabase:
-```
-File: services/bot/supabase_migration.sql
-Cara: Supabase Dashboard → SQL Editor → paste → Run
-```
-
-### 5. Discord Developer Portal
-Aktifkan Privileged Intents:
-- ✅ Server Members Intent
-- ✅ Presence Intent
-- ✅ Message Content Intent
+| `SPOTIFY_ID` / `SPOTIFY_SECRET` | dari Spotify Developer |
 
 ---
 
-## 📁 Struktur bot (untuk referensi Bubu)
+### 2. Run SQL Migration di Supabase (WAJIB — 1x saja)
+
+Tanpa ini bot crash saat akses database.
+
+```
+Supabase Dashboard → SQL Editor → New query
+→ paste isi file: services/bot/supabase_migration.sql
+→ Run
+```
+
+---
+
+### 3. Aktifkan Privileged Intents di Discord Dev Portal (WAJIB)
+
+```
+discord.com/developers → aplikasi Soraku → Bot → Privileged Gateway Intents
+✅ Server Members Intent
+✅ Presence Intent
+✅ Message Content Intent
+→ Save Changes
+```
+
+---
+
+### 4. Verifikasi setelah deploy
+
+Buka di browser:
+```
+https://soraku.up.railway.app/status
+```
+
+Expected (bot siap):
+```json
+{
+  "bot": "🟢 online",
+  "env": {
+    "TOKEN": "✅ set",
+    "CLIENT_ID": "✅ set",
+    "GUILD_ID": "✅ set",
+    "SUPABASE_URL": "✅ set",
+    "SUPABASE_SERVICE_KEY": "✅ set",
+    "SORAKU_WEB_URL": "✅ set",
+    "WEBHOOK": "✅ set"
+  }
+}
+```
+
+Kalau ada `❌ MISSING` → isi ENV tersebut di Railway → Variables.
+
+---
+
+## 📋 Untuk Bubu — Integrasi Bot ↔ Web
+
+### Webhook dari `apps/web` ke bot
+
+Endpoint bot: `https://soraku.up.railway.app/webhook/...`
+Header wajib: `x-soraku-secret: <nilai WEBHOOK di Railway>`
+
+| Endpoint | Method | Fungsi |
+|----------|--------|--------|
+| `/webhook/notify` | POST | Kirim DM ke user Discord |
+| `/webhook/role-sync` | POST | Sync tier supporter → assign role Discord |
+| `/webhook/event-announce` | POST | Announce event baru ke channel |
+
+**Contoh role-sync dari web (saat user donasi):**
+```json
+POST /webhook/role-sync
+{ "discordId": "123456789", "tier": "VIP" }
+```
+
+### Sinkronisasi otomatis Discord ↔ Supabase
+
+| Trigger di Discord | Efek di `soraku.users` |
+|-------------------|----------------------|
+| User dapat role DONATUR/VIP/VVIP | `supporterrole` otomatis update |
+| `/profile` dipanggil | Ambil data dari `users.discordid` |
+
+### ENV apps/web yang perlu diset agar bot ↔ web tersambung
+
+```
+BOT_WEBHOOK_URL    = https://soraku.up.railway.app
+BOT_WEBHOOK_SECRET = (sama dengan WEBHOOK di Railway bot)
+SORAKU_API_SECRET  = (sama dengan SORAKU_API_SECRET di Railway bot)
+```
+
+---
+
+## 📁 Struktur bot (referensi)
 
 ```
 services/bot/src/
 ├── Commands/
-│   ├── prefix/          ← Semua prefix commands (!help, !play, dll)
-│   │   ├── Antinuke/
-│   │   ├── Automod/
-│   │   ├── Config/
-│   │   ├── Extra/
-│   │   ├── Information/
-│   │   ├── Moderation/
-│   │   ├── Music/
-│   │   ├── Owner/
-│   │   ├── Playlist/
-│   │   ├── Profile/
-│   │   ├── Role/
-│   │   ├── Utility/
-│   │   ├── Voice/
-│   │   └── Welcome/
-│   └── slash/           ← Semua slash commands (/link, /profile, dll)
-│       ├── Soraku/
-│       ├── Information/
-│       └── Music/
-├── Events/              ← Discord events (guildMemberAdd, dll)
-├── Schema/db.js         ← Supabase layer (pengganti MongoDB)
+│   ├── prefix/     — !help, !play, !ban, !antinuke, dll
+│   └── slash/      — /link, /profile, /about, /help, /play, dll
+├── Events/         — guildMemberAdd, guildMemberUpdate, dll
+├── Schema/db.js    — Supabase (pengganti MongoDB)
 ├── Structures/SorakuClient.js
-├── Utils/
-├── Webhooks/server.js   ← HTTP server untuk Railway + webhook dari web
+├── Webhooks/server.js
 └── index.js
 ```
 
-## 🔗 Integrasi dengan apps/web (untuk Bubu)
-
-Bot **terhubung langsung** ke Supabase `soraku` schema yang sama dengan web:
-
-| Aksi Discord | Efek di Web |
-|-------------|-------------|
-| User dapat role DONATUR/VIP/VVIP | `soraku.users.supporterrole` langsung update |
-| `/profile` | Ambil data dari `soraku.users` berdasarkan `discordid` |
-
-Webhook dari web ke bot (endpoint `POST /webhook/`):
-| Endpoint | Fungsi |
-|----------|--------|
-| `/webhook/notify` | Kirim DM ke user Discord |
-| `/webhook/role-sync` | Sync supporter tier → assign Discord role |
-| `/webhook/event-announce` | Announce event baru ke channel Discord |
-
-Header yang dibutuhkan: `x-soraku-secret: <WEBHOOK_SECRET>`
-
----
-
-## ✅ Status setelah fix ini
-
-Setelah Railway redeploy dengan commit `6dd1567`:
-1. `/health` langsung respond setelah container start
-2. Bot login Discord di background
-3. Kalau ENV ada yang kurang → log warning, server tetap up (tidak crash)
-
-Cek status: `https://soraku.up.railway.app/health`
-Expected: `{"status":"ok","bot":"starting"}` → lalu `"bot":"online"` setelah login
+File `.env.example` di `services/bot/` selalu sinkron dengan kode.
