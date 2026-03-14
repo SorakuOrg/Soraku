@@ -1,17 +1,8 @@
 [build]
 builder = "dockerfile"
-dockerfilePath = "services/bot/Dockerfile"
 
 [deploy]
-startCommand = "node dist/index.js"
 healthcheckPath = "/health"
 healthcheckTimeout = 30
 restartPolicyType = "on_failure"
-restartPolicyMaxRetries = 3
-
-[[services]]
-name = "soraku-bot"
-
-[services.networking]
-[[services.networking.tcpProxies]]
-applicationPort = 3000
+restartPolicyMaxRetries = 5
