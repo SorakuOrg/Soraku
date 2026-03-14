@@ -2,8 +2,17 @@ const { Hono } = require("hono")
 const { serve } = require("@hono/node-server")
 
 let _client
+const _state = {
+  loginError:   null,
+  startedAt:    null,
+  envMissing:   [],
+  discordReady: false,
+}
+
+function setState(key, val) { _state[key] = val }
 
 async function startWebhookServer(client) {
+  _state.startedAt = new Date().toISOString()
   _client = client
   const app  = new Hono()
   const port = parseInt(process.env.PORT ?? "3000")
@@ -17,6 +26,23 @@ async function startWebhookServer(client) {
       uptime: process.uptime(),
       guilds: _client?.guilds?.cache?.size ?? 0,
       version: "0.2.0",
+    })
+  })
+
+  // Status endpoint — debug info (tidak butuh auth, baca saja)
+  app.get("/status", c => {
+    const required = ["BOT_TOKEN","CLIENT_ID","GUILD_ID","SUPABASE_URL","SUPABASE_SERVICE_ROLE_KEY","SORAKU_WEB_URL","WEBHOOK_SECRET"]
+    const envCheck = {}
+    for (const k of required) envCheck[k] = process.env[k] ? "✅ set" : "❌ MISSING"
+    return c.json({
+      bot:        _client?.isReady() ? "🟢 online" : "🔴 offline",
+      uptime:     Math.floor(process.uptime()) + "s",
+      startedAt:  _state.startedAt,
+      loginError: _state.loginError ?? null,
+      envMissing: _state.envMissing,
+      env:        envCheck,
+      guilds:     _client?.guilds?.cache?.size ?? 0,
+      version:    "0.2.0",
     })
   })
 
@@ -77,4 +103,4 @@ async function startWebhookServer(client) {
   console.log(`[bot] 🌐 Webhook server on 0.0.0.0:${port}`)
 }
 
-module.exports = { startWebhookServer }
+module.exports = { startWebhookServer, setState }

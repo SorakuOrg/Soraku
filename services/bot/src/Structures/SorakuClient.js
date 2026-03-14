@@ -166,40 +166,60 @@ class SorakuClient extends Client {
   }
 
   /** Start bot — urutan kritis:
-   * 1. Start webhook server PERTAMA (Railway health check butuh /health segera)
-   * 2. Validasi ENV
-   * 3. Load commands + events
-   * 4. Login Discord + deploy slash
+   * 1. Start webhook server PERTAMA (Railway health check harus respond segera)
+   * 2. Validasi ENV + load commands
+   * 3. Deploy slash + Login Discord
    */
   async connect() {
     require("dotenv").config()
 
-    // 1. Start HTTP server SEBELUM apapun — Railway health check harus dapat response
-    const { startWebhookServer } = require("../Webhooks/server")
-    await startWebhookServer(this)
+    const { startWebhookServer, setState } = require("../Webhooks/server")
 
-    // 2. Validasi ENV — setelah server up, jadi Railway tidak salah sangka crash
+    // 1. HTTP server start PERTAMA — Railway butuh /health segera
+    await startWebhookServer(this)
+    log("HTTP server started on port " + (process.env.PORT ?? "3000"), "ready")
+
+    // 2. Validasi ENV
     const required = ["BOT_TOKEN", "CLIENT_ID", "GUILD_ID", "SUPABASE_URL", "SUPABASE_SERVICE_ROLE_KEY", "SORAKU_WEB_URL", "WEBHOOK_SECRET"]
-    const missing = required.filter(k => !process.env[k])
+    const missing  = required.filter(k => !process.env[k])
+
     if (missing.length) {
-      log(`ENV missing: ${missing.join(", ")}`, "error")
-      log("Bot tidak bisa login Discord, tapi server tetap jalan.", "warn")
-      return // Tidak exit — biarkan health check tetap hijau
+      setState("envMissing", missing)
+      log("❌ ENV MISSING: " + missing.join(", "), "error")
+      log("Bot tidak bisa login. Cek Railway → Variables dan pastikan semua ENV di atas ada.", "error")
+      log("Cek status di: " + (process.env.SORAKU_WEB_URL ?? "http://localhost:" + (process.env.PORT ?? "3000")) + "/status", "warn")
+      return // Server tetap jalan, health check tetap hijau
     }
 
-    // 3. Init music, load commands + events
+    log("✅ Semua ENV valid", "info")
+
+    // 3. Init music (opsional)
     this.initMusic()
+
+    // 4. Load commands + events
     this.loadCommands()
     this.loadEvents()
     this.loadPlayers()
 
-    // 4. Deploy slash commands
+    // 5. Deploy slash commands ke Discord
     await this.deploySlash().catch(err => {
-      log("deploySlash gagal: " + err.message + " (bot tetap login)", "warn")
+      setState("loginError", "deploySlash: " + err.message)
+      log("⚠️ deploySlash gagal: " + err.message, "warn")
     })
 
-    // 5. Login Discord
-    await this.login(process.env.BOT_TOKEN)
+    // 6. Login Discord — ini yang bikin bot online
+    log("Logging in to Discord...", "info")
+    try {
+      await this.login(process.env.BOT_TOKEN)
+      // ready event akan di-emit setelah login berhasil
+    } catch (err) {
+      setState("loginError", err.message)
+      log("❌ Discord login GAGAL: " + err.message, "error")
+      log("Kemungkinan penyebab:", "error")
+      log("  1. BOT_TOKEN salah atau expired → buat ulang di Discord Dev Portal", "error")
+      log("  2. Bot belum di-invite ke server", "error")
+      log("  3. Privileged Intents belum diaktifkan di Discord Dev Portal", "error")
+    }
   }
 }
 
