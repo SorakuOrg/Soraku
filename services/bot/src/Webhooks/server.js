@@ -8,13 +8,17 @@ async function startWebhookServer(client) {
   const app  = new Hono()
   const port = parseInt(process.env.PORT ?? "3000")
 
-  // Health check — NO AUTH (Railway health check)
-  app.get("/health", c => c.json({
-    status: "ok",
-    bot:    _client.isReady() ? "online" : "starting",
-    uptime: process.uptime(),
-    guilds: _client.guilds.cache.size,
-  }))
+  // Health check — NO AUTH, selalu 200 agar Railway tidak kill container
+  // Meski bot belum login Discord, server sudah harus respond
+  app.get("/health", c => {
+    return c.json({
+      status: "ok",
+      bot:    _client?.isReady() ? "online" : "starting",
+      uptime: process.uptime(),
+      guilds: _client?.guilds?.cache?.size ?? 0,
+      version: "0.2.0",
+    })
+  })
 
   // Auth middleware — hanya untuk webhook routes
   app.use("/webhook/*", async (c, next) => {

@@ -165,24 +165,40 @@ class SorakuClient extends Client {
     log("Kazagumo (Lavalink) initialized", "ready")
   }
 
-  /** Start bot */
+  /** Start bot — urutan kritis:
+   * 1. Start webhook server PERTAMA (Railway health check butuh /health segera)
+   * 2. Validasi ENV
+   * 3. Load commands + events
+   * 4. Login Discord + deploy slash
+   */
   async connect() {
     require("dotenv").config()
 
+    // 1. Start HTTP server SEBELUM apapun — Railway health check harus dapat response
+    const { startWebhookServer } = require("../Webhooks/server")
+    await startWebhookServer(this)
+
+    // 2. Validasi ENV — setelah server up, jadi Railway tidak salah sangka crash
     const required = ["BOT_TOKEN", "CLIENT_ID", "GUILD_ID", "SUPABASE_URL", "SUPABASE_SERVICE_ROLE_KEY", "SORAKU_WEB_URL", "WEBHOOK_SECRET"]
-    for (const key of required) {
-      if (!process.env[key]) { log(`ENV missing: ${key}`, "error"); process.exit(1) }
+    const missing = required.filter(k => !process.env[k])
+    if (missing.length) {
+      log(`ENV missing: ${missing.join(", ")}`, "error")
+      log("Bot tidak bisa login Discord, tapi server tetap jalan.", "warn")
+      return // Tidak exit — biarkan health check tetap hijau
     }
 
+    // 3. Init music, load commands + events
     this.initMusic()
     this.loadCommands()
     this.loadEvents()
     this.loadPlayers()
-    await this.deploySlash()
 
-    const { startWebhookServer } = require("../Webhooks/server")
-    await startWebhookServer(this)
+    // 4. Deploy slash commands
+    await this.deploySlash().catch(err => {
+      log("deploySlash gagal: " + err.message + " (bot tetap login)", "warn")
+    })
 
+    // 5. Login Discord
     await this.login(process.env.BOT_TOKEN)
   }
 }
