@@ -118,9 +118,9 @@ class SorakuClient extends Client {
   /** Deploy slash commands ke Discord */
   async deploySlash() {
     const { REST, Routes } = require("discord.js")
-    const token    = process.env.BOT_TOKEN
+    const token    = process.env.DISCORD_TOKEN
     const clientId = process.env.CLIENT_ID
-    const guildId  = process.env.GUILD_ID
+    const guildId  = process.env.DISCORD_GUILD_ID
     const rest     = new REST({ version: "10" }).setToken(token)
     const body     = [...this.slash.values()].map(c => ({ name: c.name, description: c.description, options: c.options ?? [] }))
 
@@ -180,7 +180,7 @@ class SorakuClient extends Client {
     log("HTTP server started on port " + (process.env.PORT ?? "3000"), "ready")
 
     // 2. Validasi ENV
-    const required = ["BOT_TOKEN", "CLIENT_ID", "GUILD_ID", "SUPABASE_URL", "SUPABASE_SERVICE_ROLE_KEY", "SORAKU_WEB_URL", "WEBHOOK_SECRET"]
+    const required = ["DISCORD_TOKEN", "CLIENT_ID", "DISCORD_GUILD_ID", "SUPABASE_URL", "SUPABASE_SERVICE_ROLE_KEY", "SORAKU_WEB_URL", "WEBHOOK_SECRET"]
     const missing  = required.filter(k => !process.env[k])
 
     if (missing.length) {
@@ -210,7 +210,7 @@ class SorakuClient extends Client {
     // 6. Login Discord — ini yang bikin bot online
     log("Logging in to Discord...", "info")
     try {
-      await this.login(process.env.BOT_TOKEN)
+      await this.login(process.env.DISCORD_TOKEN)
       // ready event akan di-emit setelah login berhasil
     } catch (err) {
       setState("loginError", err.message)
