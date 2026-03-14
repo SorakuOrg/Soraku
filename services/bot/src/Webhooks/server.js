@@ -31,9 +31,19 @@ async function startWebhookServer(client) {
 
   // Status endpoint — debug info (tidak butuh auth, baca saja)
   app.get("/status", c => {
-    const required = ["DISCORD_TOKEN","CLIENT_ID","DISCORD_GUILD_ID","SUPABASE_URL","SUPABASE_SERVICE_ROLE_KEY","SORAKU_WEB_URL","WEBHOOK_SECRET"]
+    const required = ["BOT_TOKEN","CLIENT_ID","GUILD_ID","SUPABASE_URL","SUPABASE_SERVICE_KEY","SORAKU_WEB_URL","WEBHOOK_SECRET"]
     const envCheck = {}
-    for (const k of required) envCheck[k] = process.env[k] ? "✅ set" : "❌ MISSING"
+    // Check dengan alias support
+    const aliases = {
+      BOT_TOKEN: ["BOT_TOKEN","DISCORD_TOKEN"],
+      GUILD_ID: ["GUILD_ID","DISCORD_GUILD_ID"],
+      SUPABASE_SERVICE_KEY: ["SUPABASE_SERVICE_KEY","SUPABASE_SERVICE_ROLE_KEY"],
+    }
+    for (const k of required) {
+      const keys = aliases[k] ?? [k]
+      const found = keys.some(a => !!process.env[a])
+      envCheck[k] = found ? "✅ set" : "❌ MISSING"
+    }
     return c.json({
       bot:        _client?.isReady() ? "🟢 online" : "🔴 offline",
       uptime:     Math.floor(process.uptime()) + "s",
@@ -68,7 +78,7 @@ async function startWebhookServer(client) {
   // POST /webhook/role-sync — sync supporter tier dari web
   app.post("/webhook/role-sync", async c => {
     const { discordId, tier } = await c.req.json()
-    const guildId = process.env.DISCORD_GUILD_ID
+    const guildId = process.env.GUILD_ID ?? process.env.DISCORD_GUILD_ID
     const ROLES   = { DONATUR: process.env.ROLE_DONATUR, VIP: process.env.ROLE_VIP, VVIP: process.env.ROLE_VVIP }
     try {
       const guild  = _client.guilds.cache.get(guildId)

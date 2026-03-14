@@ -118,9 +118,9 @@ class SorakuClient extends Client {
   /** Deploy slash commands ke Discord */
   async deploySlash() {
     const { REST, Routes } = require("discord.js")
-    const token    = process.env.DISCORD_TOKEN
+    const token    = process.env.BOT_TOKEN ?? process.env.DISCORD_TOKEN
     const clientId = process.env.CLIENT_ID
-    const guildId  = process.env.DISCORD_GUILD_ID
+    const guildId  = process.env.GUILD_ID ?? process.env.DISCORD_GUILD_ID
     const rest     = new REST({ version: "10" }).setToken(token)
     const body     = [...this.slash.values()].map(c => ({ name: c.name, description: c.description, options: c.options ?? [] }))
 
@@ -180,12 +180,22 @@ class SorakuClient extends Client {
     log("HTTP server started on port " + (process.env.PORT ?? "3000"), "ready")
 
     // 2. Validasi ENV
-    const required = ["DISCORD_TOKEN", "CLIENT_ID", "DISCORD_GUILD_ID", "SUPABASE_URL", "SUPABASE_SERVICE_ROLE_KEY", "SORAKU_WEB_URL", "WEBHOOK_SECRET"]
-    const missing  = required.filter(k => !process.env[k])
+    // Cek semua kemungkinan nama ENV (support Railway Riu punya + nama baru)
+    const required = [
+      ["BOT_TOKEN", "DISCORD_TOKEN"],           // token Discord
+      ["CLIENT_ID"],                             // application ID
+      ["GUILD_ID", "DISCORD_GUILD_ID"],          // server ID
+      ["SUPABASE_URL"],                          // supabase URL
+      ["SUPABASE_SERVICE_KEY","SUPABASE_SERVICE_ROLE_KEY"], // supabase key
+      ["SORAKU_WEB_URL"],                        // web URL
+      ["WEBHOOK_SECRET"],                        // webhook secret
+    ]
+    const missing  = required.filter(keys => !keys.some(k => !!process.env[k]))
+    const missingStr = missing.map(keys => keys[0]).join(", ")
 
     if (missing.length) {
-      setState("envMissing", missing)
-      log("❌ ENV MISSING: " + missing.join(", "), "error")
+      setState("envMissing", missing.map(k => k[0]))
+      log("❌ ENV MISSING: " + missingStr, "error")
       log("Bot tidak bisa login. Cek Railway → Variables dan pastikan semua ENV di atas ada.", "error")
       log("Cek status di: " + (process.env.SORAKU_WEB_URL ?? "http://localhost:" + (process.env.PORT ?? "3000")) + "/status", "warn")
       return // Server tetap jalan, health check tetap hijau
@@ -210,7 +220,7 @@ class SorakuClient extends Client {
     // 6. Login Discord — ini yang bikin bot online
     log("Logging in to Discord...", "info")
     try {
-      await this.login(process.env.DISCORD_TOKEN)
+      await this.login(process.env.BOT_TOKEN ?? process.env.DISCORD_TOKEN)
       // ready event akan di-emit setelah login berhasil
     } catch (err) {
       setState("loginError", err.message)
