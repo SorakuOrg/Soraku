@@ -1,140 +1,82 @@
 import { Hono } from "hono"
 import { serve } from "@hono/node-server"
 import { z } from "zod"
-import { client } from "../index"
+import type { SorakuClient } from "../structures/SorakuClient"
 
-const app = new Hono()
+let _client: SorakuClient
 
-// ─── Health check — NO AUTH (wajib untuk Railway health check) ─────────────────
-app.get("/health", (c) => {
-  return c.json({
-    status:  "ok",
-    bot:     client.isReady() ? "online" : "offline",
-    uptime:  process.uptime(),
-    version: "0.1.0",
+export async function startWebhookServer(client: SorakuClient) {
+  _client = client
+  const app  = new Hono()
+  const port = parseInt(process.env.PORT ?? "3000")
+
+  // Health check — NO AUTH (Railway health check)
+  app.get("/health", c => c.json({
+    status: "ok",
+    bot:    _client.isReady() ? "online" : "starting",
+    uptime: process.uptime(),
+    guilds: _client.guilds.cache.size,
+  }))
+
+  // Auth middleware untuk webhook routes
+  app.use("/webhook/*", async (c, next) => {
+    if (c.req.header("x-soraku-secret") !== process.env.WEBHOOK_SECRET)
+      return c.json({ error: "Unauthorized" }, 401)
+    await next()
   })
-})
 
-// ─── Auth middleware — hanya untuk webhook routes ──────────────────────────────
-app.use("/webhook/*", async (c, next) => {
-  const secret = c.req.header("x-soraku-secret")
-  if (secret !== process.env.WEBHOOK_SECRET) {
-    return c.json({ error: "Unauthorized" }, 401)
-  }
-  await next()
-})
+  // POST /webhook/notify — kirim DM
+  app.post("/webhook/notify", async c => {
+    const { discordId, message } = await c.req.json() as { discordId: string; message: string }
+    try {
+      const user = await _client.users.fetch(discordId)
+      await user.send(message)
+      return c.json({ sent: true })
+    } catch (err) {
+      return c.json({ sent: false, error: String(err) }, 500)
+    }
+  })
 
-// ─── POST /webhook/notify — kirim DM ke user Discord ──────────────────────────
-const NotifySchema = z.object({
-  discordId: z.string(),
-  message:   z.string().max(1800),
-})
-
-app.post("/webhook/notify", async (c) => {
-  const body   = await c.req.json()
-  const parsed = NotifySchema.safeParse(body)
-  if (!parsed.success) return c.json({ error: parsed.error.message }, 400)
-
-  try {
-    const user = await client.users.fetch(parsed.data.discordId)
-    await user.send(parsed.data.message)
-    return c.json({ sent: true })
-  } catch (err) {
-    console.error("[bot] notify error:", err)
-    return c.json({ sent: false, error: String(err) }, 500)
-  }
-})
-
-// ─── POST /webhook/discord-event — announce event ke channel ──────────────────
-const EventAnnounceSchema = z.object({
-  title:       z.string(),
-  description: z.string().optional(),
-  startAt:     z.string(),
-  eventUrl:    z.string().url().optional(),
-})
-
-app.post("/webhook/discord-event", async (c) => {
-  const body   = await c.req.json()
-  const parsed = EventAnnounceSchema.safeParse(body)
-  if (!parsed.success) return c.json({ error: parsed.error.message }, 400)
-
-  const channelId = process.env.DISCORD_EVENT_CHANNEL_ID
-  if (!channelId) return c.json({ error: "DISCORD_EVENT_CHANNEL_ID not set" }, 500)
-
-  try {
-    const channel = client.channels.cache.get(channelId)
-    if (!channel || !("send" in channel)) return c.json({ error: "Channel not found or not sendable" }, 404)
-    const textChannel = channel as { send: (msg: string) => Promise<unknown> }
-
-    const { title, description, startAt, eventUrl } = parsed.data
-    const date = new Date(startAt).toLocaleString("id-ID", {
-      dateStyle: "full", timeStyle: "short", timeZone: "Asia/Jakarta",
-    })
-
-    const msg = [
-      `📣 **Event Baru: ${title}**`,
-      description ? `> ${description}` : "",
-      `🗓️ **Waktu:** ${date} WIB`,
-      eventUrl ? `🔗 **Detail:** ${eventUrl}` : "",
-      `\n🔔 Jangan sampai terlewat, Sorakuuu~`,
-    ].filter(Boolean).join("\n")
-
-    await textChannel.send(msg)
-    return c.json({ announced: true })
-  } catch (err) {
-    console.error("[bot] discord-event error:", err)
-    return c.json({ announced: false, error: String(err) }, 500)
-  }
-})
-
-// ─── POST /webhook/role-sync — sync role dari web ke Discord ──────────────────
-const RoleSyncSchema = z.object({
-  discordId: z.string(),
-  tier:      z.enum(["DONATUR", "VIP", "VVIP"]).nullable(),
-})
-
-app.post("/webhook/role-sync", async (c) => {
-  const body   = await c.req.json()
-  const parsed = RoleSyncSchema.safeParse(body)
-  if (!parsed.success) return c.json({ error: parsed.error.message }, 400)
-
-  const guildId = process.env.GUILD_ID
-  if (!guildId) return c.json({ error: "GUILD_ID not set" }, 500)
-
-  const ROLE_MAP: Record<string, string | undefined> = {
-    DONATUR: process.env.ROLE_DONATUR,
-    VIP:     process.env.ROLE_VIP,
-    VVIP:    process.env.ROLE_VVIP,
-  }
-
-  try {
-    const guild  = client.guilds.cache.get(guildId)
-    if (!guild) return c.json({ error: "Guild not in cache" }, 404)
-    const member = await guild.members.fetch(parsed.data.discordId)
-
-    // Hapus semua tier roles dulu
-    for (const roleId of Object.values(ROLE_MAP)) {
-      if (roleId && member.roles.cache.has(roleId)) {
-        await member.roles.remove(roleId)
+  // POST /webhook/role-sync — sync supporter tier dari web
+  app.post("/webhook/role-sync", async c => {
+    const { discordId, tier } = await c.req.json() as { discordId: string; tier: string | null }
+    const guildId = process.env.GUILD_ID!
+    const ROLE_MAP: Record<string, string | undefined> = {
+      DONATUR: process.env.ROLE_DONATUR,
+      VIP:     process.env.ROLE_VIP,
+      VVIP:    process.env.ROLE_VVIP,
+    }
+    try {
+      const guild  = _client.guilds.cache.get(guildId)
+      if (!guild) return c.json({ error: "Guild not cached" }, 404)
+      const member = await guild.members.fetch(discordId)
+      for (const roleId of Object.values(ROLE_MAP)) {
+        if (roleId && member.roles.cache.has(roleId)) await member.roles.remove(roleId).catch(() => {})
       }
+      if (tier && ROLE_MAP[tier]) await member.roles.add(ROLE_MAP[tier]!).catch(() => {})
+      return c.json({ synced: true, tier })
+    } catch (err) {
+      return c.json({ synced: false, error: String(err) }, 500)
     }
+  })
 
-    // Tambah role baru kalau ada tier
-    if (parsed.data.tier) {
-      const roleId = ROLE_MAP[parsed.data.tier]
-      if (roleId) await member.roles.add(roleId)
+  // POST /webhook/event-announce — announce event ke channel
+  app.post("/webhook/event-announce", async c => {
+    const { title, description, startAt, eventUrl } = await c.req.json() as { title: string; description?: string; startAt: string; eventUrl?: string }
+    const channelId = process.env.DISCORD_EVENT_CHANNEL_ID
+    if (!channelId) return c.json({ error: "DISCORD_EVENT_CHANNEL_ID not set" }, 500)
+    try {
+      const channel = _client.channels.cache.get(channelId)
+      if (!channel || !("send" in channel)) return c.json({ error: "Channel not found" }, 404)
+      const date = new Date(startAt).toLocaleString("id-ID", { dateStyle: "full", timeStyle: "short", timeZone: "Asia/Jakarta" })
+      const msg  = [`📣 **Event Baru: ${title}**`, description ? `> ${description}` : "", `🗓️ **Waktu:** ${date} WIB`, eventUrl ? `🔗 **Detail:** ${eventUrl}` : "", `\n🔔 Jangan sampai terlewat, Sorakuuu~`].filter(Boolean).join("\n")
+      await (channel as any).send(msg)
+      return c.json({ announced: true })
+    } catch (err) {
+      return c.json({ announced: false, error: String(err) }, 500)
     }
+  })
 
-    return c.json({ synced: true, tier: parsed.data.tier })
-  } catch (err) {
-    console.error("[bot] role-sync error:", err)
-    return c.json({ synced: false, error: String(err) }, 500)
-  }
-})
-
-// ─── Start server ──────────────────────────────────────────────────────────────
-export async function startWebhookServer() {
-  const port = parseInt(process.env.PORT ?? "3001")
   serve({ fetch: app.fetch, port, hostname: "0.0.0.0" })
-  console.log(`[bot] 🌐 Webhook server listening on 0.0.0.0:${port}`)
+  console.log(`[bot] 🌐 Webhook server on 0.0.0.0:${port}`)
 }
