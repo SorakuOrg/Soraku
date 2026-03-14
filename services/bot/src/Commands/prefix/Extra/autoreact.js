@@ -8,8 +8,7 @@ module.exports = {
     if(opt==="list"){
       const all=await Autoreact.getAll(message.guild.id)
       if(!all.length)return message.reply({embeds:[client.embed().setDescription("Belum ada autoreact.").setFooter({text:"Soraku Community"})]})
-      return message.reply({embeds:[client.embed().setTitle("✨ Autoreact").setDescription(all.map((r,i)=>"`"+(i+1)+"`. `"+r.keyword+"` → "+r.emoji).join("
-")).setFooter({text:"Soraku Community"})]})
+      return message.reply({embeds:[client.embed().setTitle("✨ Autoreact").setDescription(all.map((r,i)=>"`"+(i+1)+"`. `"+r.keyword+"` → "+r.emoji).join("\n")).setFooter({text:"Soraku Community"})]})
     }
     if(opt==="add"){
       if(!args[1]||!args[2])return message.reply({embeds:[client.embed().setDescription(client.emoji.cross+" Format: `!autoreact add <keyword> <emoji>`").setFooter({text:"Soraku Community"})]})
