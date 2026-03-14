@@ -4,14 +4,31 @@
  */
 const { createClient } = require("@supabase/supabase-js")
 
-// Support kedua nama: SUPABASE_SERVICE_KEY (Railway Riu) atau SUPABASE_SERVICE_ROLE_KEY
-const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.SUPABASE_SERVICE_KEY
-)
+// Lazy init — tidak crash saat load jika ENV belum ada atau format salah
+let _supabase = null
 
-const bot = () => supabase.schema("bot")
-const soraku = () => supabase.schema("soraku")
+function getSupabase() {
+  if (_supabase) return _supabase
+  const url = process.env.SUPABASE_URL
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.SUPABASE_SERVICE_KEY
+  if (!url || !key) throw new Error("SUPABASE_URL atau SUPABASE_SERVICE_KEY belum diset di Railway Variables")
+  // Pastikan URL punya format https://
+  const fixedUrl = url.startsWith("http") ? url : "https://" + url
+  _supabase = createClient(fixedUrl, key)
+  return _supabase
+}
+
+// Proxy agar kode lain tetap pakai `supabase.schema(...)` seperti biasa
+const supabase = new Proxy({}, {
+  get: (_, prop) => {
+    const client = getSupabase()
+    const val = client[prop]
+    return typeof val === "function" ? val.bind(client) : val
+  }
+})
+
+const bot = () => getSupabase().schema("bot")
+const soraku = () => getSupabase().schema("soraku")
 
 async function upsert(table, data, conflict) {
   const { data: r, error } = await bot().from(table).upsert(data, { onConflict: conflict }).select().single()
